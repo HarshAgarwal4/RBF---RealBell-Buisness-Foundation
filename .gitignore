@@ -1,0 +1,112 @@
+# ==========================
+# Dependencies
+# ==========================
+node_modules/
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.production
+.env.test
+
+# ==========================
+# Logs
+# ==========================
+logs/
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================
+# Build Outputs
+# ==========================
+dist/
+dist
+dist-ssr/
+dist-ssr
+build/
+coverage/
+
+# ==========================
+# Local Configuration
+# ==========================
+*.local
+
+# ==========================
+# Cache
+# ==========================
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+.nyc_output/
+
+# ==========================
+# Runtime Files
+# ==========================
+*.pid
+*.pid.lock
+*.seed
+
+# ==========================
+# Temporary Files
+# ==========================
+tmp/
+temp/
+*.tmp
+
+# ==========================
+# IDE / Editor
+# ==========================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================
+# Package Manager
+# ==========================
+.pnp
+.pnp.js
+
+# ==========================
+# MongoDB Local Data (Optional)
+# ==========================
+data/
+*.wt
+*.lock
+
+# ==========================
+# User Uploads (Optional)
+# Uncomment if uploads are generated
+# uploads/
+
+# ==========================
+# Generated Files (Optional)
+# ==========================
+*.pdf
+*.csv
+*.zip

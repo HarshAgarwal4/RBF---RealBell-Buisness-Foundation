@@ -1,0 +1,7 @@
+@media (max-width: 480px) {
+  .Toastify__toast {
+    width: 60vw !important; /* almost full width on mobile */
+    font-size: 12px;
+    padding: 10px 10px;
+  }
+}
