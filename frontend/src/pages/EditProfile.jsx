@@ -1,5 +1,5 @@
 import React , {useState, useEffect} from 'react'
-import Sidebar from '../components/SIdebar'
+import { Sidebar } from '../components/Sidebar'
 import { useStore } from '../zustand/store'
 import StartupProfile from './Profile/Startup/profile'
 import EditProfile from './Profile/Startup/Edit'

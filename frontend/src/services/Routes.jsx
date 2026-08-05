@@ -10,6 +10,7 @@ import ProfilePage from '../pages/Profile.jsx';
 import EditProfilePage from '../pages/EditProfile.jsx';
 import Connect from '../pages/app/connect.jsx';
 import ViewProfile from '../pages/app/viewProfile.jsx';
+import CommunityWall from '../pages/app/community.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -47,6 +48,10 @@ const Routes = createBrowserRouter([
     {
         path: '/connect/:type/:id',
         element: <ProtectedRoute> <ViewProfile /> </ProtectedRoute>
+    },
+    {
+        path: '/community',
+        element: <ProtectedRoute> <CommunityWall /> </ProtectedRoute>
     },
     {
         path: '*',

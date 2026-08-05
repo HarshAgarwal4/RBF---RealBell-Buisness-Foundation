@@ -48,7 +48,7 @@ function renderPrimitive(value) {
         return value.toLocaleString();
     }
 
-    return <span className="break-words text-slate-800">{String(value)}</span>;
+    return <span className="wrap-break-words text-slate-800">{String(value)}</span>;
 }
 
 function DynamicNode({ label, value, depth = 0 }) {
@@ -252,7 +252,8 @@ export default function ViewProfile() {
                 if (ignore) return;
 
                 if (res.data?.status === 1) {
-                    setProfile(res.data?.profile || null);
+                    console.log('p =',JSON.parse(res.data?.profile.profile.profile))
+                    setProfile(JSON.parse(res.data?.profile.profile.profile) || null);
                 } else {
                     setProfile(null);
                     setError(res.data?.msg || "Unable to fetch profile");
@@ -281,7 +282,7 @@ export default function ViewProfile() {
         };
     }, [id]);
 
-    const profileData = profile?.profile || {};
+    const profileData = profile || {};
     const hasProfileData = useMemo(() => {
         if (!isPlainObject(profileData)) return !isEmptyValue(profileData);
         return Object.keys(profileData).length > 0;
@@ -385,14 +386,6 @@ export default function ViewProfile() {
                             <div className="mb-6 border-b border-slate-200 pb-5">
                                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#8E1B2E]">
                                     Profile
-                                </p>
-                                <h1 className="mt-2 text-3xl font-bold text-slate-900">
-                                    Dynamic profile view
-                                </h1>
-                                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                                    Rendering only `organization.profile` with
-                                    fallback placeholders when no structured
-                                    profile data exists yet.
                                 </p>
                             </div>
 

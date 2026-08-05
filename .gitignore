@@ -110,3 +110,5 @@ data/
 *.pdf
 *.csv
 *.zip
+config.txt
+Dictionary.txt
