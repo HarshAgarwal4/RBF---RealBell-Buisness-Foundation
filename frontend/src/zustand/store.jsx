@@ -2,18 +2,20 @@ import { create } from 'zustand';
 import axios from '../services/axios';
 import { toast } from 'react-toastify';
 
-export const useStore = create((set,get) => ({
+export const useStore = create((set) => ({
     user: null,
     isLoading: true,
     setIsLoading: (data) => set({isLoading : data}),
     setUser: (data) => set({user: data}),
-    fetchUser: async () => {
+    fetchUser: async ({ silent = true } = {}) => {
         try {
             let r = await axios.post('/me')
             if(r.status === 200 ){
                 if(r.data.status === 0) return
                 if(r.data.status === 1) {
-                    toast.success("Welcome again")
+                    if (!silent) {
+                        toast.success("Welcome again")
+                    }
                     set({user: r.data.user})
                     return
                 } 

@@ -57,9 +57,8 @@ function DynamicNode({ label, value, depth = 0 }) {
 
     return (
         <div
-            className={`rounded-2xl border border-slate-200 bg-white p-4 ${
-                depth > 0 ? "shadow-none" : "shadow-sm"
-            }`}
+            className={`rounded-2xl border border-slate-200 bg-white p-4 ${depth > 0 ? "shadow-none" : "shadow-sm"
+                }`}
         >
             <div className="mb-3 flex items-start justify-between gap-3">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-[#8E1B2E]">
@@ -127,9 +126,8 @@ function NodeRenderer({ value, depth = 0 }) {
                 {entries.map(([key, childValue]) => (
                     <div
                         key={key}
-                        className={`grid gap-2 border-b border-slate-200 pb-3 last:border-b-0 last:pb-0 ${
-                            depth > 0 ? "md:grid-cols-[180px_minmax(0,1fr)]" : "md:grid-cols-[220px_minmax(0,1fr)]"
-                        }`}
+                        className={`grid gap-2 border-b border-slate-200 pb-3 last:border-b-0 last:pb-0 ${depth > 0 ? "md:grid-cols-[180px_minmax(0,1fr)]" : "md:grid-cols-[220px_minmax(0,1fr)]"
+                            }`}
                     >
                         <p className="text-sm font-medium text-slate-500">
                             {formatLabel(key)}
@@ -252,18 +250,23 @@ export default function ViewProfile() {
                 if (ignore) return;
 
                 if (res.data?.status === 1) {
-                    console.log('p =',JSON.parse(res.data?.profile.profile.profile))
-                    setProfile(JSON.parse(res.data?.profile.profile.profile) || null);
+                    try {
+                        const raw = res.data?.profile?.profile?.profile;
+                        setProfile(raw ? JSON.parse(raw) : {});
+                    } catch (err) {
+                        console.error(err);
+                        setProfile({});
+                    }
                 } else {
-                    setProfile(null);
+                    setProfile({});
                     setError(res.data?.msg || "Unable to fetch profile");
                 }
             } catch (err) {
                 if (ignore) return;
-                setProfile(null);
+                setProfile({});
                 setError(
                     err?.response?.data?.msg ||
-                        "Unable to fetch profile right now"
+                    "Unable to fetch profile right now"
                 );
             } finally {
                 if (!ignore) setLoading(false);
@@ -281,6 +284,10 @@ export default function ViewProfile() {
             ignore = true;
         };
     }, [id]);
+
+    useEffect(() => {
+        console.log('profile =', profile)
+    }, [profile])
 
     const profileData = profile || {};
     const hasProfileData = useMemo(() => {

@@ -502,6 +502,19 @@ export default function CommunityWall() {
     };
   }, [composer.imagePreview]);
 
+  useEffect(() => {
+    if (!showComposer) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setShowComposer(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showComposer]);
+
   const filteredPosts = useMemo(() => {
     if (filter === "mine") {
       return posts.filter((post) => String(post?.author?._id) === String(user?._id));
@@ -772,39 +785,54 @@ export default function CommunityWall() {
                 Use the buttons in the feed to switch between everything, your posts, polls, and active threads.
               </p>
             </div>
-
-            {showComposer ? (
-              <ComposerCard
-                value={composer}
-                setValue={setComposer}
-                onSubmit={handleCreate}
-                submitting={submitting}
-                onPickImage={handlePickImage}
-                onRemoveImage={handleRemoveImage}
-                onImageChange={handleImageChange}
-                fileInputRef={fileInputRef}
-              />
-            ) : (
-              <div className="rounded-[28px] border border-dashed border-[#CBD5E5] bg-white p-6 text-center shadow-[0_18px_42px_rgba(15,23,42,0.04)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8A95AB]">
-                  Ready to share?
-                </p>
-                <h3 className="mt-2 text-xl font-bold text-[#152033]">Create a new post</h3>
-                <p className="mt-3 text-sm leading-7 text-[#6E7B92]">
-                  Click the button above to open the post form here and publish an update, image, or poll.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowComposer(true)}
-                  className="mt-5 inline-flex h-12 items-center gap-2 rounded-2xl bg-[#0F3D4A] px-5 text-[15px] font-semibold text-white transition hover:bg-[#0b313b]"
-                >
-                  <Plus size={16} />
-                  Open form
-                </button>
-              </div>
-            )}
           </aside>
         </div>
+
+        {showComposer ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+            onClick={() => setShowComposer(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Create community post"
+              className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[32px] border border-[#E5EAF3] bg-white shadow-[0_30px_80px_rgba(15,23,42,0.28)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#EEF2F8] bg-white px-6 py-5">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#8A95AB]">
+                    Community Wall
+                  </p>
+                  <h2 className="mt-1 text-2xl font-bold text-[#142036]">Create a post</h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowComposer(false)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#F4F6FB] text-[#526079] transition hover:bg-[#e9eef7] hover:text-[#0F3D4A]"
+                  aria-label="Close composer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <ComposerCard
+                  value={composer}
+                  setValue={setComposer}
+                  onSubmit={handleCreate}
+                  submitting={submitting}
+                  onPickImage={handlePickImage}
+                  onRemoveImage={handleRemoveImage}
+                  onImageChange={handleImageChange}
+                  fileInputRef={fileInputRef}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </>
   );

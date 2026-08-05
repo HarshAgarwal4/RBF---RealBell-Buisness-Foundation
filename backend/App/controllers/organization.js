@@ -516,26 +516,36 @@ async function toggleConnectionRequest(req, res) {
             });
         }
 
-        req.user.connections.push({
-            with: target._id,
-            direction: "sent",
-            status: "pending",
-            requestedAt: new Date(),
-            respondedAt: null,
-        });
+        const now = new Date();
+
+        if (userConnectionIndex >= 0) {
+            req.user.connections[userConnectionIndex].with = target._id;
+            req.user.connections[userConnectionIndex].direction = "sent";
+            req.user.connections[userConnectionIndex].status = "pending";
+            req.user.connections[userConnectionIndex].requestedAt = now;
+            req.user.connections[userConnectionIndex].respondedAt = null;
+        } else {
+            req.user.connections.push({
+                with: target._id,
+                direction: "sent",
+                status: "pending",
+                requestedAt: now,
+                respondedAt: null,
+            });
+        }
 
         if (targetConnectionIndex >= 0) {
             target.connections[targetConnectionIndex].with = req.user._id;
             target.connections[targetConnectionIndex].direction = "received";
             target.connections[targetConnectionIndex].status = "pending";
-            target.connections[targetConnectionIndex].requestedAt = new Date();
+            target.connections[targetConnectionIndex].requestedAt = now;
             target.connections[targetConnectionIndex].respondedAt = null;
         } else {
             target.connections.push({
                 with: req.user._id,
                 direction: "received",
                 status: "pending",
-                requestedAt: new Date(),
+                requestedAt: now,
                 respondedAt: null,
             });
         }
@@ -557,6 +567,226 @@ async function toggleConnectionRequest(req, res) {
     }
 }
 
+function isProfileOnline(profile) {
+    const availability = profile?.account?.availability;
+
+    if (!availability) return false;
+
+    if (availability.type === "Anytime") {
+        return true;
+    }
+
+    if (availability.type === "Temporary Unavailable") {
+        return false;
+    }
+
+    if (availability.type === "Specific Days") {
+        const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+        return (availability.weekly_schedule || []).some(
+            (entry) => entry.day === today && !entry.not_available
+        );
+    }
+
+    return false;
+}
+
+function serializeConnectionProfile(profile) {
+    if (!profile) return null;
+
+    return {
+        _id: profile._id,
+        name: profile.name || "",
+        company_name: profile.company_name || "",
+        company_type: profile.company_type || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        account: {
+            image: profile.account?.image || "",
+            designation: profile.account?.designation || "",
+            availability: profile.account?.availability || {},
+        },
+    };
+}
+
+function normalizeConnectionEntries(connections = []) {
+    const map = new Map();
+
+    connections.forEach((entry) => {
+        const key = String(entry.with?._id || entry.with);
+        const existing = map.get(key);
+        const currentTime = new Date(entry.respondedAt || entry.requestedAt || 0).getTime();
+        const existingTime = existing
+            ? new Date(existing.respondedAt || existing.requestedAt || 0).getTime()
+            : -1;
+
+        if (!existing || currentTime >= existingTime) {
+            map.set(key, entry);
+        }
+    });
+
+    return [...map.values()];
+}
+
+async function fetchMyConnections(req, res) {
+    try {
+        const user = await OrganizationModel.findById(req.user._id).populate(
+            "connections.with",
+            "name company_name company_type email phone account"
+        );
+
+        if (!user) {
+            return res.send({
+                status: 9,
+                msg: "Profile not found",
+            });
+        }
+
+        const entries = normalizeConnectionEntries(user.connections || []);
+
+        const normalized = entries
+            .map((entry) => {
+                const profile = serializeConnectionProfile(entry.with);
+                if (!profile) return null;
+
+                return {
+                    profile,
+                    status: entry.status,
+                    direction: entry.direction,
+                    requestedAt: entry.requestedAt,
+                    respondedAt: entry.respondedAt,
+                    is_online: isProfileOnline(entry.with),
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => {
+                const left = new Date(b.respondedAt || b.requestedAt || 0).getTime();
+                const right = new Date(a.respondedAt || a.requestedAt || 0).getTime();
+                return left - right;
+            });
+
+        const active = normalized.filter((item) => item.status === "accepted");
+        const pending = normalized.filter((item) => item.status === "pending");
+        const rejected = normalized.filter((item) => item.status === "rejected");
+        const pendingRequests = pending.filter((item) => item.direction === "received");
+        const online = active.filter((item) => item.is_online);
+
+        return res.send({
+            status: 1,
+            msg: "Connections fetched successfully",
+            summary: {
+                active: active.length,
+                pending: pending.length,
+                rejected: rejected.length,
+                pending_requests: pendingRequests.length,
+                online: online.length,
+            },
+            connections: {
+                active,
+                pending,
+                rejected,
+                pending_requests: pendingRequests,
+                online,
+            },
+        });
+    } catch (err) {
+        console.log(err);
+        return res.send({
+            status: 0,
+            msg: "Unable to fetch connections",
+        });
+    }
+}
+
+async function respondConnectionRequest(req, res) {
+    try {
+        const { id } = req.params;
+        const action = String(req.body?.action || "").toLowerCase();
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.send({
+                status: 7,
+                msg: "Invalid profile id",
+            });
+        }
+
+        if (!["accept", "reject"].includes(action)) {
+            return res.send({
+                status: 7,
+                msg: "Invalid response action",
+            });
+        }
+
+        const target = await OrganizationModel.findById(id);
+
+        if (!target) {
+            return res.send({
+                status: 9,
+                msg: "Profile not found",
+            });
+        }
+
+        req.user.connections = req.user.connections || [];
+        target.connections = target.connections || [];
+
+        const userConnectionIndex = req.user.connections.findIndex(
+            (item) => String(item.with) === String(id)
+        );
+        const targetConnectionIndex = target.connections.findIndex(
+            (item) => String(item.with) === String(req.user._id)
+        );
+
+        const userConnection =
+            userConnectionIndex >= 0
+                ? req.user.connections[userConnectionIndex]
+                : null;
+
+        if (!userConnection || userConnection.status !== "pending" || userConnection.direction !== "received") {
+            return res.send({
+                status: 7,
+                msg: "No pending request found",
+            });
+        }
+
+        const newStatus = action === "accept" ? "accepted" : "rejected";
+        const now = new Date();
+
+        req.user.connections[userConnectionIndex].status = newStatus;
+        req.user.connections[userConnectionIndex].respondedAt = now;
+
+        if (targetConnectionIndex >= 0) {
+            target.connections[targetConnectionIndex].status = newStatus;
+            target.connections[targetConnectionIndex].respondedAt = now;
+            target.connections[targetConnectionIndex].direction = "sent";
+        } else {
+            target.connections.push({
+                with: req.user._id,
+                direction: "sent",
+                status: newStatus,
+                requestedAt: now,
+                respondedAt: now,
+            });
+        }
+
+        await req.user.save();
+        await target.save();
+
+        return res.send({
+            status: 1,
+            msg:
+                action === "accept"
+                    ? "Connection accepted successfully"
+                    : "Connection rejected successfully",
+            connection_status: newStatus,
+        });
+    } catch (err) {
+        console.log(err);
+        return res.send({
+            status: 0,
+            msg: "Unable to update connection",
+        });
+    }
+}
+
 export {
     signUp,
     login,
@@ -567,6 +797,8 @@ export {
     updateProfile,
     fetchOrganizationsByType,
     fetchOrganizationById,
+    fetchMyConnections,
+    respondConnectionRequest,
     toggleSaveProfile,
     toggleConnectionRequest,
 }

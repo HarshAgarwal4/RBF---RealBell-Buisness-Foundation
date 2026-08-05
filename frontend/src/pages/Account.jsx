@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, Pencil, Mail } from "lucide-react";
-import { COLORS } from "../components/Sidebar";
+import { COLORS } from "../components/colors";
 import { useStore } from "../zustand/store";
 import Sidebar from "../components/Sidebar";
 import axios from "../services/axios";

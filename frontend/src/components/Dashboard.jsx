@@ -15,7 +15,7 @@ import {
   Underline,
   Link2,
 } from "lucide-react";
-import { COLORS } from "./Sidebar";
+import { COLORS } from "./colors";
 import { useStore } from "../zustand/store";
 
 const chipStyle = {

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../zustand/store";
+import { COLORS } from "./colors";
 import {
   MessageCircle,
   Users,
@@ -24,16 +25,6 @@ import {
   FileText,
   HelpCircle,
 } from "lucide-react";
-
-export const COLORS = {
-  primary: "#8E1B2E",
-  primaryDark: "#6E1524",
-  ink: "#14142B",
-  bg: "#F4F5F7",
-  card: "#FFFFFF",
-  border: "#E7E7EC",
-  muted: "#8A8A97",
-};
 
 /**
  * Nav config.
@@ -62,8 +53,10 @@ const NAV_ITEMS = [
     label: "My Actions",
     icon: Scissors,
     children: [
-      { path: "/actions/pending", label: "Pending" },
-      { path: "/actions/completed", label: "Completed" },
+      { path: "/connections", label: "Connections"},
+      { path: "/meetings", label: "My Meetings" },
+      { path: "/mentorship-hours", label: "Mentor Hours" },
+      { path: "/milestones", label: "MileStones" },
     ],
   },
   { path: "/programs", label: "Programs", icon: HandCoins },
@@ -112,20 +105,13 @@ export default function Sidebar() {
   // Tracks which expandable items are open, e.g. { connect: true }
   const [openKeys, setOpenKeys] = useState({});
 
-  // Auto-expand a section if the current route is inside it (e.g. deep link
-  // or page refresh on /connect/investors should open "Connect").
-  useEffect(() => {
-    const toOpen = {};
-    NAV_ITEMS.forEach((item) => {
-      if (item.children && isChildActive(item, location.pathname)) {
-        toOpen[item.key] = true;
-      }
-    });
-    if (Object.keys(toOpen).length) {
-      setOpenKeys((prev) => ({ ...prev, ...toOpen }));
+  // Auto-expand a section when the current route lives inside it.
+  const routeOpenKeys = {};
+  NAV_ITEMS.forEach((item) => {
+    if (item.children && isChildActive(item, location.pathname)) {
+      routeOpenKeys[item.key] = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  });
 
   const toggleKey = (key) => {
     setOpenKeys((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -141,7 +127,7 @@ export default function Sidebar() {
 
     // Expandable parent item
     if (item.children) {
-      const open = !!openKeys[item.key];
+      const open = !!openKeys[item.key] || !!routeOpenKeys[item.key];
       const parentActive = isChildActive(item, location.pathname);
 
       return (
@@ -212,19 +198,9 @@ export default function Sidebar() {
                       borderLeft: `2px solid ${childActive ? COLORS.primary : COLORS.border}`,
                     }}
                   >
-                    {ChildIcon ? (
+                    {ChildIcon && (
                       <ChildIcon size={14} color={childActive ? "#fff" : COLORS.muted} style={{ flexShrink: 0 }} />
-                    ) : (
-                      <span
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: "50%",
-                          background: childActive ? "#fff" : COLORS.muted,
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
+                    ) }
                     <span style={{ flex: 1 }}>{child.label}</span>
                   </button>
                 );
@@ -392,7 +368,7 @@ export default function Sidebar() {
           <button style={pillBtnStyle}>
             <MessageCircle size={15} /> Messages
           </button>
-          <button style={pillBtnStyle}>
+          <button onClick={() => navigate('/connections')} style={pillBtnStyle}>
             <Users size={15} /> Connections
           </button>
         </div>
