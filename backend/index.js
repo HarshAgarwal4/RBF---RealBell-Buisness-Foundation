@@ -7,6 +7,8 @@ import { isLoggedIn } from './middlewares/Auth.js';
 import { organizationRoutes } from './App/routes/organization.js';
 import { connectRoutes } from './App/routes/connect.js';
 import { communityRoutes } from './App/routes/community.js';
+import meetingRouter from './App/routes/meeting.js';
+import milestoneRouter from './App/routes/milestone.js';
 
 const app = express();
 
@@ -24,6 +26,8 @@ app.get('/', (req, res) => {
 app.use('/' , organizationRoutes)
 app.use('/connect', connectRoutes)
 app.use('/community', communityRoutes)
+app.use('/meetings' , meetingRouter)
+app.use('/milestones' , milestoneRouter)
 
 mongoose.connect(process.env.DB_URL, {
     dbName: "RBF"

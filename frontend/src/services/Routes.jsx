@@ -12,6 +12,8 @@ import Connect from '../pages/app/connect.jsx';
 import ViewProfile from '../pages/app/viewProfile.jsx';
 import ConnectionsPage from '../pages/app/connections.jsx';
 import CommunityWall from '../pages/app/community.jsx';
+import Meetings from '../pages/app/meetings.jsx';
+import Milestones from '../pages/app/MileStone.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -57,6 +59,14 @@ const Routes = createBrowserRouter([
     {
         path: '/community',
         element: <ProtectedRoute> <CommunityWall /> </ProtectedRoute>
+    },
+    {
+        path : '/meetings',
+        element: <ProtectedRoute> <Meetings /> </ProtectedRoute>
+    },
+    {
+        path: '/milestones',
+        element: <ProtectedRoute> <Milestones /> </ProtectedRoute>
     },
     {
         path: '*',
