@@ -1,4 +1,4 @@
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useStore } from '../../../zustand/store';
 
 const Tag = ({ children }) => (
@@ -48,30 +48,33 @@ const TeamMember = ({ initial, name, role, linkedinUrl }) => (
 
 export default function StartupProfile() {
   const { user } = useStore();
-  const [profile , setProfile] = useState({})
+  const [profile, setProfile] = useState({})
   const [pitchDeckFullScreen, setPitchDeckFullScreen] = useState(false);
 
   useEffect(() => {
-    console.log('user = ', typeof(user.profile.profile))
-    setProfile(JSON.parse(user?.profile?.profile) || {});
-  }, [user])
-  
-  useEffect(() => {
-    console.log('profile = ', profile)
-  },[])
+    try {
+      const profile = user?.profile?.profile;
+
+      setProfile(profile ? JSON.parse(profile) : {});
+    } catch (err) {
+      console.error("Invalid profile JSON:", err);
+      setProfile({});
+    }
+  }, [user]);
+
   // Helper to format location
   const location = [profile?.city, profile?.state, profile?.country]
     .filter(Boolean)
-    .join(", ") || "â€”";
+    .join(", ") || '';
 
   // Process social links dynamically
   const socialLinks = profile?.socialLinks
     ? Object.entries(profile.socialLinks)
-        .filter(([_, url]) => Boolean(url))
-        .map(([key, url]) => ({
-          label: key.charAt(0).toUpperCase() + key.slice(1),
-          url,
-        }))
+      .filter(([_, url]) => Boolean(url))
+      .map(([key, url]) => ({
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        url,
+      }))
     : [];
 
   if (!user) {
@@ -100,8 +103,8 @@ export default function StartupProfile() {
                 {profile?.companyName || user?.company_name || 'No Company Name'}
               </h1>
               <div className="flex items-center gap-6 mt-3 text-gray-600 text-sm font-medium">
-                <span>ðŸ“ {location}</span>
-                <span>ðŸ¢ Estd. in {profile?.yearOfIncorporation || "â€”"}</span>
+                <span>{location}</span>
+                <span>Estd. in {profile?.yearOfIncorporation}</span>
                 {profile?.isIncorporated && (
                   <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Incorporated</span>
                 )}
@@ -113,7 +116,7 @@ export default function StartupProfile() {
             href="/profile/edit"
             className="flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white font-bold px-5 py-3 rounded-lg text-sm"
           >
-            âœŽ Edit Profile
+            Edit Profile
           </a>
         </div>
 
@@ -145,7 +148,7 @@ export default function StartupProfile() {
                 <Field label="Product Stage" value={profile?.productStage} />
                 <Field label="Company Size" value={profile?.companySize} />
                 <Field label="TRL Level" value={profile?.technologyReadinessLevel} />
-                
+
                 <p className="text-sm text-gray-500 mb-2">Business Models</p>
                 <div className="mb-5">
                   {profile?.businessModels?.length
@@ -176,16 +179,16 @@ export default function StartupProfile() {
                 <div className="flex flex-wrap gap-4">
                   {socialLinks.length
                     ? socialLinks.map((s) => (
-                        <a
-                          key={s.label}
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-red-700 font-medium hover:underline flex items-center gap-1"
-                        >
-                          â€” {s.label}
-                        </a>
-                      ))
+                      <a
+                        key={s.label}
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-red-700 font-medium hover:underline flex items-center gap-1"
+                      >
+                        â€” {s.label}
+                      </a>
+                    ))
                     : "â€”"}
                 </div>
               </div>
