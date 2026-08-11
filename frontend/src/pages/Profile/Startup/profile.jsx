@@ -212,9 +212,9 @@ export default function StartupProfile() {
                   </SectionHeader>
                   {profile?.pitchDeckUrl ? (
                     <iframe
-                      src={profile.pitchDeckUrl}
+                      src={profile.pitchDeckUrl}c
                       title="Pitch Deck Preview"
-                      className="w-full h-[400px] rounded-lg border border-gray-200"
+                      className="w-full h-100 rounded-lg border border-gray-200"
                     />
                   ) : (
                     <p className="text-gray-400 text-sm italic">No pitch deck available.</p>

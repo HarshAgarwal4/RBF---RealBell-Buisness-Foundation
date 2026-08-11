@@ -9,20 +9,54 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadFile = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
+const DEFAULT_IMAGE_FORMATS = ["jpg", "jpeg", "png", "webp"];
 
-async function uploadFileToCloud(fileBuffer, originalName) {
+const createUploadMiddleware = ({
+  maxFileSize = 5 * 1024 * 1024,
+  allowedMimeTypes,
+} = {}) => {
+  const config = {
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxFileSize },
+  };
+
+  if (Array.isArray(allowedMimeTypes) && allowedMimeTypes.length > 0) {
+    config.fileFilter = (req, file, cb) => {
+      if (allowedMimeTypes.includes(file.mimetype)) {
+        return cb(null, true);
+      }
+
+      return cb(
+        new Error(`Unsupported file type: ${file.mimetype}`)
+      );
+    };
+  }
+
+  return multer(config);
+};
+
+const uploadFile = createUploadMiddleware();
+
+async function uploadFileToCloud(fileBuffer, originalName, options = {}) {
+  const {
+    folder = "RBF",
+    resourceType = "auto",
+    allowedFormats = DEFAULT_IMAGE_FORMATS,
+  } = options;
+
+  const uploadOptions = {
+    folder,
+    resource_type: resourceType,
+    public_id: `${Date.now()}-${originalName}`,
+  };
+
+  if (Array.isArray(allowedFormats) && allowedFormats.length > 0) {
+    uploadOptions.allowed_formats = allowedFormats;
+  }
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.v2.uploader.upload_stream(
-      {
-        folder: "RBF",
-        resource_type: 'auto',
-        public_id: `${Date.now()}-${originalName}`,
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           console.error("Cloudinary upload failed:", error);
@@ -38,7 +72,14 @@ async function uploadFileToCloud(fileBuffer, originalName) {
 
 async function deleteImageByPublicId(publicId) {
   try {
-    const result = await cloudinary.v2.uploader.destroy(publicId);
+    const tryDelete = async (resourceType) =>
+      cloudinary.v2.uploader.destroy(publicId, { resource_type: resourceType });
+
+    let result = await tryDelete("image");
+    if (result?.result === "not found") {
+      result = await tryDelete("raw");
+    }
+
     console.log("Deleted successfully:", result);
     return result;
   } catch (error) {
@@ -55,7 +96,10 @@ async function deleteImageByUrl(imageUrl) {
         if (!match || !match[1]) throw new Error("Invalid Cloudinary URL format");
 
         let publicId = match[1];  
-        let result = await cloudinary.uploader.destroy(publicId);
+        let result = await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+        if (result?.result === "not found") {
+            result = await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+        }
 
         return result;
     } catch (error) {
@@ -64,4 +108,4 @@ async function deleteImageByUrl(imageUrl) {
     }
 }
 
-export { uploadFile, uploadFileToCloud, deleteImageByPublicId , deleteImageByUrl };
+export { createUploadMiddleware, uploadFile, uploadFileToCloud, deleteImageByPublicId , deleteImageByUrl };

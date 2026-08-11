@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 import { setUser } from "../../services/Auth.js";
 import { sendOtp, verifyOtp } from "../../services/otp.js";
 import OrganizationModel from "../models/organization.js";
-import { uploadFileToCloud ,deleteImageByUrl} from "../../services/upload.js";
+import { uploadFileToCloud, deleteImageByUrl } from "../../services/upload.js";
+import { isUserOnline } from "../../services/chat.js";
 
 function normalizeCompanyType(type = "") {
     const value = String(type).toLowerCase().trim();
@@ -218,7 +219,7 @@ async function updateAccount(req, res) {
             req.user.account.designation = account.designation;
         }
 
-        if(req.file){
+        if (req.file) {
             if (account.image !== undefined && account.image !== null && account.image !== "") {
                 // Delete the old image from Cloudinary
                 await deleteImageByUrl(account.image);
@@ -261,24 +262,24 @@ async function updateAccount(req, res) {
 
 async function updateProfile(req, res) {
     console.log(req.body)
-  try {
-    Object.assign(req.user.profile, req.body);
+    try {
+        Object.assign(req.user.profile, req.body);
 
-    req.user.markModified("profile"); // Important for Mixed
+        req.user.markModified("profile"); // Important for Mixed
 
-    await req.user.save();
+        await req.user.save();
 
-    return res.send({
-      status: 1,
-      msg: "Profile updated successfully",
-    });
-  } catch (err) {
-    console.error(err);
-    return res.send({
-      status: 0,
-      msg: "Internal server error",
-    });
-  }
+        return res.send({
+            status: 1,
+            msg: "Profile updated successfully",
+        });
+    } catch (err) {
+        console.error(err);
+        return res.send({
+            status: 0,
+            msg: "Internal server error",
+        });
+    }
 }
 
 async function logout(req, res) {
@@ -567,27 +568,8 @@ async function toggleConnectionRequest(req, res) {
     }
 }
 
-function isProfileOnline(profile) {
-    const availability = profile?.account?.availability;
-
-    if (!availability) return false;
-
-    if (availability.type === "Anytime") {
-        return true;
-    }
-
-    if (availability.type === "Temporary Unavailable") {
-        return false;
-    }
-
-    if (availability.type === "Specific Days") {
-        const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-        return (availability.weekly_schedule || []).some(
-            (entry) => entry.day === today && !entry.not_available
-        );
-    }
-
-    return false;
+async function isProfileOnline(profile) {
+    return await isUserOnline(profile?._id);
 }
 
 function serializeConnectionProfile(profile) {
@@ -643,24 +625,34 @@ async function fetchMyConnections(req, res) {
 
         const entries = normalizeConnectionEntries(user.connections || []);
 
-        const normalized = entries
-            .map((entry) => {
-                const profile = serializeConnectionProfile(entry.with);
-                if (!profile) return null;
+        const normalized = (
+            await Promise.all(
+                entries.map(async (entry) => {
+                    const profile = serializeConnectionProfile(entry.with);
 
-                return {
-                    profile,
-                    status: entry.status,
-                    direction: entry.direction,
-                    requestedAt: entry.requestedAt,
-                    respondedAt: entry.respondedAt,
-                    is_online: isProfileOnline(entry.with),
-                };
-            })
+                    if (!profile) return null;
+
+                    return {
+                        profile,
+                        status: entry.status,
+                        direction: entry.direction,
+                        requestedAt: entry.requestedAt,
+                        respondedAt: entry.respondedAt,
+                        is_online: await isProfileOnline(entry.with),
+                    };
+                })
+            )
+        )
             .filter(Boolean)
             .sort((a, b) => {
-                const left = new Date(b.respondedAt || b.requestedAt || 0).getTime();
-                const right = new Date(a.respondedAt || a.requestedAt || 0).getTime();
+                const left = new Date(
+                    b.respondedAt || b.requestedAt || 0
+                ).getTime();
+
+                const right = new Date(
+                    a.respondedAt || a.requestedAt || 0
+                ).getTime();
+
                 return left - right;
             });
 

@@ -1,23 +1,33 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   CalendarDays,
+  ArrowLeft,
   CheckCircle2,
   Clock3,
   Mail,
   MessageCircle,
   MoreVertical,
+  Paperclip,
   Phone,
   Search,
   ShieldAlert,
+  Smile,
+  Mic,
+  Square,
   UserRound,
   Users,
   XCircle,
+  Send,
+  FileText,
 } from "lucide-react";
 import Sidebar from "../../components/Sidebar";
 import axios from "../../services/axios";
 import { toast } from "react-toastify";
+import { useStore } from "../../zustand/store";
+import { ScheduleMeetingModal } from "./meetings.jsx";
+import { io } from "socket.io-client";
 
 function timeAgo(value) {
   if (!value) return "just now";
@@ -52,6 +62,8 @@ function connectionName(connection) {
   return (
     connection?.profile?.company_name ||
     connection?.profile?.name ||
+    connection?.company_name ||
+    connection?.name ||
     "Anonymous"
   );
 }
@@ -59,7 +71,8 @@ function connectionName(connection) {
 function connectionMeta(connection) {
   return (
     connection?.profile?.account?.designation ||
-    formatTypeLabel(connection?.profile?.company_type) ||
+    connection?.account?.designation ||
+    formatTypeLabel(connection?.profile?.company_type || connection?.company_type) ||
     "Community member"
   );
 }
@@ -75,12 +88,59 @@ function initialsFor(connection) {
 }
 
 function avatarFor(connection) {
-  const image = connection?.profile?.account?.image;
+  const image = connection?.profile?.account?.image || connection?.account?.image;
   if (image) return image;
 
   return `https://placehold.co/160x160/0F3D4A/FFFFFF?text=${encodeURIComponent(
     initialsFor(connection)
   )}`;
+}
+
+function formatChatTime(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatChatDay(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+  return date.toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function groupMessagesByDay(messages = []) {
+  const groups = [];
+  let currentLabel = "";
+
+  messages
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .forEach((message) => {
+      const label = formatChatDay(message.createdAt);
+      if (!groups.length || label !== currentLabel) {
+        currentLabel = label;
+        groups.push({ label, messages: [message] });
+        return;
+      }
+
+      groups[groups.length - 1].messages.push(message);
+    });
+
+  return groups;
 }
 
 function TabButton({ active, children, onClick }) {
@@ -343,8 +403,747 @@ function SummaryCard({ title, emptyTitle, emptyDescription, items, onItemClick, 
   );
 }
 
+function ChatWorkspace({
+  currentUserId,
+  currentUserName,
+  chatConnection,
+  onClose,
+  onSchedule,
+}) {
+  const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL || window.location.origin;
+  const [threads, setThreads] = useState([]);
+  const [threadsLoading, setThreadsLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [activePeerId, setActivePeerId] = useState(chatConnection?.profile?._id || chatConnection?._id || "");
+  const [search, setSearch] = useState("");
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+
+  const socketRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const recordingSecondsRef = useRef(0);
+  const activePeerRef = useRef(activePeerId);
+  const threadsRef = useRef([]);
+  const messagesEndRef = useRef(null);
+
+  const emojiList = ["😀", "😁", "😂", "🙂", "😍", "🙏", "👏", "🔥", "✅", "🎉", "🤝", "💬"];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    activePeerRef.current = activePeerId;
+  }, [activePeerId]);
+
+  useEffect(() => {
+    threadsRef.current = threads;
+  }, [threads]);
+
+  const activeThread = useMemo(
+    () => threads.find((thread) => String(thread.profile?._id) === String(activePeerId)) || null,
+    [threads, activePeerId]
+  );
+
+  const filteredThreads = useMemo(() => {
+    const value = search.trim().toLowerCase();
+    if (!value) return threads;
+
+    return threads.filter((thread) => {
+      const haystack = [
+        connectionName(thread),
+        connectionMeta(thread),
+        thread.profile?.company_name,
+        thread.profile?.name,
+        thread.profile?.email,
+        thread.profile?.phone,
+        thread.lastMessage?.text,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(value);
+    });
+  }, [threads, search]);
+
+  const updateThreadPreview = (message) => {
+    setThreads((prev) =>
+      prev
+        .map((thread) => {
+          const otherId = String(thread.profile?._id);
+          if (otherId !== String(message.senderId) && otherId !== String(message.recipientId)) {
+            return thread;
+          }
+
+          const isActive = String(activePeerRef.current) === otherId;
+          const unreadCount =
+            isActive || String(message.senderId) === String(currentUserId)
+              ? 0
+              : (thread.unreadCount || 0) + 1;
+
+          return {
+            ...thread,
+            lastMessage: message,
+            unreadCount,
+            is_online:
+              String(message.senderId) === String(currentUserId)
+                ? thread.is_online
+                : thread.is_online,
+          };
+        })
+        .sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0))
+    );
+  };
+
+  const loadThreads = async (preferredPeerId = null) => {
+    setThreadsLoading(true);
+    setError("");
+    try {
+      const res = await axios.get("/chat/threads");
+      const list = res.data?.threads || [];
+      setThreads(list);
+
+      const preferredId =
+        preferredPeerId ||
+        chatConnection?.profile?._id ||
+        chatConnection?._id ||
+        list[0]?.profile?._id ||
+        "";
+
+      if (preferredId) {
+        setActivePeerId(String(preferredId));
+      }
+    } catch (err) {
+      setError(err?.response?.data?.msg || "Unable to load chats");
+    } finally {
+      setThreadsLoading(false);
+    }
+  };
+
+  const loadMessages = async (peerId) => {
+    if (!peerId) return;
+
+    setMessagesLoading(true);
+    setError("");
+    try {
+      const res = await axios.get(`/chat/threads/${peerId}/messages?limit=100`);
+      const list = [...(res.data?.messages || [])].sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setMessages(list);
+      setThreads((prev) =>
+        prev.map((thread) =>
+          String(thread.profile?._id) === String(peerId)
+            ? {
+                ...thread,
+                is_online: res.data?.is_online ?? thread.is_online,
+                unreadCount: 0,
+              }
+            : thread
+        )
+      );
+
+      const lastMessageId = list[list.length - 1]?.id || null;
+      await axios.post(`/chat/threads/${peerId}/read`, {
+        messageId: lastMessageId,
+      });
+    } catch (err) {
+      setError(err?.response?.data?.msg || "Unable to load messages");
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadThreads(chatConnection?.profile?._id || chatConnection?._id || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatConnection?.profile?._id, chatConnection?._id]);
+
+  useEffect(() => {
+    if (!activePeerId) return;
+    loadMessages(activePeerId);
+    socketRef.current?.emit("chat:thread:join", { otherId: activePeerId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePeerId]);
+
+  useEffect(() => {
+    const socket = io(backendUrl, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+    });
+
+    socketRef.current = socket;
+
+    socket.on("chat:presence:update", ({ userId, online }) => {
+      setThreads((prev) =>
+        prev.map((thread) =>
+          String(thread.profile?._id) === String(userId)
+            ? { ...thread, is_online: online }
+            : thread
+        )
+      );
+    });
+
+    socket.on("chat:message:new", (message) => {
+      updateThreadPreview(message);
+      if (String(activePeerRef.current) === String(message.senderId) || String(activePeerRef.current) === String(message.recipientId)) {
+        setMessages((prev) =>
+          prev.some((item) => String(item.id) === String(message.id))
+            ? prev.map((item) => (String(item.id) === String(message.id) ? message : item))
+            : [...prev, message].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        );
+      }
+    });
+
+    socket.on("chat:message:delivered", (message) => {
+      setThreads((prev) =>
+        prev.map((thread) =>
+          String(thread.profile?._id) === String(message.senderId) ||
+          String(thread.profile?._id) === String(message.recipientId)
+            ? {
+                ...thread,
+                lastMessage:
+                  String(thread.lastMessage?.id) === String(message.id)
+                    ? { ...thread.lastMessage, deliveredAt: message.deliveredAt }
+                    : thread.lastMessage,
+              }
+            : thread
+        )
+      );
+
+      setMessages((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(message.id)
+            ? { ...item, deliveredAt: message.deliveredAt, status: item.status === "read" ? "read" : "delivered" }
+            : item
+        )
+      );
+    });
+
+    socket.on("chat:ready", ({ deliveredCount }) => {
+      if (deliveredCount > 0 && activePeerRef.current) {
+        loadThreads(activePeerRef.current);
+        loadMessages(activePeerRef.current);
+      }
+    });
+
+    socket.on("chat:message:read", ({ threadId, readerId, readAt }) => {
+      const active = threadsRef.current.find(
+        (thread) => String(thread.profile?._id) === String(activePeerRef.current)
+      );
+
+      if (!active || String(active.threadId) !== String(threadId)) return;
+
+      setMessages((prev) =>
+        prev.map((item) => {
+          if (String(item.senderId) !== String(currentUserId)) return item;
+          if (!item.createdAt || new Date(item.createdAt).getTime() > new Date(readAt).getTime()) {
+            return item;
+          }
+          return { ...item, status: "read", readAt };
+        })
+      );
+
+      if (String(readerId) !== String(currentUserId)) {
+        setThreads((prev) =>
+          prev.map((thread) =>
+            String(thread.threadId) === String(threadId)
+              ? { ...thread, unreadCount: 0 }
+              : thread
+          )
+        );
+      }
+    });
+
+    socket.on("connect_error", (err) => {
+      setError(err?.message || "Chat connection failed");
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [backendUrl, currentUserId]);
+
+  useEffect(() => {
+    if (chatConnection?.profile?._id && String(chatConnection.profile._id) !== String(activePeerId)) {
+      setActivePeerId(String(chatConnection.profile._id));
+    }
+  }, [activePeerId, chatConnection]);
+
+  const activePeerProfile =
+    activeThread?.profile || chatConnection?.profile || chatConnection || null;
+  const scheduleTarget =
+    activeThread || chatConnection || (activePeerProfile ? { profile: activePeerProfile } : null);
+
+  const openPeer = async (peerId) => {
+    if (!peerId) return;
+    setActivePeerId(String(peerId));
+    setEmojiOpen(false);
+    socketRef.current?.emit("chat:thread:join", { otherId: peerId });
+  };
+
+  const sendTextMessage = async (event) => {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text || !activePeerId || sending) return;
+
+    setSending(true);
+    setError("");
+    try {
+      const res = await axios.post("/chat/messages/text", {
+        otherId: activePeerId,
+        text,
+      });
+
+      if (res.data?.status !== 1) {
+        throw new Error(res.data?.msg || "Unable to send message");
+      }
+
+      const savedMessage = res.data?.message;
+      if (savedMessage) {
+        setMessages((prev) =>
+          prev.some((item) => String(item.id) === String(savedMessage.id))
+            ? prev.map((item) => (String(item.id) === String(savedMessage.id) ? savedMessage : item))
+            : [...prev, savedMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        );
+      }
+
+      setDraft("");
+      setEmojiOpen(false);
+    } catch (err) {
+      setError(err?.message || err?.response?.data?.msg || "Unable to send message");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const sendAttachment = async (file, kind = "file", duration = null) => {
+    if (!file || !activePeerId) return;
+
+    setSending(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("otherId", activePeerId);
+      formData.append("file", file);
+      formData.append("kind", kind);
+      formData.append("text", draft.trim());
+      if (duration !== null && duration !== undefined) {
+        formData.append("duration", String(duration));
+      }
+
+      const res = await axios.post("/chat/messages/attachment", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res.data?.status !== 1) {
+        throw new Error(res.data?.msg || "Unable to send attachment");
+      }
+
+      const savedMessage = res.data?.message;
+      if (savedMessage) {
+        setMessages((prev) =>
+          prev.some((item) => String(item.id) === String(savedMessage.id))
+            ? prev.map((item) => (String(item.id) === String(savedMessage.id) ? savedMessage : item))
+            : [...prev, savedMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        );
+      }
+
+      setDraft("");
+      setEmojiOpen(false);
+    } catch (err) {
+      setError(err?.message || err?.response?.data?.msg || "Unable to send attachment");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const emojiButton = (emoji) => (
+    <button
+      key={emoji}
+      type="button"
+      onClick={() => setDraft((prev) => `${prev}${emoji}`)}
+      className="rounded-lg px-2 py-1 text-lg transition hover:bg-[#F1F4FB]"
+    >
+      {emoji}
+    </button>
+  );
+
+  const startRecording = async () => {
+    if (recording) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+      setRecording(true);
+      setRecordingSeconds(0);
+      recordingSecondsRef.current = 0;
+
+      timerRef.current = window.setInterval(() => {
+        recordingSecondsRef.current += 1;
+        setRecordingSeconds(recordingSecondsRef.current);
+      }, 1000);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) chunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: blob.type });
+        const duration = Math.max(1, recordingSecondsRef.current);
+        await sendAttachment(file, "voice", duration);
+        setRecording(false);
+        setRecordingSeconds(0);
+        recordingSecondsRef.current = 0;
+      };
+
+      recorder.start();
+    } catch (err) {
+      setError(err?.message || "Unable to access microphone");
+      setRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recorderRef.current && recording) {
+      recorderRef.current.stop();
+    }
+  };
+
+  const onFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    await sendAttachment(file, file.type.startsWith("audio/") ? "voice" : "file");
+  };
+
+  const renderAttachment = (message) => {
+    const attachment = message.attachment;
+    if (!attachment) return null;
+
+    const isImage = attachment.mimeType?.startsWith("image/");
+    const isAudio = attachment.mimeType?.startsWith("audio/") || message.kind === "voice";
+
+    if (isImage) {
+      return (
+        <a href={attachment.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl">
+          <img src={attachment.url} alt={attachment.name || "attachment"} className="max-h-64 w-full rounded-2xl object-cover" />
+        </a>
+      );
+    }
+
+    if (isAudio) {
+      return (
+        <audio controls className="w-full">
+          <source src={attachment.url} type={attachment.mimeType || "audio/webm"} />
+        </audio>
+      );
+    }
+
+    return (
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-2 rounded-2xl border border-[#DDE4F0] bg-white px-4 py-3 text-sm font-medium text-[#172033] transition hover:bg-[#F8FAFD]"
+      >
+        <FileText size={16} />
+        {attachment.name || "Open file"}
+      </a>
+    );
+  };
+
+  const formatBubbleStatus = (message) => {
+    if (String(message.senderId) !== String(currentUserId)) return null;
+    const status = message.status || (message.readAt ? "read" : message.deliveredAt ? "delivered" : "sent");
+    if (status === "read") return "Read";
+    if (status === "delivered") return "Delivered";
+    return "Sent";
+  };
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 h-[calc(100vh-100px)] max-h-[900px]">
+      <div className="grid h-full grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 overflow-hidden min-h-0">
+        {/* Sidebar */}
+        <aside className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[#E7ECF5] bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center justify-between gap-3 shrink-0">
+            <div>
+              <h2 className="text-[28px] font-bold tracking-tight text-[#172033]">Chats</h2>
+              <p className="mt-1 text-sm text-[#7A849A]">Accepted connections only.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 rounded-2xl border border-[#E6EBF4] px-3 py-2 text-sm font-medium text-[#28324B] transition hover:bg-[#F8FAFD]"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          </div>
+
+          <div className="relative mt-5 shrink-0">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC]"
+            />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search chats"
+              className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] bg-[#F8FAFE] pl-11 pr-4 text-[15px] text-[#1A2540] outline-none placeholder:text-[#A4ADC1] focus:ring-2 focus:ring-[#8E1B2E]/10"
+            />
+          </div>
+
+          <div className="mt-5 flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
+            {threadsLoading ? (
+              <div className="rounded-2xl border border-dashed border-[#E4E9F2] px-4 py-8 text-center text-sm text-[#8E97AD]">
+                Loading chats...
+              </div>
+            ) : filteredThreads.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#E4E9F2] px-4 py-8 text-center text-sm text-[#8E97AD]">
+                No chats found.
+              </div>
+            ) : (
+              filteredThreads.map((thread) => (
+                <button
+                  key={thread.threadId || thread.profile?._id}
+                  type="button"
+                  onClick={() => openPeer(thread.profile?._id)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                    String(activePeerId) === String(thread.profile?._id)
+                      ? "border-[#B52B2B] bg-[#FFF7F7]"
+                      : "border-[#EEF1F6] bg-white hover:bg-[#FBFCFF]"
+                  }`}
+                >
+                  <img
+                    src={avatarFor(thread)}
+                    alt={connectionName(thread)}
+                    className="h-12 w-12 rounded-2xl object-cover shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate text-[15px] font-semibold text-[#18213A]">
+                        {connectionName(thread)}
+                      </div>
+                      {thread.unreadCount ? (
+                        <span className="rounded-full bg-[#B52B2B] px-2 py-0.5 text-xs font-semibold text-white shrink-0">
+                          {thread.unreadCount}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="truncate text-sm text-[#8390AA]">
+                      {thread.lastMessage?.text
+                        ? thread.lastMessage.text
+                        : thread.lastMessage?.kind === "file"
+                          ? "File attachment"
+                          : "Start a chat"}
+                    </div>
+                  </div>
+                  {thread.is_online ? (
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#34C759] shrink-0" />
+                  ) : (
+                    <span className="text-xs font-semibold text-[#9AA2B8] shrink-0">Away</span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </aside>
+
+        {/* Main Workspace */}
+        <section className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[#E7ECF5] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.05)] min-h-0">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 border-b border-[#EEF2F8] px-6 py-4 shrink-0">
+            <div className="flex min-w-0 items-center gap-4">
+              <img
+                src={avatarFor(activePeerProfile || chatConnection || {})}
+                alt={connectionName(activePeerProfile || chatConnection || {})}
+                className="h-12 w-12 rounded-full object-cover shrink-0"
+              />
+              <div className="min-w-0">
+                <h3 className="truncate text-[20px] font-bold tracking-tight text-[#172033]">
+                  {connectionName(activePeerProfile || chatConnection || {})}
+                </h3>
+                <p className="truncate text-xs text-[#7A849A]">
+                  {connectionMeta(activePeerProfile || chatConnection || {})}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              {activeThread?.is_online ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#ECF9F0] px-3 py-1.5 text-xs font-semibold text-[#179B4B]">
+                  <span className="h-2 w-2 rounded-full bg-[#34C759]" />
+                  Online
+                </span>
+              ) : (
+                <span className="rounded-full bg-[#F7F8FB] px-3 py-1.5 text-xs font-semibold text-[#8891A7]">
+                  Away
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onSchedule(scheduleTarget)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#B52B2B] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#972222]"
+              >
+                <CalendarDays size={16} />
+                <span className="hidden sm:inline">Schedule meeting</span>
+              </button>
+            </div>
+          </div>
+
+          {error ? (
+            <div className="border-b border-[#F2D6D6] bg-[#FFF6F6] px-6 py-2 text-sm text-[#B23A3A] shrink-0">
+              {error}
+            </div>
+          ) : null}
+
+          {/* Messages Scroll Area */}
+          <div className="flex-1 overflow-y-auto bg-[#FBFCFF] px-6 py-6 space-y-4 min-h-0">
+            {messagesLoading ? (
+              <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-[#D9E0EE] bg-white px-6 py-16 text-center text-[#8E97AD]">
+                Loading conversation...
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-[#D9E0EE] bg-white px-6 py-16 text-center text-[#8E97AD]">
+                Start the conversation from here.
+              </div>
+            ) : (
+              groupMessagesByDay(messages).map((group) => (
+                <div key={group.label} className="space-y-4">
+                  <div className="flex items-center justify-center">
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#8E97AD] shadow-sm">
+                      {group.label}
+                    </span>
+                  </div>
+                  {group.messages.map((message) => {
+                    const isMine = String(message.senderId) === String(currentUserId);
+                    return (
+                      <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[75%] sm:max-w-[65%] min-w-0 ${isMine ? "text-right" : "text-left"}`}>
+                          <div className={`mb-1 text-xs font-semibold text-[#172033] ${isMine ? "pr-2" : "pl-2"}`}>
+                            {isMine ? currentUserName || "You" : connectionName(activePeerProfile || chatConnection || {})}
+                          </div>
+                          <div
+                            className={`space-y-2 rounded-3xl px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed shadow-sm break-words overflow-hidden ${
+                              isMine
+                                ? "bg-[#B52B2B] text-white"
+                                : "bg-[#EEF4FB] text-[#172033]"
+                            }`}
+                          >
+                            {message.text ? <p className="whitespace-pre-wrap">{message.text}</p> : null}
+                            {renderAttachment(message)}
+                          </div>
+                          <div className={`mt-1 text-[11px] text-[#8E97AD] ${isMine ? "pr-2" : "pl-2"}`}>
+                            {formatChatTime(message.createdAt)}
+                            {formatBubbleStatus(message) ? ` • ${formatBubbleStatus(message)}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Form Input Area */}
+          <form onSubmit={sendTextMessage} className="border-t border-[#EEF2F8] bg-white px-6 py-4 shrink-0">
+            <div className="relative flex items-center gap-2 sm:gap-3 rounded-full border border-[#E0E6F0] bg-[#FBFCFF] px-3 sm:px-4 py-2 sm:py-2.5">
+              {emojiOpen ? (
+                <div className="absolute bottom-full left-4 mb-3 rounded-2xl border border-[#E6EBF4] bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+                  <div className="grid grid-cols-6 gap-2">{emojiList.map(emojiButton)}</div>
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => setEmojiOpen((prev) => !prev)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#667089] transition hover:bg-[#EEF2F8] shrink-0"
+                aria-label="Add emoji"
+              >
+                <Smile size={20} />
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={onFileChange}
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#667089] transition hover:bg-[#EEF2F8] shrink-0"
+                aria-label="Attach file"
+              >
+                <Paperclip size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={recording ? stopRecording : startRecording}
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition shrink-0 ${
+                  recording ? "bg-[#B52B2B] text-white" : "text-[#667089] hover:bg-[#EEF2F8]"
+                }`}
+                aria-label="Voice note"
+              >
+                {recording ? <Square size={16} /> : <Mic size={18} />}
+              </button>
+
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={recording ? `Recording ${recordingSeconds}s...` : "Type a message..."}
+                className="min-w-0 flex-1 bg-transparent text-[15px] text-[#172033] outline-none placeholder:text-[#9AA3B8]"
+                disabled={recording}
+              />
+
+              <button
+                type="submit"
+                disabled={sending || recording || (!draft.trim() && !recording)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#B52B2B] text-white transition hover:bg-[#972222] disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                aria-label="Send message"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 export default function ConnectionsPage() {
   const navigate = useNavigate();
+  const { user } = useStore();
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -364,6 +1163,8 @@ export default function ConnectionsPage() {
     online: [],
   });
   const [busyKey, setBusyKey] = useState("");
+  const [chatConnection, setChatConnection] = useState(null);
+  const [scheduleConnection, setScheduleConnection] = useState(null);
 
   const loadConnections = async () => {
     setLoading(true);
@@ -443,15 +1244,15 @@ export default function ConnectionsPage() {
   };
 
   const scheduleCall = (connection) => {
-    const email = connection?.profile?.email;
-    if (!email) {
-      toast.error("No email found for this connection");
-      return;
-    }
+    setScheduleConnection(connection);
+  };
 
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(
-      "Schedule a call"
-    )}`;
+  const openChat = (connection) => {
+    setChatConnection(connection);
+  };
+
+  const closeChat = () => {
+    setChatConnection(null);
   };
 
   const respondToConnection = async (connection, action) => {
@@ -519,79 +1320,98 @@ export default function ConnectionsPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 px-6 py-8 xl:grid-cols-[minmax(0,1fr)_446px] xl:px-10">
-          <main className="space-y-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <p className="text-[22px] font-medium tracking-tight text-[#12213D]">
-                {pageCountLabel}
-              </p>
+        {chatConnection ? (
+          <ChatWorkspace
+            currentUserId={user?._id}
+            currentUserName={user?.name}
+            chatConnection={chatConnection}
+            onClose={closeChat}
+            onSchedule={scheduleCall}
+          />
+        ) : (
+          <div className="grid gap-6 px-6 py-8 xl:grid-cols-[minmax(0,1fr)_446px] xl:px-10">
+            <main className="space-y-6">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <p className="text-[22px] font-medium tracking-tight text-[#12213D]">
+                  {pageCountLabel}
+                </p>
 
-              <div className="relative w-full xl:max-w-[490px]">
-                <Search
-                  size={20}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC]"
-                />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search a connection"
-                  className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] bg-white pl-12 pr-4 text-[16px] text-[#1A2540] outline-none placeholder:text-[#A4ADC1] focus:ring-2 focus:ring-[#8E1B2E]/10"
-                />
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                Loading connections...
-              </div>
-            ) : error ? (
-              <div className="rounded-[24px] border border-red-200 bg-red-50 p-10 text-center text-red-700 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                {error}
-              </div>
-            ) : currentItems.length === 0 ? (
-              <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                No connections found for this view.
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                {currentItems.map((connection) => (
-                  <ConnectionCard
-                    key={connection.profile._id}
-                    connection={connection}
-                    variant={tab}
-                    onViewProfile={openProfile}
-                    onChat={openProfile}
-                    onSchedule={scheduleCall}
-                    onRespond={respondToConnection}
-                    onReconnect={reconnect}
-                    busyKey={busyKey}
+                <div className="relative w-full xl:max-w-[490px]">
+                  <Search
+                    size={20}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC]"
                   />
-                ))}
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search a connection"
+                    className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] bg-white pl-12 pr-4 text-[16px] text-[#1A2540] outline-none placeholder:text-[#A4ADC1] focus:ring-2 focus:ring-[#8E1B2E]/10"
+                  />
+                </div>
               </div>
-            )}
-          </main>
 
-          <aside className="space-y-6 self-start xl:sticky xl:top-28">
-            <SummaryCard
-              title="Pending Requests"
-              emptyTitle="No pending requests found"
-              emptyDescription="Pending requests will show up here when someone reaches out."
-              items={groups.pending_requests || []}
-              onItemClick={openProfile}
-              icon={AlertCircle}
-            />
+              {loading ? (
+                <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                  Loading connections...
+                </div>
+              ) : error ? (
+                <div className="rounded-[24px] border border-red-200 bg-red-50 p-10 text-center text-red-700 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                  {error}
+                </div>
+              ) : currentItems.length === 0 ? (
+                <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                  No connections found for this view.
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  {currentItems.map((connection) => (
+                    <ConnectionCard
+                      key={connection.profile._id}
+                      connection={connection}
+                      variant={tab}
+                      onViewProfile={openProfile}
+                      onChat={openChat}
+                      onSchedule={scheduleCall}
+                      onRespond={respondToConnection}
+                      onReconnect={reconnect}
+                      busyKey={busyKey}
+                    />
+                  ))}
+                </div>
+              )}
+            </main>
 
-            <SummaryCard
-              title="Online Connections"
-              emptyTitle="No connections online right now."
-              emptyDescription="When a connection is available, they appear here."
-              items={groups.online || []}
-              onItemClick={openProfile}
-              icon={Users}
-            />
-          </aside>
-        </div>
+            <aside className="space-y-6 self-start xl:sticky xl:top-28">
+              <SummaryCard
+                title="Pending Requests"
+                emptyTitle="No pending requests found"
+                emptyDescription="Pending requests will show up here when someone reaches out."
+                items={groups.pending_requests || []}
+                onItemClick={openProfile}
+                icon={AlertCircle}
+              />
+
+              <SummaryCard
+                title="Online Connections"
+                emptyTitle="No connections online right now."
+                emptyDescription="When a connection is available, they appear here."
+                items={groups.online || []}
+                onItemClick={openProfile}
+                icon={Users}
+              />
+            </aside>
+          </div>
+        )}
       </div>
+
+      {scheduleConnection ? (
+        <ScheduleMeetingModal
+          connections={groups.active || []}
+          selectedConnection={scheduleConnection.profile}
+          onClose={() => setScheduleConnection(null)}
+          onScheduled={() => setScheduleConnection(null)}
+        />
+      ) : null}
     </>
   );
 }

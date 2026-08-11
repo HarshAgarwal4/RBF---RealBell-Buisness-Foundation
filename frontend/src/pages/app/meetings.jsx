@@ -606,9 +606,9 @@ export default function Meetings() {
 
 /* ---------------------------- schedule modal ---------------------------- */
 
-function ScheduleMeetingModal({ connections, onClose, onScheduled }) {
+export function ScheduleMeetingModal({ connections, selectedConnection, onClose, onScheduled }) {
     const [form, setForm] = useState({
-        attendee: "",
+        attendee: selectedConnection?._id || "",
         title: "",
         duration: 30,
         agenda: "",
@@ -620,6 +620,12 @@ function ScheduleMeetingModal({ connections, onClose, onScheduled }) {
     });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (selectedConnection?._id) {
+            setForm((prev) => ({ ...prev, attendee: selectedConnection._id }));
+        }
+    }, [selectedConnection]);
 
     const handleChange = (e) => {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -672,20 +678,32 @@ function ScheduleMeetingModal({ connections, onClose, onScheduled }) {
                         <label className="mb-2 block text-sm font-medium text-gray-700">
                             Who would you prefer to schedule a meeting with?
                         </label>
-                        <select
-                            name="attendee"
-                            value={form.attendee}
-                            onChange={handleChange}
-                            required
-                            className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
-                        >
-                            <option value="">Select a name</option>
-                            {connections.map((c) => (
-                                <option key={c._id} value={c._id}>
-                                    {c.name} {c.company_name ? `- ${c.company_name}` : ""}
-                                </option>
-                            ))}
-                        </select>
+                        {selectedConnection ? (
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                <p className="font-medium text-gray-900">
+                                    {selectedConnection.name}
+                                </p>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    {selectedConnection.company_name ? selectedConnection.company_name : "Selected connection"}
+                                </p>
+                                <input type="hidden" name="attendee" value={form.attendee} />
+                            </div>
+                        ) : (
+                            <select
+                                name="attendee"
+                                value={form.attendee}
+                                onChange={handleChange}
+                                required
+                                className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                            >
+                                <option value="">Select a name</option>
+                                {connections.map((c) => (
+                                    <option key={c._id} value={c._id}>
+                                        {c.name} {c.company_name ? `- ${c.company_name}` : ""}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-5">

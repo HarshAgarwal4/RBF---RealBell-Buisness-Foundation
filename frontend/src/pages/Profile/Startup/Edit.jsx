@@ -310,7 +310,7 @@ const RadioCard = ({ label, checked, onChange }) => (
             }`}
     >
         <span
-            className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${checked ? "border-red-700" : "border-gray-300"
+            className={`w-4 h-4 rounded-full border-2 shrink-0 ${checked ? "border-red-700" : "border-gray-300"
                 }`}
         >
             {checked && (
@@ -710,7 +710,7 @@ export default function EditProfile({ profile }) {
                     ))}
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-100 p-8 min-h-[420px]">
+                <div className="bg-white rounded-xl border border-gray-100 p-8 min-h-105">
                     {/* --- Basic Information --- */}
                     {activeTab === 0 && (
                         <div>
@@ -1461,7 +1461,7 @@ export default function EditProfile({ profile }) {
                 </div>
 
                 {/* Status messages */}
-                <div className="mt-3 min-h-[20px]">
+                <div className="mt-3 min-h-5">
                     {saveError && (
                         <p className="text-sm text-red-600 font-medium">
                             {saveError}

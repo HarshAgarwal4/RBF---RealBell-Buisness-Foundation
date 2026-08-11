@@ -14,6 +14,8 @@ import ConnectionsPage from '../pages/app/connections.jsx';
 import CommunityWall from '../pages/app/community.jsx';
 import Meetings from '../pages/app/meetings.jsx';
 import Milestones from '../pages/app/MileStone.jsx';
+import Job from '../pages/app/Job.jsx';
+import Tickets from '../pages/app/Tickets.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -45,6 +47,10 @@ const Routes = createBrowserRouter([
         element: <ProtectedRoute> <EditProfilePage /> </ProtectedRoute>
     },
     {
+        path: '/jobs',
+        element: <ProtectedRoute> <Job /> </ProtectedRoute>
+    },
+    {
         path: '/connect/:type',
         element: <ProtectedRoute> <Connect /> </ProtectedRoute>
     },
@@ -67,6 +73,10 @@ const Routes = createBrowserRouter([
     {
         path: '/milestones',
         element: <ProtectedRoute> <Milestones /> </ProtectedRoute>
+    },
+    {
+        path: '/tickets',
+        element: <ProtectedRoute> <Tickets /> </ProtectedRoute>
     },
     {
         path: '*',
