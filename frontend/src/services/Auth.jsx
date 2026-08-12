@@ -19,4 +19,20 @@ const ProtectedRoute = ({children}) => {
     )
 }
 
-export {ProtectedRoute}
+/**
+ * IsAdminRoute — wraps admin-only pages
+ * Must be used INSIDE a ProtectedRoute (so user is guaranteed to be loaded)
+ * Redirects to /unauthorized if the user's role is not admin or super_admin
+ */
+const IsAdminRoute = ({ children }) => {
+    const user = useStore((state) => state.user)
+
+    if (!user) return <Navigate to="/login" replace />
+
+    const isAdmin = user.role === "admin" || user.role === "super_admin"
+    if (!isAdmin) return <Navigate to="/unauthorized" replace />
+
+    return children
+}
+
+export { ProtectedRoute, IsAdminRoute }

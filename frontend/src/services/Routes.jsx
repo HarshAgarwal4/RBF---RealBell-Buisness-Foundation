@@ -2,7 +2,7 @@ import { createBrowserRouter} from 'react-router-dom'
 import Home from '../pages/Home.jsx';
 import SignUp from '../pages/signup.jsx';
 import LoginPage from '../pages/login.jsx';
-import { ProtectedRoute } from './Auth.jsx';
+import { ProtectedRoute, IsAdminRoute } from './Auth.jsx';
 import Main from '../pages/Main.jsx';
 import { AccountPage } from '../pages/Account.jsx';
 import PageNotFound from '../pages/PageNotFound.jsx';
@@ -16,6 +16,13 @@ import Meetings from '../pages/app/meetings.jsx';
 import Milestones from '../pages/app/MileStone.jsx';
 import Job from '../pages/app/Job.jsx';
 import Tickets from '../pages/app/Tickets.jsx';
+import Unauthorized from '../pages/Unauthorized.jsx';
+import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
+import AdminUsers from '../pages/admin/AdminUsers.jsx';
+import AdminJobs from '../pages/admin/AdminJobs.jsx';
+import AdminTickets from '../pages/admin/AdminTickets.jsx';
+import AdminCommunity from '../pages/admin/AdminCommunity.jsx';
+import AdminAnalytics from '../pages/admin/AdminAnalytics.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -77,6 +84,35 @@ const Routes = createBrowserRouter([
     {
         path: '/tickets',
         element: <ProtectedRoute> <Tickets /> </ProtectedRoute>
+    },
+    {
+        path: '/unauthorized',
+        element: <Unauthorized />
+    },
+    /* ── Admin Routes (ProtectedRoute → IsAdminRoute → Page) ── */
+    {
+        path: '/admin',
+        element: <ProtectedRoute><IsAdminRoute><AdminDashboard /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/users',
+        element: <ProtectedRoute><IsAdminRoute><AdminUsers /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/jobs',
+        element: <ProtectedRoute><IsAdminRoute><AdminJobs /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/tickets',
+        element: <ProtectedRoute><IsAdminRoute><AdminTickets /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/community',
+        element: <ProtectedRoute><IsAdminRoute><AdminCommunity /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/analytics',
+        element: <ProtectedRoute><IsAdminRoute><AdminAnalytics /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '*',

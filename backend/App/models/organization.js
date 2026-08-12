@@ -220,6 +220,13 @@ const OrganizationSchema = new mongoose.Schema(
       default: true,
     },
 
+    // Role-based access control
+    role: {
+      type: String,
+      enum: ["normal", "admin", "super_admin"],
+      default: "normal",
+    },
+
     // Embedded Account Schema
     account: {
       type: AccountSchema,

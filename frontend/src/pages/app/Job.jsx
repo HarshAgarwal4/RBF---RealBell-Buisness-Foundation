@@ -321,7 +321,7 @@ export default function Job() {
                             className="flex items-center space-x-2 bg-[#8B1D2C] hover:bg-[#721724] text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
-                            <span>+ POST JOB</span>
+                            <span>POST JOB</span>
                         </button>
                     ) : (
                         <button
