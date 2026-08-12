@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   CalendarDays,
@@ -21,6 +21,7 @@ import {
   XCircle,
   Send,
   FileText,
+  Video,
 } from "lucide-react";
 import Sidebar from "../../components/Sidebar";
 import axios from "../../services/axios";
@@ -28,6 +29,8 @@ import { toast } from "react-toastify";
 import { useStore } from "../../zustand/store";
 import { ScheduleMeetingModal } from "./meetings.jsx";
 import { io } from "socket.io-client";
+import { useVideoCall } from "../../context/VideoCallContext";
+
 
 function timeAgo(value) {
   if (!value) return "just now";
@@ -205,6 +208,7 @@ function ConnectionCard({
   variant,
   onViewProfile,
   onChat,
+  onVideoCall,
   onSchedule,
   onRespond,
   onReconnect,
@@ -269,22 +273,30 @@ function ConnectionCard({
           </div>
 
           {variant === "active" ? (
-            <div className="mt-5 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6]">
+            <div className="mt-5 grid w-full grid-cols-3 divide-x divide-[#E8ECF4] overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6]">
               <button
                 type="button"
                 onClick={() => onChat(connection)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
               >
-                <MessageCircle size={18} />
+                <MessageCircle size={17} />
                 Chat
               </button>
               <button
                 type="button"
-                onClick={() => onSchedule(connection)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                onClick={() => onVideoCall && onVideoCall(connection)}
+                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#179B4B] transition hover:bg-[#F2FAF4]"
               >
-                <CalendarDays size={18} />
-                Schedule call
+                <Video size={17} />
+                Video Call
+              </button>
+              <button
+                type="button"
+                onClick={() => onSchedule(connection)}
+                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+              >
+                <CalendarDays size={17} />
+                Schedule
               </button>
             </div>
           ) : variant === "pending" ? (
@@ -410,6 +422,7 @@ function ChatWorkspace({
   onClose,
   onSchedule,
 }) {
+  const { initiateCall } = useVideoCall();
   const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL || window.location.origin;
   const [threads, setThreads] = useState([]);
   const [threadsLoading, setThreadsLoading] = useState(true);
@@ -1007,6 +1020,15 @@ function ChatWorkspace({
 
               <button
                 type="button"
+                onClick={() => initiateCall(activePeerProfile || chatConnection)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#179B4B] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#13823E]"
+              >
+                <Video size={16} />
+                <span className="hidden sm:inline">Video Call</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => onSchedule(scheduleTarget)}
                 className="inline-flex items-center gap-2 rounded-2xl bg-[#B52B2B] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#972222]"
               >
@@ -1144,10 +1166,12 @@ function ChatWorkspace({
 export default function ConnectionsPage() {
   const navigate = useNavigate();
   const { user } = useStore();
+  const { initiateCall } = useVideoCall();
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
   const [summary, setSummary] = useState({
     active: 0,
     pending: 0,
@@ -1204,6 +1228,16 @@ export default function ConnectionsPage() {
   useEffect(() => {
     loadConnections();
   }, []);
+
+  // Auto-open chat panel when navigated via ?section=chat
+  useEffect(() => {
+    if (searchParams.get("section") === "chat" && !loading && !chatConnection) {
+      const firstActive = groups?.active?.[0];
+      if (firstActive) {
+        setChatConnection(firstActive);
+      }
+    }
+  }, [searchParams, loading, groups]);
 
   const currentItems = useMemo(() => {
     const source = groups[tab] || [];
@@ -1371,6 +1405,7 @@ export default function ConnectionsPage() {
                       variant={tab}
                       onViewProfile={openProfile}
                       onChat={openChat}
+                      onVideoCall={initiateCall}
                       onSchedule={scheduleCall}
                       onRespond={respondToConnection}
                       onReconnect={reconnect}

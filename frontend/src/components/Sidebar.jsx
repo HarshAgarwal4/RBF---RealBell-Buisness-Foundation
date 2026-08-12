@@ -365,7 +365,7 @@ export default function Sidebar() {
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-          <button style={pillBtnStyle}>
+          <button onClick={() => navigate('/connections?section=chat')} style={pillBtnStyle}>
             <MessageCircle size={15} /> Messages
           </button>
           <button onClick={() => navigate('/connections')} style={pillBtnStyle}>

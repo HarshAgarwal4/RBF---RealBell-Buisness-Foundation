@@ -261,11 +261,52 @@ async function updateAccount(req, res) {
 }
 
 async function updateProfile(req, res) {
-    console.log(req.body)
+    console.log(req.body);
     try {
-        Object.assign(req.user.profile, req.body);
+        // Parse profile JSON sent as FormData string
+        let profileData = {};
+        if (req.body.profile) {
+            try {
+                profileData = JSON.parse(req.body.profile);
+            } catch {
+                profileData = req.body;
+            }
+        } else {
+            profileData = req.body;
+        }
 
-        req.user.markModified("profile"); // Important for Mixed
+        // Upload any attached image files (logo / photo) to Cloudinary
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                try {
+                    const result = await uploadFileToCloud(file.buffer, file.originalname);
+                    const secureUrl = result.secure_url;
+
+                    // Assign to the correct profile field based on multer field name
+                    if (file.fieldname === "logo" || file.fieldname === "photo") {
+                        profileData.logo = secureUrl;
+                        profileData.photo = secureUrl;
+                    } else {
+                        profileData[file.fieldname] = secureUrl;
+                    }
+
+                    // Also sync to account.image so the avatar updates app-wide
+                    if (!req.user.account) req.user.account = {};
+                    req.user.account.image = secureUrl;
+                    req.user.markModified("account");
+                } catch (uploadErr) {
+                    console.error("Error uploading profile image:", uploadErr);
+                    return res.send({ status: 0, msg: "Error uploading image to cloud" });
+                }
+            }
+        }
+
+        // Merge into existing profile and persist
+        if (!req.user.profile) req.user.profile = {};
+        Object.assign(req.user.profile, profileData);
+        // Store a serialized copy so front-end can JSON.parse it
+        req.user.profile.profile = JSON.stringify(profileData);
+        req.user.markModified("profile");
 
         await req.user.save();
 

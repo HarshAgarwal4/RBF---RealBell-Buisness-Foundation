@@ -9,6 +9,6 @@ organizationRoutes.post('/sendotp' , sendOTPToEmail)
 organizationRoutes.post('/me' , fetchUser)
 organizationRoutes.post('/logout' , logout)
 organizationRoutes.post('/update-account' , uploadFile.single('image') , updateAccount)
-organizationRoutes.post('/update-profile' , uploadFile.none() , updateProfile)
+organizationRoutes.post('/update-profile' , uploadFile.any() , updateProfile)
 
 export {organizationRoutes}
