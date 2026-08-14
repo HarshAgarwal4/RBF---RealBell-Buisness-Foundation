@@ -24,6 +24,10 @@ import {
   Newspaper,
   FileText,
   HelpCircle,
+  FileArchive,
+  BookMarked,
+  BarChart2,
+  Video,
 } from "lucide-react";
 
 /**
@@ -68,9 +72,11 @@ const NAV_ITEMS = [
     label: "Resources",
     icon: BookOpen,
     children: [
-      { path: "/resources/articles", label: "Articles", icon: Newspaper },
-      { path: "/resources/guides", label: "Guides", icon: FileText },
-      { path: "/resources/faq", label: "FAQ", icon: HelpCircle },
+      { path: "/resources/contracts", label: "Contracts & Legal Templates", icon: FileArchive },
+      { path: "/resources/glossary",  label: "Glossary",                   icon: BookMarked },
+      { path: "/resources/reports",   label: "Reports",                    icon: BarChart2  },
+      { path: "/resources/news",      label: "News",                       icon: Newspaper  },
+      { path: "/resources/videos",    label: "Videos",                     icon: Video      },
     ],
   },
   { path: "/tickets", label: "Tickets", icon: Ticket },

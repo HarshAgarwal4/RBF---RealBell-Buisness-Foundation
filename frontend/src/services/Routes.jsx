@@ -23,6 +23,12 @@ import AdminJobs from '../pages/admin/AdminJobs.jsx';
 import AdminTickets from '../pages/admin/AdminTickets.jsx';
 import AdminCommunity from '../pages/admin/AdminCommunity.jsx';
 import AdminAnalytics from '../pages/admin/AdminAnalytics.jsx';
+import AdminResources from '../pages/admin/AdminResources.jsx';
+import ContractsPage from '../pages/app/resources/ContractsPage.jsx';
+import GlossaryPage from '../pages/app/resources/GlossaryPage.jsx';
+import ReportsPage from '../pages/app/resources/ReportsPage.jsx';
+import NewsPage from '../pages/app/resources/NewsPage.jsx';
+import VideosPage from '../pages/app/resources/VideosPage.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -113,6 +119,31 @@ const Routes = createBrowserRouter([
     {
         path: '/admin/analytics',
         element: <ProtectedRoute><IsAdminRoute><AdminAnalytics /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/resources',
+        element: <ProtectedRoute><IsAdminRoute><AdminResources /></IsAdminRoute></ProtectedRoute>
+    },
+    /* ── Resource Pages ── */
+    {
+        path: '/resources/contracts',
+        element: <ProtectedRoute><ContractsPage /></ProtectedRoute>
+    },
+    {
+        path: '/resources/glossary',
+        element: <ProtectedRoute><GlossaryPage /></ProtectedRoute>
+    },
+    {
+        path: '/resources/reports',
+        element: <ProtectedRoute><ReportsPage /></ProtectedRoute>
+    },
+    {
+        path: '/resources/news',
+        element: <ProtectedRoute><NewsPage /></ProtectedRoute>
+    },
+    {
+        path: '/resources/videos',
+        element: <ProtectedRoute><VideosPage /></ProtectedRoute>
     },
     {
         path: '*',

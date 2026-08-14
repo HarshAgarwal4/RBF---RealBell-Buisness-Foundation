@@ -1,0 +1,211 @@
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../../components/Sidebar";
+import { COLORS } from "../../../components/colors";
+import { Search, Plus, Trash2, Play, Filter, Upload } from "lucide-react";
+import { useStore } from "../../../zustand/store";
+import axios from "../../../services/axios.jsx";
+import { toast } from "react-toastify";
+
+const INDUSTRIES = [
+  "All",
+  "Technology",
+  "Finance & Investment",
+  "Healthcare",
+  "E-Commerce",
+  "EdTech",
+  "SaaS",
+  "Clean Energy",
+  "Agriculture",
+  "Manufacturing",
+  "Real Estate",
+];
+
+function getYouTubeId(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([^&?\s]+)/);
+  return match ? match[1] : null;
+}
+
+function VideoCard({ item, isAdmin, onDelete }) {
+  const [playing, setPlaying] = useState(false);
+  const ytId = getYouTubeId(item.videoUrl);
+  const thumbnail = item.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
+
+  return (
+    <div
+      style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid #F0F0F5", display: "flex", flexDirection: "column", transition: "box-shadow 0.15s, transform 0.15s" }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.13)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.07)"; e.currentTarget.style.transform = "none"; }}
+    >
+      <div style={{ position: "relative", paddingTop: "56.25%", background: "#1a1a2e", cursor: "pointer" }} onClick={() => setPlaying(true)}>
+        {playing && ytId ? (
+          <iframe src={`https://www.youtube.com/embed/${ytId}?autoplay=1`} title={item.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        ) : (
+          <>
+            {thumbnail ? (
+              <img src={thumbnail} alt={item.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#222" }}>
+                <div style={{ fontSize: 28, color: "#fff" }}>▶</div>
+              </div>
+            )}
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: COLORS.primary, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(185,28,28,0.4)" }}>
+                <Play size={22} color="#fff" style={{ marginLeft: 3 }} />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a2e", lineHeight: 1.4 }}>{item.title}</div>
+        {item.courtesy && <div style={{ fontSize: 12.5, color: "#777" }}>Courtesy: <span style={{ color: COLORS.primary }}>{item.courtesy}</span></div>}
+        {item.speaker && <div style={{ fontSize: 12.5, color: "#555" }}>Speaker: {item.speaker}</div>}
+        {item.industry && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "#F0F4FF", color: "#3B82F6", alignSelf: "flex-start", marginTop: 4 }}>{item.industry}</span>}
+      </div>
+      {isAdmin && (
+        <div style={{ padding: "0 18px 14px", display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={() => onDelete(item._id)} style={{ background: "none", border: "1px solid #fee2e2", color: "#ef4444", borderRadius: 8, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600 }}>
+            <Trash2 size={13} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddModal({ onClose, onAdded }) {
+  const [form, setForm] = useState({ title: "", videoUrl: "", speaker: "", courtesy: "", industry: "Technology", description: "" });
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.videoUrl) return toast.error("Title and Video URL required");
+
+    const fd = new FormData();
+    fd.append("type", "video");
+    Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v); });
+    // Custom thumbnail upload (optional — auto-derived from YouTube if not uploaded)
+    if (thumbnailFile) fd.append("image", thumbnailFile);
+
+    setLoading(true);
+    try {
+      const res = await axios.post("/resources", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      toast.success("Video added!");
+      onAdded(res.data.resource);
+      onClose();
+    } catch { toast.error("Upload failed"); } finally { setLoading(false); }
+  };
+
+  const f = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: 520, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
+        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700 }}>Add Video</h2>
+        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <input placeholder="Title *" value={form.title} onChange={f("title")} style={inputStyle} />
+          <input placeholder="YouTube URL *" value={form.videoUrl} onChange={f("videoUrl")} style={inputStyle} />
+          <input placeholder="Speaker(s)" value={form.speaker} onChange={f("speaker")} style={inputStyle} />
+          <input placeholder="Courtesy (e.g. www.youtube.com)" value={form.courtesy} onChange={f("courtesy")} style={inputStyle} />
+          <select value={form.industry} onChange={f("industry")} style={inputStyle}>
+            {INDUSTRIES.filter((i) => i !== "All").map((i) => <option key={i}>{i}</option>)}
+          </select>
+          <textarea placeholder="Description (optional)" value={form.description} onChange={f("description")} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+          {/* Optional custom thumbnail */}
+          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: 13, color: "#555", fontWeight: 600 }}>Custom Thumbnail (optional – auto from YouTube)</span>
+            <div style={{ border: "2px dashed #e5e7eb", borderRadius: 10, padding: "14px", textAlign: "center", cursor: "pointer", background: thumbnailFile ? "#F0FFF4" : "#FAFAFA", position: "relative" }}>
+              <Upload size={18} color={thumbnailFile ? "#16a34a" : "#aaa"} style={{ marginBottom: 4 }} />
+              <div style={{ fontSize: 12, color: thumbnailFile ? "#16a34a" : "#aaa" }}>{thumbnailFile ? thumbnailFile.name : "Click to upload thumbnail image"}</div>
+              <input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files[0] || null)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+            </div>
+          </label>
+          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+            <button type="button" onClick={onClose} style={cancelBtnStyle}>Cancel</button>
+            <button type="submit" disabled={loading} style={submitBtnStyle}>{loading ? "Uploading..." : "Add Video"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle = { padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" };
+const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14 };
+const submitBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "none", background: COLORS.primary, color: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14 };
+
+export default function VideosPage() {
+  const { user } = useStore();
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+
+  const [videos, setVideos] = useState([]);
+  const [search, setSearch] = useState("");
+  const [industry, setIndustry] = useState("All");
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("/resources", { params: { type: "video", limit: 200 } });
+      setVideos(res.data.resources || []);
+    } catch {/* silent */} finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchVideos(); }, []);
+
+  const filtered = videos.filter((v) => {
+    const matchInd = industry === "All" || v.industry === industry;
+    const matchSearch = !search || v.title.toLowerCase().includes(search.toLowerCase()) || (v.speaker || "").toLowerCase().includes(search.toLowerCase());
+    return matchInd && matchSearch;
+  });
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this video?")) return;
+    try {
+      await axios.delete(`/resources/${id}`);
+      toast.success("Deleted");
+      setVideos((prev) => prev.filter((v) => v._id !== id));
+    } catch { toast.error("Failed to delete"); }
+  };
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+      <Sidebar />
+      <main style={{ marginLeft: 300, flex: 1, padding: "36px 40px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1a1a2e" }}>Videos</h1>
+          <div style={{ position: "relative" }}>
+            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+            <input placeholder="Search videos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: 220 }} />
+          </div>
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
+            <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", minWidth: 180 }}>
+              {INDUSTRIES.map((i) => <option key={i}>{i}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1 }} />
+          {isAdmin && (
+            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6 }}>
+              <Plus size={16} /> Add Video
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 80, color: "#aaa" }}>Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 80, color: "#bbb" }}>No videos found.{isAdmin && " Click 'Add Video' to get started."}</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 22 }}>
+            {filtered.map((v) => <VideoCard key={v._id} item={v} isAdmin={isAdmin} onDelete={handleDelete} />)}
+          </div>
+        )}
+      </main>
+      {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setVideos((prev) => [r, ...prev])} />}
+    </div>
+  );
+}

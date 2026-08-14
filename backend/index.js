@@ -14,6 +14,7 @@ import jobsRoutes from './App/routes/job.js';
 import ticketRoutes from './App/routes/ticket.js';
 import chatRouter from './App/routes/chat.js';
 import adminRouter from './App/routes/admin.js';
+import resourceRouter from './App/routes/resource.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 
@@ -40,6 +41,7 @@ app.use('/jobs' , jobsRoutes)
 app.use('/tickets' , ticketRoutes)
 app.use('/chat', chatRouter)
 app.use('/admin', adminRouter)
+app.use('/resources', resourceRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {

@@ -9,6 +9,7 @@ const navItems = [
     { to: '/admin/tickets', label: 'Tickets', icon: '🎫' },
     { to: '/admin/community', label: 'Community', icon: '🌐' },
     { to: '/admin/analytics', label: 'Analytics', icon: '📈' },
+    { to: '/admin/resources', label: 'Resources', icon: '📚' },
 ];
 
 const styles = {
