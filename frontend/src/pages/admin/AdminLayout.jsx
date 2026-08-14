@@ -11,6 +11,7 @@ const navItems = [
     { to: '/admin/analytics', label: 'Analytics', icon: '📈' },
     { to: '/admin/resources', label: 'Resources', icon: '📚' },
     { to: '/admin/programs', label: 'Programs', icon: '🏆' },
+    { to: '/admin/events', label: 'Events', icon: '📅' },
 ];
 
 const styles = {

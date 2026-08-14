@@ -16,6 +16,7 @@ import chatRouter from './App/routes/chat.js';
 import adminRouter from './App/routes/admin.js';
 import resourceRouter from './App/routes/resource.js';
 import programsRouter from './App/routes/programs.js';
+import eventsRouter from './App/routes/events.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 
@@ -44,6 +45,7 @@ app.use('/chat', chatRouter)
 app.use('/admin', adminRouter)
 app.use('/resources', resourceRouter)
 app.use('/programs', programsRouter)
+app.use('/events', eventsRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {

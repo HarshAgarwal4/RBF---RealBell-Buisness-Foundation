@@ -34,6 +34,11 @@ import ProgramDetail from '../pages/app/ProgramDetail.jsx';
 import ProgramApply from '../pages/app/ProgramApply.jsx';
 import AdminPrograms from '../pages/admin/AdminPrograms.jsx';
 import AdminProgramApplications from '../pages/admin/AdminProgramApplications.jsx';
+import Events from '../pages/app/Events.jsx';
+import EventDetail from '../pages/app/EventDetail.jsx';
+import EventApply from '../pages/app/EventApply.jsx';
+import AdminEvents from '../pages/admin/AdminEvents.jsx';
+import AdminEventAttendees from '../pages/admin/AdminEventAttendees.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -171,6 +176,28 @@ const Routes = createBrowserRouter([
     {
         path: '/admin/programs/:id/applications',
         element: <ProtectedRoute><IsAdminRoute><AdminProgramApplications /></IsAdminRoute></ProtectedRoute>
+    },
+    /* ── Events ── */
+    {
+        path: '/events',
+        element: <ProtectedRoute><Events /></ProtectedRoute>
+    },
+    {
+        path: '/events/:id',
+        element: <ProtectedRoute><EventDetail /></ProtectedRoute>
+    },
+    {
+        path: '/events/:id/apply',
+        element: <ProtectedRoute><EventApply /></ProtectedRoute>
+    },
+    /* ── Admin Events ── */
+    {
+        path: '/admin/events',
+        element: <ProtectedRoute><IsAdminRoute><AdminEvents /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/events/:id/attendees',
+        element: <ProtectedRoute><IsAdminRoute><AdminEventAttendees /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '*',
