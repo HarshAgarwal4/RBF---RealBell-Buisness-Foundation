@@ -29,6 +29,11 @@ import GlossaryPage from '../pages/app/resources/GlossaryPage.jsx';
 import ReportsPage from '../pages/app/resources/ReportsPage.jsx';
 import NewsPage from '../pages/app/resources/NewsPage.jsx';
 import VideosPage from '../pages/app/resources/VideosPage.jsx';
+import Programs from '../pages/app/Programs.jsx';
+import ProgramDetail from '../pages/app/ProgramDetail.jsx';
+import ProgramApply from '../pages/app/ProgramApply.jsx';
+import AdminPrograms from '../pages/admin/AdminPrograms.jsx';
+import AdminProgramApplications from '../pages/admin/AdminProgramApplications.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -144,6 +149,28 @@ const Routes = createBrowserRouter([
     {
         path: '/resources/videos',
         element: <ProtectedRoute><VideosPage /></ProtectedRoute>
+    },
+    /* ── Programs ── */
+    {
+        path: '/programs',
+        element: <ProtectedRoute><Programs /></ProtectedRoute>
+    },
+    {
+        path: '/programs/:id',
+        element: <ProtectedRoute><ProgramDetail /></ProtectedRoute>
+    },
+    {
+        path: '/programs/:id/apply',
+        element: <ProtectedRoute><ProgramApply /></ProtectedRoute>
+    },
+    /* ── Admin Programs ── */
+    {
+        path: '/admin/programs',
+        element: <ProtectedRoute><IsAdminRoute><AdminPrograms /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/programs/:id/applications',
+        element: <ProtectedRoute><IsAdminRoute><AdminProgramApplications /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '*',

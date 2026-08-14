@@ -10,6 +10,7 @@ const navItems = [
     { to: '/admin/community', label: 'Community', icon: '🌐' },
     { to: '/admin/analytics', label: 'Analytics', icon: '📈' },
     { to: '/admin/resources', label: 'Resources', icon: '📚' },
+    { to: '/admin/programs', label: 'Programs', icon: '🏆' },
 ];
 
 const styles = {
