@@ -215,6 +215,11 @@ const OrganizationSchema = new mongoose.Schema(
       trim: true,
     },
 
+    password: {
+      type: String,
+      default: null,
+    },
+
     agree: {
       type: Boolean,
       default: true,

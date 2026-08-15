@@ -4,6 +4,8 @@ import { sendOtp, verifyOtp } from "../../services/otp.js";
 import OrganizationModel from "../models/organization.js";
 import { uploadFileToCloud, deleteImageByUrl } from "../../services/upload.js";
 import { isUserOnline } from "../../services/chat.js";
+import { hashPassword, verifyPassword } from "../../services/encryption.js";
+import { getEffectiveLoginMethod } from "./authSettingController.js";
 
 function normalizeCompanyType(type = "") {
     const value = String(type).toLowerCase().trim();
@@ -33,6 +35,7 @@ async function signUp(req, res) {
             name,
             email,
             phone,
+            password,
             agree,
             otp
         } = req.body;
@@ -81,6 +84,11 @@ async function signUp(req, res) {
             });
         }
 
+        let hashedPassword = null;
+        if (password) {
+            hashedPassword = await hashPassword(password);
+        }
+
         const organization = new OrganizationModel({
 
             company_type,
@@ -97,6 +105,8 @@ async function signUp(req, res) {
             email,
 
             phone,
+
+            password: hashedPassword,
 
             agree,
 
@@ -142,46 +152,176 @@ async function signUp(req, res) {
 }
 
 async function login(req, res) {
-    let { email, otp } = req.body
-    if (!email || !otp) return res.send({ status: 7, msg: "Invalid fields" })
     try {
-        const otpMatched = await verifyOtp(email, otp);
-        if (!otpMatched) {
-            return res.send({
-                status: 2,
-                msg: "Invalid OTP"
-            });
+        let { email, otp, password } = req.body;
+        if (!email) return res.send({ status: 7, msg: "Email is required" });
+        email = email.trim().toLowerCase();
+
+        const configuredLoginMethod = await getEffectiveLoginMethod();
+
+        let findUser = await OrganizationModel.findOne({ email });
+        if (!findUser) {
+            return res.send({ status: 9, msg: "No registered account found with this email" });
         }
-        let findUser = await OrganizationModel.findOne({ email })
-        if (!findUser) return res.send({ status: 9, msg: "No user found" })
+
+        // Handle method routing strictly as per backend setting
+        if (configuredLoginMethod === "otp") {
+            if (!otp) return res.send({ status: 7, msg: "Verification OTP is required" });
+            const otpMatched = await verifyOtp(email, otp);
+            if (!otpMatched) {
+                return res.send({ status: 2, msg: "Invalid or expired OTP code" });
+            }
+        } else if (configuredLoginMethod === "password") {
+            if (!password) return res.send({ status: 7, msg: "Password is required" });
+            if (!findUser.password) {
+                return res.send({
+                    status: 12,
+                    msg: "Password not yet set for this account. Please contact admin."
+                });
+            }
+            const passwordMatched = await verifyPassword(password, findUser.password);
+            if (!passwordMatched) {
+                return res.send({ status: 2, msg: "Incorrect password" });
+            }
+        } else {
+            // configuredLoginMethod === "both" (2-Factor: Password verified before sending OTP, OTP verified here)
+            if (!otp) return res.send({ status: 7, msg: "Verification OTP is required" });
+            const otpMatched = await verifyOtp(email, otp);
+            if (!otpMatched) {
+                return res.send({ status: 2, msg: "Invalid or expired OTP code" });
+            }
+        }
+
         let token = await setUser(findUser._id);
-        if (!token) return res.send({ status: 11, msg: "error in token" })
-        findUser.sessions = [{ token }]
-        res.cookie('UID', token, {
-            httpOnly: process.env.production === 'true',
-            secure: process.env.production === 'true',
-            sameSite: process.env.production === 'true' ? 'none' : 'lax',
+        if (!token) return res.send({ status: 11, msg: "Error generating session token" });
+
+        findUser.sessions = [{ token }];
+        res.cookie("UID", token, {
+            httpOnly: process.env.PRODUCTION === "true" || process.env.production === "true",
+            secure: process.env.PRODUCTION === "true" || process.env.production === "true",
+            sameSite:
+                process.env.PRODUCTION === "true" || process.env.production === "true"
+                    ? "none"
+                    : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
-        await findUser.save()
-        console.log('login sucessful')
-        return res.send({ status: 1, msg: "Login successfull" })
+        });
+
+        await findUser.save();
+        return res.send({
+            status: 1,
+            msg: "Login successful",
+            user: {
+                _id: findUser._id,
+                name: findUser.name,
+                email: findUser.email,
+                role: findUser.role,
+                company_type: findUser.company_type,
+            },
+        });
     } catch (err) {
-        console.log(err)
-        return res.send({ status: 0, msg: "intrnal server error" })
+        console.error("Login controller error:", err);
+        return res.send({ status: 0, msg: "Internal server error" });
     }
 }
 
 async function sendOTPToEmail(req, res) {
-    let { email } = req.body;
-    if (!email) return res.send({ status: 7, msg: "Inavlid fields" })
+    let { email, password } = req.body;
+    if (!email) return res.send({ status: 7, msg: "Email is required" });
+    email = email.trim().toLowerCase();
+
     try {
-        let r = await sendOtp(email)
-        if (!r) return res.send({ status: 8, msg: "error in generating otp" })
-        return res.send({ status: 1, msg: "OTP sent successfully" })
+        const configuredLoginMethod = await getEffectiveLoginMethod();
+        if (configuredLoginMethod === "password") {
+            return res.send({
+                status: 10,
+                msg: "OTP authentication is disabled by administrator. Please log in using password.",
+            });
+        }
+
+        let findUser = await OrganizationModel.findOne({ email });
+        if (!findUser) {
+            return res.send({ status: 9, msg: "No registered account found with this email" });
+        }
+
+        // If backend setting is 'both', verify password before sending OTP
+        if (configuredLoginMethod === "both") {
+            if (!password) {
+                return res.send({ status: 7, msg: "Password is required" });
+            }
+            if (!findUser.password) {
+                return res.send({
+                    status: 12,
+                    msg: "Password not set for this account. Please contact administrator.",
+                });
+            }
+            const passwordMatched = await verifyPassword(password, findUser.password);
+            if (!passwordMatched) {
+                return res.send({ status: 2, msg: "Incorrect password" });
+            }
+        }
+
+        let r = await sendOtp(email);
+        if (!r) return res.send({ status: 8, msg: "Error generating and sending OTP" });
+        return res.send({ status: 1, msg: "OTP sent successfully" });
     } catch (err) {
-        console.log(err)
-        return res.send({ status: 0, msg: "Internal server error" })
+        console.error("Send OTP error:", err);
+        return res.send({ status: 0, msg: "Internal server error" });
+    }
+}
+
+async function forgotPasswordSendOTP(req, res) {
+    try {
+        let { email } = req.body;
+        if (!email) return res.send({ status: 7, msg: "Email is required" });
+        email = email.trim().toLowerCase();
+
+        let findUser = await OrganizationModel.findOne({ email });
+        if (!findUser) {
+            return res.send({ status: 9, msg: "No registered account found with this email" });
+        }
+
+        let r = await sendOtp(email);
+        if (!r) return res.send({ status: 8, msg: "Error generating and sending OTP" });
+        return res.send({ status: 1, msg: "Password reset verification code sent to your email" });
+    } catch (err) {
+        console.error("Forgot password send OTP error:", err);
+        return res.send({ status: 0, msg: "Internal server error" });
+    }
+}
+
+async function resetPasswordWithOTP(req, res) {
+    try {
+        let { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.send({ status: 7, msg: "Email, OTP, and New Password are required" });
+        }
+        email = email.trim().toLowerCase();
+
+        if (newPassword.length < 6) {
+            return res.send({ status: 7, msg: "Password must be at least 6 characters long" });
+        }
+
+        let findUser = await OrganizationModel.findOne({ email });
+        if (!findUser) {
+            return res.send({ status: 9, msg: "No registered account found with this email" });
+        }
+
+        const otpMatched = await verifyOtp(email, otp);
+        if (!otpMatched) {
+            return res.send({ status: 2, msg: "Invalid or expired OTP code" });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+        findUser.password = hashedPassword;
+        await findUser.save();
+
+        return res.send({
+            status: 1,
+            msg: "Password has been reset successfully! You can now log in with your new password.",
+        });
+    } catch (err) {
+        console.error("Reset password error:", err);
+        return res.send({ status: 0, msg: "Internal server error" });
     }
 }
 
@@ -824,6 +964,8 @@ export {
     signUp,
     login,
     sendOTPToEmail,
+    forgotPasswordSendOTP,
+    resetPasswordWithOTP,
     fetchUser,
     logout,
     updateAccount,

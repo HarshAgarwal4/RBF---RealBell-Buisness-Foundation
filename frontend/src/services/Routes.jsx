@@ -43,6 +43,8 @@ import AdminRoles from '../pages/admin/AdminRoles.jsx';
 import Subscription from '../pages/Subscription.jsx';
 import AdminSubscriptions from '../pages/admin/AdminSubscriptions.jsx';
 import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
+import AdminAuthSettings from '../pages/admin/AdminAuthSettings.jsx';
+import ForgotPassword from '../pages/ForgotPassword.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -56,6 +58,10 @@ const Routes = createBrowserRouter([
     {
         path: '/login',
         element: <LoginPage />
+    },
+    {
+        path: '/forgot-password',
+        element: <ForgotPassword />
     },
     {
         path: '/dashboard',
@@ -129,6 +135,10 @@ const Routes = createBrowserRouter([
     {
         path: '/admin/theme-customizer',
         element: <ProtectedRoute><IsAdminRoute><AdminThemeCustomizer /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/auth-settings',
+        element: <ProtectedRoute><IsAdminRoute><AdminAuthSettings /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '/admin/users',

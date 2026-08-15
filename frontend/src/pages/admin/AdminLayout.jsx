@@ -7,6 +7,7 @@ import './adminTheme.css';
 const navItems = [
     { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
     { to: '/admin/users', label: 'Users', icon: '👥' },
+    { to: '/admin/auth-settings', label: 'Auth Methods', icon: '🔐' },
     { to: '/admin/roles', label: 'Roles & Designer', icon: '⚙️' },
     { to: '/admin/jobs', label: 'Jobs', icon: '💼' },
     { to: '/admin/tickets', label: 'Tickets', icon: '🎫' },

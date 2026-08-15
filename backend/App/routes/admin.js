@@ -17,6 +17,10 @@ import {
     getAnalytics,
     getRecentActivity,
 } from "../controllers/admin.js";
+import {
+    getAdminAuthSettings,
+    updateAuthSettings,
+} from "../controllers/authSettingController.js";
 
 const adminRouter = express.Router();
 
@@ -27,6 +31,10 @@ adminRouter.use(isAdmin);
 adminRouter.get("/stats", getDashboardStats);
 adminRouter.get("/activity", getRecentActivity);
 adminRouter.get("/analytics", getAnalytics);
+
+/* ── Auth Settings ── */
+adminRouter.get("/auth-settings", getAdminAuthSettings);
+adminRouter.put("/auth-settings", updateAuthSettings);
 
 /* ── Users ── */
 adminRouter.get("/users", getAllUsers);
