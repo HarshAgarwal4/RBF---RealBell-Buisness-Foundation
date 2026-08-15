@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../zustand/store";
+import { AppLoader } from "./Loading";
 
 function Logo() {
   return (
@@ -156,10 +157,7 @@ export default function LoginPage() {
   const fetchUser = useStore((state) => state.fetchUser);
   const user = useStore((state) => state.user);
   const sendOtp = useStore((state) => state.sendOtp);
-
-  // Authentication configuration fetched dynamically from backend
-  const [loginMethod, setLoginMethod] = useState("otp"); // "otp" | "password" | "both"
-  const [fetchingAuth, setFetchingAuth] = useState(true);
+  const loginMethod = useStore((state) => state.loginMethod || "both");
 
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -172,23 +170,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const otpRefs = useRef([]);
-
-  // Fetch authentication settings dynamically on load (just like roles in signup)
-  useEffect(() => {
-    async function fetchAuthSettings() {
-      try {
-        const res = await axios.get("/auth-settings");
-        if (res.data.status === 1 && res.data.loginMethod) {
-          setLoginMethod(res.data.loginMethod);
-        }
-      } catch (err) {
-        console.error("Error fetching login auth settings from backend:", err);
-      } finally {
-        setFetchingAuth(false);
-      }
-    }
-    fetchAuthSettings();
-  }, []);
 
   useEffect(() => {
     if (user) navigate("/dashboard");
@@ -449,18 +430,9 @@ export default function LoginPage() {
           <div className="w-full max-w-lg">
             <TopBar step={step} back={() => setStep(1)} />
 
-            {fetchingAuth ? (
-              <div className="mt-12 flex flex-col items-center justify-center py-20 text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin text-amber-700 dark:text-amber-500 mb-3" />
-                <span className="text-xs font-semibold tracking-wider uppercase">
-                  Loading authentication configuration...
-                </span>
-              </div>
-            ) : (
-              <>
-                {/* Step Dots when the configured mode has multiple steps */}
-                {isMultiStep && (
-                  <div className="mt-6 sm:mt-8 flex items-center gap-2">
+            {/* Step Dots when the configured mode has multiple steps */}
+            {isMultiStep && (
+              <div className="mt-6 sm:mt-8 flex items-center gap-2">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-300 ${
                         step === 1
@@ -711,8 +683,6 @@ export default function LoginPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </>
-            )}
           </div>
         </div>
 

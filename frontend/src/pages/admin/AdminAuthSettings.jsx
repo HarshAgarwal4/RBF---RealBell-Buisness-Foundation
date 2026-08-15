@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import axios from "../../services/axios";
 import { toast } from "react-toastify";
+import { useStore } from "../../zustand/store";
 import "./adminTheme.css";
 import {
   ShieldCheck,
@@ -94,6 +95,8 @@ export default function AdminAuthSettings() {
     fetchSettings();
   }, []);
 
+  const setLoginMethod = useStore((state) => state.setLoginMethod);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -104,6 +107,7 @@ export default function AdminAuthSettings() {
       if (res.data.status === 1) {
         toast.success(res.data.msg || "Authentication method updated!");
         setActiveMethod(selectedMethod);
+        setLoginMethod(selectedMethod);
         if (res.data.setting) {
           setSettingMeta(res.data.setting);
         }

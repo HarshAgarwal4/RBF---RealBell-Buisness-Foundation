@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../zustand/store";
 import axios from "../services/axios";
@@ -36,60 +36,30 @@ import {
   ShieldCheck,
   Sun,
   Moon,
+  TrendingUp,
+  Award,
+  GraduationCap,
+  Globe,
 } from "lucide-react";
 
-/**
- * Nav config.
- * - Plain item:      { path, label, icon }
- * - Expandable item:  { key, label, icon, children: [{ path, label, icon? }, ...] }
- *
- * To add a new expandable section in the future, just add a `children` array —
- * no other code changes are needed. `key` is only required for expandable
- * items (used to track open/closed state); plain items don't need one.
- */
-const NAV_ITEMS = [
-  { path: "/dashboard", label: "Dashboard", icon: Building2 },
-  {
-    key: "connect",
-    label: "Connect",
-    icon: Search,
-    children: [
-      { path: "/connect/startups", label: "Startups", icon: Rocket },
-      { path: "/connect/investors", label: "Investors", icon: Landmark },
-      { path: "/connect/mentors", label: "Mentors", icon: Handshake },
-    ],
-  },
-  { path: "/community", label: "Community Wall", icon: Users },
-  {
-    key: "actions",
-    label: "My Actions",
-    icon: Scissors,
-    children: [
-      { path: "/connections", label: "Connections"},
-      { path: "/meetings", label: "My Meetings" },
-      { path: "/mentorship-hours", label: "Mentor Hours" },
-      { path: "/milestones", label: "MileStones" },
-    ],
-  },
-  { path: "/programs", label: "Programs", icon: HandCoins },
-  { path: "/events", label: "Events", icon: Megaphone },
-  { path: "/resources/news", label: "News", icon: Newspaper },
-  { path: "/resources/videos", label: "Videos", icon: Video },
-  { path: "/jobs", label: "Jobs", icon: Briefcase },
-  { path: "/subscription", label: "Subscriptions", icon: CreditCard },
-  { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
-  {
-    key: "resources",
-    label: "Resources",
-    icon: BookOpen,
-    children: [
-      { path: "/resources/contracts", label: "Contracts & Legal Templates", icon: FileArchive },
-      { path: "/resources/glossary",  label: "Glossary",                   icon: BookMarked },
-      { path: "/resources/reports",   label: "Reports",                    icon: BarChart2  },
-    ],
-  },
-  { path: "/tickets", label: "Tickets", icon: Ticket },
-  { path: "/account", label: "Account Settings", icon: UserCircle2 },
+const ICON_MAP = {
+  Rocket,
+  TrendingUp,
+  Users,
+  Building2,
+  Briefcase,
+  Award,
+  GraduationCap,
+  Globe,
+  Landmark,
+  Handshake,
+  Search,
+};
+
+const DEFAULT_CONNECT_CHILDREN = [
+  { path: "/connect/startups", label: "Startups", icon: Rocket },
+  { path: "/connect/investors", label: "Investors", icon: Landmark },
+  { path: "/connect/mentors", label: "Mentors", icon: Handshake },
 ];
 
 const pillBtnStyle = {
@@ -116,10 +86,74 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useStore();
+  const roles = useStore((state) => state.roles);
   const { theme, toggleTheme } = useTheme();
 
   const [activeCount, setActiveCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Dynamic Connect sub-items: uses fetched organization types if present, else default 3 items
+  const connectChildren = useMemo(() => {
+    if (Array.isArray(roles) && roles.length > 0) {
+      return roles.map((r) => ({
+        path: `/connect/${r.key || r.label.toLowerCase()}`,
+        label: r.label,
+        icon:
+          ICON_MAP[r.icon] ||
+          (r.key === "investor"
+            ? Landmark
+            : r.key === "mentor"
+            ? Handshake
+            : r.key === "startup"
+            ? Rocket
+            : Building2),
+      }));
+    }
+    return DEFAULT_CONNECT_CHILDREN;
+  }, [roles]);
+
+  const navItems = useMemo(() => {
+    return [
+      { path: "/dashboard", label: "Dashboard", icon: Building2 },
+      {
+        key: "connect",
+        label: "Connect",
+        icon: Search,
+        children: connectChildren,
+      },
+      { path: "/community", label: "Community Wall", icon: Users },
+      {
+        key: "actions",
+        label: "My Actions",
+        icon: Scissors,
+        children: [
+          { path: "/connections", label: "Connections" },
+          { path: "/meetings", label: "My Meetings" },
+          { path: "/mentorship-hours", label: "Mentor Hours" },
+          { path: "/milestones", label: "MileStones" },
+        ],
+      },
+      { path: "/programs", label: "Programs", icon: HandCoins },
+      { path: "/events", label: "Events", icon: Megaphone },
+      { path: "/resources/news", label: "News", icon: Newspaper },
+      { path: "/resources/videos", label: "Videos", icon: Video },
+      { path: "/jobs", label: "Jobs", icon: Briefcase },
+      { path: "/subscription", label: "Subscriptions", icon: CreditCard },
+      { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
+      {
+        key: "resources",
+        label: "Resources",
+        icon: BookOpen,
+        children: [
+          { path: "/resources/contracts", label: "Contracts & Legal Templates", icon: FileArchive },
+          { path: "/resources/glossary",  label: "Glossary",                   icon: BookMarked },
+          { path: "/resources/reports",   label: "Reports",                    icon: BarChart2  },
+        ],
+      },
+      { path: "/tickets", label: "Tickets", icon: Ticket },
+      { path: "/account", label: "Account Settings", icon: UserCircle2 },
+    ];
+  }, [connectChildren]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -144,7 +178,7 @@ export default function Sidebar() {
 
   // Auto-expand a section when the current route lives inside it.
   const routeOpenKeys = {};
-  NAV_ITEMS.forEach((item) => {
+  navItems.forEach((item) => {
     if (item.children && isChildActive(item, location.pathname)) {
       routeOpenKeys[item.key] = true;
     }
@@ -540,7 +574,7 @@ export default function Sidebar() {
             <span style={{ flex: 1 }}>Admin Panel</span>
           </button>
         )}
-        {NAV_ITEMS.map((item) => renderNavItem(item))}
+        {navItems.map((item) => renderNavItem(item))}
       </nav>
 
       {/* Logout */}

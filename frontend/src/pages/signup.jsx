@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { useStore } from "../zustand/store";
+import { AppLoader } from "./Loading";
 import {
   ArrowLeft,
   Bell,
@@ -294,28 +295,21 @@ export default function SignUpPage() {
   const [verifying, setVerifying] = useState(false);
   const otpRefs = useRef([]);
 
-  const [userTypes, setUserTypes] = useState(DEFAULT_USER_TYPES);
+  const storeRoles = useStore((state) => state.roles);
 
-  useEffect(() => {
-    async function loadRoles() {
-      try {
-        const res = await axios.get("/roles");
-        if (res.data.status === 1 && Array.isArray(res.data.roles) && res.data.roles.length > 0) {
-          const mapped = res.data.roles.map((r) => ({
-            id: r.key,
-            label: r.label,
-            icon: ICON_MAP[r.icon] || Building2,
-            hasSubtypes: r.hasSubtypes,
-            subtypes: r.subtypes,
-          }));
-          setUserTypes(mapped);
-        }
-      } catch (err) {
-        console.error("Error loading signup roles:", err);
-      }
+  const userTypes = React.useMemo(() => {
+    if (Array.isArray(storeRoles) && storeRoles.length > 0) {
+      return storeRoles.map((r) => ({
+        id: r.key,
+        label: r.label,
+        desc: r.desc,
+        icon: ICON_MAP[r.icon] || Building2,
+        hasSubtypes: r.hasSubtypes,
+        subtypes: r.subtypes,
+      }));
     }
-    loadRoles();
-  }, []);
+    return DEFAULT_USER_TYPES;
+  }, [storeRoles]);
 
   useEffect(() => {
     if (step === 3 && resendTimer > 0) {

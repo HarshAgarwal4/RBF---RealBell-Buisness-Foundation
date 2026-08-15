@@ -6,19 +6,25 @@ import { ToastContainer } from 'react-toastify'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { ThemeProvider } from './context/ThemeProvider'
 import { AdminThemeProvider } from './pages/admin/AdminThemeContext'
+import FullScreenLoader from './pages/Loading'
 import './toast.css'
 
 function App() {
-  const fetchUser = useStore((state) => state.fetchUser)
+  const initializeApp = useStore((state) => state.initializeApp)
+  const isLoading = useStore((state) => state.isLoading)
 
   useEffect(() => {
-    fetchUser()
+    initializeApp()
   }, [])
 
   return (
     <ThemeProvider>
       <AdminThemeProvider>
-        <RouterProvider router={Routes} />
+        {isLoading ? (
+          <FullScreenLoader message="Initializing RealBell Ecosystem..." />
+        ) : (
+          <RouterProvider router={Routes} />
+        )}
         <PWAInstallPrompt />
         <ToastContainer
           position="top-center"

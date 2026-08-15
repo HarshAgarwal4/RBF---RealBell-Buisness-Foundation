@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import AdminLayout from "./AdminLayout.jsx";
 import axios from "../../services/axios.jsx";
+import { useStore } from "../../zustand/store.jsx";
 import {
   Rocket,
   TrendingUp,
@@ -97,12 +98,15 @@ export default function AdminRoles() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const setStoreRoles = useStore((state) => state.setRoles);
+
   const loadRoles = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get("/roles");
-      if (res.data.status === 1) {
+      if (res.data.status === 1 && Array.isArray(res.data.roles)) {
         setRoles(res.data.roles);
+        setStoreRoles(res.data.roles);
       }
     } catch (err) {
       console.error(err);
@@ -110,7 +114,7 @@ export default function AdminRoles() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setStoreRoles]);
 
   useEffect(() => {
     loadRoles();
