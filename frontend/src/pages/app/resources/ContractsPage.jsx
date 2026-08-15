@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../../components/Sidebar";
 import { COLORS } from "../../../components/colors";
-import { FileText, Download, Search, Trash2, Plus, Upload } from "lucide-react";
+import { FileText, Download, Search, Trash2, Plus, Upload, Filter } from "lucide-react";
 import { useStore } from "../../../zustand/store";
 import axios from "../../../services/axios.jsx";
 import { toast } from "react-toastify";
@@ -173,38 +173,42 @@ export default function ContractsPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
-      <main style={{ marginLeft: 300, flex: 1, padding: "36px 40px", minHeight: "100vh" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1a1a2e" }}>Contracts &amp; Legal Templates</h1>
-          <div style={{ flex: 1 }} />
-          <div style={{ position: "relative" }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
-            <input placeholder="Search templates..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ ...inputStyle, paddingLeft: 36, width: 220 }} />
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#1a1a2e" }}>Contracts &amp; Legal Templates</h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative w-full sm:w-52">
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <input placeholder="Search templates..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ ...inputStyle, paddingLeft: 36, width: "100%" }} />
+            </div>
+            <div className="relative w-full sm:w-48 flex items-center">
+              <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+                style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", width: "100%" }}
+              >
+                {TABS.map((tab) => (
+                  <option key={tab} value={tab}>{tab}</option>
+                ))}
+              </select>
+            </div>
+            {isAdmin && (
+              <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+                <Plus size={16} /> Add Template
+              </button>
+            )}
           </div>
-          {isAdmin && (
-            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6 }}>
-              <Plus size={16} /> Add Template
-            </button>
-          )}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, borderBottom: "2px solid #e9ecef", marginBottom: 32 }}>
-          {TABS.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: "11px 22px", border: "none", borderBottom: activeTab === tab ? `3px solid ${COLORS.primary}` : "3px solid transparent", background: "none", cursor: "pointer", fontWeight: activeTab === tab ? 700 : 500, color: activeTab === tab ? COLORS.primary : "#555", fontSize: 13.5, transition: "all 0.15s", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ background: "#fff", borderRadius: 16, padding: 28, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
+        <div className="bg-white rounded-2xl p-4 sm:p-7 shadow-xs">
           <h2 style={{ margin: "0 0 20px", fontSize: 20, fontWeight: 700, color: "#1a1a2e" }}>{activeTab}</h2>
           {loading ? (
             <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No templates found.{isAdmin && " Click 'Add Template' to upload one."}</div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((item) => (
                 <ContractCard key={item._id} item={item} isAdmin={isAdmin} onDelete={handleDelete} onDownload={handleDownload} />
               ))}

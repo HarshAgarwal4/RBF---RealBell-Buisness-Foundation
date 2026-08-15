@@ -253,37 +253,15 @@ export default function Programs() {
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
       <main
+        className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen"
         style={{
-          marginLeft: 300,
-          flex: 1,
           fontFamily: "'Inter', system-ui, sans-serif",
-          minHeight: "100vh",
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            background: "#fff",
-            borderBottom: `1px solid ${COLORS.border}`,
-            padding: "22px 36px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-        >
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                color: COLORS.ink,
-                margin: 0,
-                letterSpacing: -0.3,
-              }}
-            >
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
               Programs
             </h1>
             <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 3 }}>
@@ -292,19 +270,11 @@ export default function Programs() {
           </div>
           <button
             onClick={() => setShowMyApps(!showMyApps)}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer self-start sm:self-auto"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "9px 18px",
-              borderRadius: 10,
               border: `1.5px solid ${showMyApps ? COLORS.primary : COLORS.border}`,
               background: showMyApps ? COLORS.primary : "#fff",
               color: showMyApps ? "#fff" : COLORS.ink,
-              fontWeight: 600,
-              fontSize: 13.5,
-              cursor: "pointer",
-              transition: "all 0.15s",
             }}
           >
             <FileText size={15} />
@@ -326,7 +296,7 @@ export default function Programs() {
           </button>
         </div>
 
-        <div style={{ padding: "28px 36px" }}>
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           {/* My Applications panel */}
           {showMyApps && (
             <div
@@ -432,19 +402,8 @@ export default function Programs() {
           )}
 
           {/* Search */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "#fff",
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: 12,
-              padding: "10px 16px",
-              marginBottom: 24,
-            }}
-          >
-            <Search size={16} color={COLORS.muted} />
+          <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 mb-6 max-w-md">
+            <Search size={16} color={COLORS.muted} className="shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -483,13 +442,7 @@ export default function Programs() {
               <div style={{ fontSize: 14 }}>Check back later for new opportunities.</div>
             </div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                gap: 20,
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filtered.map((p) => (
                 <ProgramCard
                   key={p._id}

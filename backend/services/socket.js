@@ -66,6 +66,12 @@ async function notifyPresence(io, userId, online) {
   });
 }
 
+let ioInstance = null;
+
+export function getIO() {
+  return ioInstance;
+}
+
 export function registerSocketServer(httpServer, app) {
   const io = new Server(httpServer, {
     cors: {
@@ -74,6 +80,7 @@ export function registerSocketServer(httpServer, app) {
     },
   });
 
+  ioInstance = io;
   app.set("io", io);
 
   io.use(async (socket, next) => {

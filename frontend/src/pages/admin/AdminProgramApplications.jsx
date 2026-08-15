@@ -10,10 +10,6 @@ import {
   Hourglass,
   ChevronDown,
   ChevronUp,
-  User,
-  Building2,
-  Mail,
-  Phone,
   Loader,
   Users,
 } from "lucide-react";
@@ -28,7 +24,7 @@ function ApplicationCard({ app, onUpdateStatus }) {
   const [expanded, setExpanded] = useState(false);
   const [note, setNote] = useState(app.admin_note || "");
   const [updating, setUpdating] = useState(false);
-  const conf = STATUS_CONFIG[app.status];
+  const conf = STATUS_CONFIG[app.status] || STATUS_CONFIG.pending;
   const Icon = conf.icon;
   const applicant = app.applicant;
 
@@ -44,35 +40,36 @@ function ApplicationCard({ app, onUpdateStatus }) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 14,
+        background: "var(--admin-card-bg, rgba(255,255,255,0.03))",
+        border: "1px solid var(--admin-card-border, rgba(255,255,255,0.07))",
+        borderRadius: 12,
         overflow: "hidden",
-        marginBottom: 12,
+        marginBottom: 10,
       }}
     >
       {/* Card header */}
       <div
         style={{
-          padding: "16px 20px",
+          padding: "14px 16px",
           display: "flex",
           alignItems: "center",
-          gap: 16,
+          gap: 14,
           cursor: "pointer",
+          flexWrap: "wrap",
         }}
         onClick={() => setExpanded(!expanded)}
       >
         {/* Avatar */}
         <div
           style={{
-            width: 44,
-            height: 44,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: 700,
             color: "#fff",
             flexShrink: 0,
@@ -86,37 +83,37 @@ function ApplicationCard({ app, onUpdateStatus }) {
           )}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 14.5, color: "#f1f5f9" }}>
+        <div style={{ flex: 1, minWidth: 160 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--admin-text-primary, #f1f5f9)" }}>
             {applicant?.name}
           </div>
-          <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: "var(--admin-text-subtle, #64748b)", marginTop: 1 }}>
             {applicant?.company_name} &middot; {applicant?.email}
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: "#475569" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: "var(--admin-text-subtle, #475569)" }}>
             {new Date(app.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
           </span>
           <span
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 5,
+              gap: 4,
               background: conf.bg,
               color: conf.color,
               border: `1px solid ${conf.border}`,
-              fontSize: 11.5,
+              fontSize: 11,
               fontWeight: 700,
-              padding: "4px 10px",
+              padding: "3px 8px",
               borderRadius: 20,
             }}
           >
-            <Icon size={12} />
+            <Icon size={11} />
             {conf.label}
           </span>
-          {expanded ? <ChevronUp size={16} color="#475569" /> : <ChevronDown size={16} color="#475569" />}
+          {expanded ? <ChevronUp size={15} color="#475569" /> : <ChevronDown size={15} color="#475569" />}
         </div>
       </div>
 
@@ -124,16 +121,16 @@ function ApplicationCard({ app, onUpdateStatus }) {
       {expanded && (
         <div
           style={{
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            padding: "20px",
+            borderTop: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
+            padding: "16px",
           }}
         >
           {/* Applicant profile */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--admin-text-subtle, #64748b)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
               Applicant Profile
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div className="admin-grid-3col">
               {[
                 { label: "Company", value: applicant?.company_name },
                 { label: "Type", value: applicant?.company_type },
@@ -150,14 +147,14 @@ function ApplicationCard({ app, onUpdateStatus }) {
                   <div
                     key={row.label}
                     style={{
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      background: "var(--admin-card-bg, rgba(255,255,255,0.03))",
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      border: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
                     }}
                   >
-                    <div style={{ fontSize: 11, color: "#475569", marginBottom: 3 }}>{row.label}</div>
-                    <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600, wordBreak: "break-all" }}>
+                    <div style={{ fontSize: 10, color: "var(--admin-text-subtle, #475569)", marginBottom: 2 }}>{row.label}</div>
+                    <div style={{ fontSize: 12, color: "var(--admin-text-primary, #e2e8f0)", fontWeight: 600, wordBreak: "break-all" }}>
                       {row.value?.toString()}
                     </div>
                   </div>
@@ -167,26 +164,26 @@ function ApplicationCard({ app, onUpdateStatus }) {
 
           {/* Custom responses */}
           {app.custom_responses?.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--admin-text-subtle, #64748b)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
                 Program Form Responses
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {app.custom_responses.map((resp, i) => (
                   <div
                     key={i}
                     style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 8,
-                      padding: "12px 14px",
+                      background: "var(--admin-card-bg, rgba(255,255,255,0.03))",
+                      border: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
+                      borderRadius: 6,
+                      padding: "10px 12px",
                     }}
                   >
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 5, fontWeight: 600 }}>
+                    <div style={{ fontSize: 11, color: "var(--admin-text-subtle, #94a3b8)", marginBottom: 4, fontWeight: 600 }}>
                       {resp.label}
                     </div>
-                    <div style={{ fontSize: 13.5, color: "#e2e8f0", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-                      {Array.isArray(resp.value) ? resp.value.join(", ") : resp.value || <em style={{ color: "#475569" }}>—</em>}
+                    <div style={{ fontSize: 12.5, color: "var(--admin-text-primary, #e2e8f0)", lineHeight: 1.4, whiteSpace: "pre-wrap" }}>
+                      {Array.isArray(resp.value) ? resp.value.join(", ") : resp.value || <em style={{ color: "var(--admin-text-subtle, #475569)" }}>—</em>}
                     </div>
                   </div>
                 ))}
@@ -197,11 +194,11 @@ function ApplicationCard({ app, onUpdateStatus }) {
           {/* Action area */}
           <div
             style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: 16,
+              borderTop: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
+              paddingTop: 14,
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--admin-text-subtle, #64748b)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
               Admin Action
             </div>
             <textarea
@@ -211,84 +208,46 @@ function ApplicationCard({ app, onUpdateStatus }) {
               rows={2}
               style={{
                 width: "100%",
-                padding: "9px 12px",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.05)",
-                color: "#e2e8f0",
-                fontSize: 13,
+                padding: "8px 10px",
+                border: "1px solid var(--admin-input-border, rgba(255,255,255,0.1))",
+                borderRadius: 6,
+                background: "var(--admin-input-bg, rgba(255,255,255,0.05))",
+                color: "var(--admin-input-text, #e2e8f0)",
+                fontSize: 12.5,
                 fontFamily: "inherit",
                 outline: "none",
                 resize: "vertical",
                 boxSizing: "border-box",
-                marginBottom: 12,
+                marginBottom: 10,
               }}
             />
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 onClick={() => handleAction("approved")}
                 disabled={updating || app.status === "approved"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(34,197,94,0.15)",
-                  border: "1px solid rgba(34,197,94,0.3)",
-                  color: "#4ade80",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: updating || app.status === "approved" ? "not-allowed" : "pointer",
-                  fontFamily: "inherit",
-                  opacity: app.status === "approved" ? 0.5 : 1,
-                }}
+                className="admin-btn admin-btn-primary"
+                style={{ padding: "6px 14px", fontSize: 12, opacity: app.status === "approved" ? 0.5 : 1 }}
               >
-                {updating ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={14} />}
+                {updating ? <Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={13} />}
                 Approve
               </button>
               <button
                 onClick={() => handleAction("rejected")}
                 disabled={updating || app.status === "rejected"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  color: "#f87171",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: updating || app.status === "rejected" ? "not-allowed" : "pointer",
-                  fontFamily: "inherit",
-                  opacity: app.status === "rejected" ? 0.5 : 1,
-                }}
+                className="admin-btn admin-btn-danger"
+                style={{ padding: "6px 14px", fontSize: 12, opacity: app.status === "rejected" ? 0.5 : 1 }}
               >
-                {updating ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> : <XCircle size={14} />}
+                {updating ? <Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> : <XCircle size={13} />}
                 Reject
               </button>
               {app.status !== "pending" && (
                 <button
                   onClick={() => handleAction("pending")}
                   disabled={updating}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    background: "rgba(245,158,11,0.1)",
-                    border: "1px solid rgba(245,158,11,0.3)",
-                    color: "#fbbf24",
-                    borderRadius: 8,
-                    padding: "8px 16px",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
+                  className="admin-btn admin-btn-secondary"
+                  style={{ padding: "6px 14px", fontSize: 12 }}
                 >
-                  <Hourglass size={14} /> Reset to Pending
+                  <Hourglass size={13} /> Reset to Pending
                 </button>
               )}
             </div>
@@ -359,51 +318,41 @@ export default function AdminProgramApplications() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Back + Program info */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 20 }}>
         <button
           onClick={() => navigate("/admin/programs")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#64748b",
-            fontSize: 13.5,
-            fontFamily: "inherit",
-            marginBottom: 16,
-          }}
+          className="admin-btn admin-btn-secondary"
+          style={{ padding: "5px 10px", fontSize: 12, marginBottom: 14 }}
         >
-          <ArrowLeft size={15} /> Back to Programs
+          <ArrowLeft size={14} /> Back to Programs
         </button>
 
         {program && (
           <div
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 12,
-              padding: "16px 20px",
+              background: "var(--admin-card-bg, rgba(255,255,255,0.03))",
+              border: "1px solid var(--admin-card-border, rgba(255,255,255,0.07))",
+              borderRadius: 10,
+              padding: "14px 16px",
               display: "flex",
               alignItems: "center",
-              gap: 16,
+              gap: 14,
             }}
           >
             {program.banner_image ? (
               <img
                 src={program.banner_image}
                 alt=""
-                style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                style={{ width: 42, height: 42, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
               />
             ) : (
-              <div style={{ width: 48, height: 48, borderRadius: 10, background: "rgba(99,102,241,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Users size={22} color="#6366f1" />
+              <div style={{ width: 42, height: 42, borderRadius: 8, background: "rgba(99,102,241,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Users size={20} color="#6366f1" />
               </div>
             )}
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: "#f1f5f9" }}>{program.title}</div>
-              <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "var(--admin-text-primary, #f1f5f9)" }}>{program.title}</div>
+              <div style={{ fontSize: 12, color: "var(--admin-text-subtle, #64748b)", marginTop: 2 }}>
                 {program.short_description}
               </div>
             </div>
@@ -412,7 +361,7 @@ export default function AdminProgramApplications() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div className="admin-grid-stats" style={{ marginBottom: 20 }}>
         {[
           { label: "Total", value: counts.all, color: "#6366f1" },
           { label: "Pending", value: counts.pending, color: "#d97706" },
@@ -422,31 +371,31 @@ export default function AdminProgramApplications() {
           <div
             key={s.label}
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 12,
-              padding: "16px 18px",
+              background: "var(--admin-card-bg, rgba(255,255,255,0.03))",
+              border: "1px solid var(--admin-card-border, rgba(255,255,255,0.07))",
+              borderRadius: 10,
+              padding: "12px 14px",
             }}
           >
-            <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 3 }}>{s.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: s.color, lineHeight: 1.1 }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: "var(--admin-text-subtle, #64748b)", marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Filter + list */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {["", "pending", "approved", "rejected"].map((s) => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
             style={{
-              padding: "7px 16px",
+              padding: "5px 14px",
               borderRadius: 20,
-              border: statusFilter === s ? "1.5px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.08)",
-              background: statusFilter === s ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
-              color: statusFilter === s ? "#a5b4fc" : "#64748b",
-              fontSize: 12.5,
+              border: statusFilter === s ? "1.5px solid rgba(99,102,241,0.5)" : "1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))",
+              background: statusFilter === s ? "rgba(99,102,241,0.15)" : "var(--admin-card-bg, rgba(255,255,255,0.04))",
+              color: statusFilter === s ? "#a5b4fc" : "var(--admin-text-subtle, #64748b)",
+              fontSize: 12,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -458,13 +407,13 @@ export default function AdminProgramApplications() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "#64748b" }}>
+        <div style={{ textAlign: "center", padding: "50px 0", color: "var(--admin-text-subtle, #64748b)", fontSize: 13 }}>
           Loading applications…
         </div>
       ) : applications.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "#64748b" }}>
-          <Users size={36} color="#1e293b" style={{ marginBottom: 12 }} />
-          <div style={{ fontWeight: 600 }}>No applications found</div>
+        <div style={{ textAlign: "center", padding: "50px 0", color: "var(--admin-text-subtle, #64748b)" }}>
+          <Users size={32} color="#334155" style={{ marginBottom: 8 }} />
+          <div style={{ fontWeight: 600, fontSize: 14 }}>No applications found</div>
         </div>
       ) : (
         applications.map((app) => (

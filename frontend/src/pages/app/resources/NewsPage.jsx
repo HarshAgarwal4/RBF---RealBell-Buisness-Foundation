@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../../components/Sidebar";
 import { COLORS } from "../../../components/colors";
-import { Search, Plus, Trash2, Tag, Calendar, Upload } from "lucide-react";
+import { Search, Plus, Trash2, Tag, Calendar, Upload, Filter } from "lucide-react";
 import { useStore } from "../../../zustand/store";
 import axios from "../../../services/axios.jsx";
 import { toast } from "react-toastify";
@@ -32,42 +32,44 @@ function formatDate(dateStr) {
 function NewsCard({ item, isAdmin, onDelete }) {
   return (
     <div
-      style={{ display: "flex", gap: 16, background: "#fff", borderRadius: 14, padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", border: "1px solid #F0F0F5", cursor: item.sourceUrl ? "pointer" : "default", transition: "box-shadow 0.15s" }}
+      className="flex flex-col sm:flex-row gap-3 sm:gap-4 bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-xs hover:shadow-md transition cursor-pointer overflow-hidden relative"
       onClick={() => item.sourceUrl && window.open(item.sourceUrl, "_blank")}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.10)")}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)")}
     >
-      <div style={{ width: 120, height: 80, borderRadius: 10, background: "#F3F4F6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="w-full sm:w-32 h-36 sm:h-24 rounded-xl bg-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
         ) : (
-          <span style={{ fontSize: 12, color: "#aaa" }}>No Image</span>
+          <span className="text-xs text-gray-400">No Image</span>
         )}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14.5, color: "#1a1a2e", marginBottom: 4, lineHeight: 1.4 }}>{item.title}</div>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-sm sm:text-base text-gray-900 mb-1 leading-snug">{item.title}</div>
         {item.description && (
-          <div style={{ fontSize: 13, color: "#666", marginBottom: 8, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+          <div className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
             {item.description}
           </div>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          {item.sourceName && <span style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>{item.sourceName}</span>}
+        <div className="flex flex-wrap items-center gap-2">
+          {item.sourceName && <span className="text-xs font-semibold text-gray-700">{item.sourceName}</span>}
           {item.publishedAt && (
-            <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#aaa" }}>
+            <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs text-gray-400">
               <Calendar size={12} /> {formatDate(item.publishedAt)}
             </span>
           )}
           {item.newsCategory && (
-            <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 12, background: "#FEE2E2", color: COLORS.primary }}>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-[#8E1B2E]">
               <Tag size={10} /> {item.newsCategory}
             </span>
           )}
         </div>
       </div>
       {isAdmin && (
-        <button onClick={(e) => { e.stopPropagation(); onDelete(item._id); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4, flexShrink: 0 }}>
-          <Trash2 size={15} />
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(item._id); }}
+          className="absolute top-3 right-3 sm:static p-1 text-red-500 hover:text-red-700 transition cursor-pointer shrink-0"
+          title="Delete article"
+        >
+          <Trash2 size={16} />
         </button>
       )}
     </div>
@@ -176,45 +178,41 @@ export default function NewsPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
-      <main style={{ marginLeft: 300, flex: 1, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "28px 36px 0", display: "flex", alignItems: "center", gap: 16 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1a1a2e" }}>News</h1>
-          <div style={{ position: "relative" }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
-            <input placeholder="Search news..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: 240 }} />
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen flex flex-col">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 pt-4 pb-2 mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#1a1a2e" }}>News</h1>
+            <div className="relative w-full sm:w-52">
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <input placeholder="Search news..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: "100%" }} />
+            </div>
+            <div className="relative w-full sm:w-44 flex items-center">
+              <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
+              <select
+                value={activeCategory}
+                onChange={(e) => setActiveCategory(e.target.value)}
+                style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", width: "100%" }}
+              >
+                {NEWS_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
-          <div style={{ flex: 1 }} />
           {isAdmin && (
-            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
               <Plus size={16} /> Add News
             </button>
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 0, flex: 1, padding: "24px 36px 36px" }}>
-          {/* Category sidebar */}
-          <div style={{ width: 220, flexShrink: 0, marginRight: 28 }}>
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: "#555", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 14 }}>Category Filters</div>
-              {NEWS_CATEGORIES.map((c) => (
-                <button key={c} onClick={() => setActiveCategory(c)} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "none", background: activeCategory === c ? "#FEE2E2" : "none", color: activeCategory === c ? COLORS.primary : "#555", fontWeight: activeCategory === c ? 700 : 500, fontSize: 13.5, cursor: "pointer", textAlign: "left", marginBottom: 2, transition: "all 0.15s", display: "flex", alignItems: "center", gap: 8 }}>
-                  {activeCategory === c && <div style={{ width: 6, height: 6, borderRadius: "50%", background: COLORS.primary }} />}
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Feed */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-            {loading ? (
-              <div style={{ textAlign: "center", padding: 80, color: "#aaa" }}>Loading...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 80, color: "#bbb" }}>No news articles.{isAdmin && " Click 'Add News' to get started."}</div>
-            ) : (
-              filtered.map((item) => <NewsCard key={item._id} item={item} isAdmin={isAdmin} onDelete={handleDelete} />)
-            )}
-          </div>
+        {/* Feed */}
+        <div className="flex-1 flex flex-col gap-4 min-w-0 px-4 sm:px-6 lg:px-8 py-2">
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No news articles.{isAdmin && " Click 'Add News' to get started."}</div>
+          ) : (
+            filtered.map((item) => <NewsCard key={item._id} item={item} isAdmin={isAdmin} onDelete={handleDelete} />)
+          )}
         </div>
       </main>
       {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setNews((prev) => [r, ...prev])} />}

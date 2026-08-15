@@ -151,10 +151,10 @@ function TabButton({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl px-5 py-3 text-[17px] font-medium transition ${
+      className={`rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition shrink-0 cursor-pointer ${
         active
-          ? "bg-[#F8F8FB] text-[#B52B2B] shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
-          : "text-[#6A6F8D] hover:bg-[#f7f8fb]"
+          ? "bg-white text-[#B52B2B] shadow-xs border border-gray-200"
+          : "text-[#6A6F8D] hover:bg-white/60"
       }`}
     >
       {children}
@@ -219,41 +219,41 @@ function ConnectionCard({
   const isBusy = (key) => busyKey === `${connection.profile._id}:${key}`;
 
   return (
-    <article className="overflow-hidden rounded-[18px] border border-[#EEF1F6] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-      <div className="flex items-center justify-between border-b border-[#F0F2F7] px-4 py-3">
-        <span className="rounded-full bg-[#F7F8FB] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#9FA6BB]">
+    <article className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white shadow-xs">
+      <div className="flex items-center justify-between border-b border-[#F0F2F7] px-3.5 py-2.5">
+        <span className="rounded-full bg-[#F7F8FB] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#8A93AA] truncate max-w-[180px]">
           {formatTypeLabel(connection?.profile?.company_name || connection?.profile?.company_type)}
         </span>
         <button
           type="button"
           onClick={() => onViewProfile(connection)}
-          className="rounded-full p-1.5 text-[#9DA4B8] transition hover:bg-[#F5F7FB] hover:text-[#0F3D4A]"
+          className="rounded-full p-1 text-[#9DA4B8] transition hover:bg-[#F5F7FB] hover:text-[#0F3D4A] cursor-pointer"
           aria-label={`View ${connectionName(connection)}`}
         >
-          <MoreVertical size={18} />
+          <MoreVertical size={16} />
         </button>
       </div>
 
-      <div className="px-4 pb-4 pt-5">
+      <div className="p-3.5 sm:p-4">
         <div className="flex flex-col items-center text-center">
           <img
             src={avatarFor(connection)}
             alt={connectionName(connection)}
-            className="h-20 w-20 rounded-full border border-[#E5EAF3] object-cover"
+            className="h-14 w-14 rounded-full border border-[#E5EAF3] object-cover"
           />
-          <h3 className="mt-4 text-[24px] font-bold tracking-tight text-[#18213A]">
+          <h3 className="mt-2.5 text-base sm:text-lg font-bold tracking-tight text-[#18213A] truncate max-w-full">
             {connectionName(connection)}
           </h3>
-          <p className="mt-1 text-[16px] text-[#2C3550]">{connectionMeta(connection)}</p>
+          <p className="mt-0.5 text-xs text-[#525E7A] truncate max-w-full">{connectionMeta(connection)}</p>
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-3 py-1 text-xs font-semibold text-[#667089]">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-2.5 py-0.5 text-[11px] font-semibold text-[#667089]">
               {connection.status === "accepted" ? (
-                <CheckCircle2 size={14} className="text-[#1F9D55]" />
+                <CheckCircle2 size={13} className="text-[#1F9D55]" />
               ) : connection.status === "pending" ? (
-                <Clock3 size={14} className="text-[#C38B00]" />
+                <Clock3 size={13} className="text-[#C38B00]" />
               ) : (
-                <ShieldAlert size={14} className="text-[#B23A3A]" />
+                <ShieldAlert size={13} className="text-[#B23A3A]" />
               )}
               {connection.status === "accepted"
                 ? "Active"
@@ -265,48 +265,48 @@ function ConnectionCard({
             </span>
 
             {connection.is_online ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#ECF9F0] px-3 py-1 text-xs font-semibold text-[#179B4B]">
-                <span className="h-2 w-2 rounded-full bg-[#34C759]" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#ECF9F0] px-2.5 py-0.5 text-[11px] font-semibold text-[#179B4B]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#34C759]" />
                 Online
               </span>
             ) : null}
           </div>
 
           {variant === "active" ? (
-            <div className="mt-5 grid w-full grid-cols-3 divide-x divide-[#E8ECF4] overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6]">
+            <div className="mt-4 grid w-full grid-cols-3 divide-x divide-[#E8ECF4] overflow-hidden rounded-xl border border-[#EEF1F6]">
               <button
                 type="button"
                 onClick={() => onChat(connection)}
-                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
               >
-                <MessageCircle size={17} />
+                <MessageCircle size={14} />
                 Chat
               </button>
               <button
                 type="button"
                 onClick={() => onVideoCall && onVideoCall(connection)}
-                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#179B4B] transition hover:bg-[#F2FAF4]"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#179B4B] transition hover:bg-[#F2FAF4] cursor-pointer"
               >
-                <Video size={17} />
-                Video Call
+                <Video size={14} />
+                Call
               </button>
               <button
                 type="button"
                 onClick={() => onSchedule(connection)}
-                className="inline-flex items-center justify-center gap-1.5 px-2 py-4 text-[14px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
               >
-                <CalendarDays size={17} />
-                Schedule
+                <CalendarDays size={14} />
+                Meet
               </button>
             </div>
           ) : variant === "pending" ? (
-            <div className="mt-5 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6]">
+            <div className="mt-4 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] overflow-hidden rounded-xl border border-[#EEF1F6]">
               <button
                 type="button"
                 onClick={() => onViewProfile(connection)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
               >
-                <UserRound size={18} />
+                <UserRound size={15} />
                 View
               </button>
               {isIncomingPending ? (
@@ -419,6 +419,7 @@ function ChatWorkspace({
   currentUserId,
   currentUserName,
   chatConnection,
+  allConnections = [],
   onClose,
   onSchedule,
 }) {
@@ -429,6 +430,7 @@ function ChatWorkspace({
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [activePeerId, setActivePeerId] = useState(chatConnection?.profile?._id || chatConnection?._id || "");
+  const [showMobileChat, setShowMobileChat] = useState(!!(chatConnection?.profile?._id || chatConnection?._id));
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -465,16 +467,38 @@ function ChatWorkspace({
     threadsRef.current = threads;
   }, [threads]);
 
+  // Combine loaded chat threads with active accepted connections so user can message any connection
+  const mergedThreads = useMemo(() => {
+    const map = new Map();
+    threads.forEach((t) => {
+      if (t.profile?._id) map.set(String(t.profile._id), t);
+    });
+
+    allConnections.forEach((conn) => {
+      const id = String(conn.profile?._id || conn._id || "");
+      if (id && !map.has(id)) {
+        map.set(id, {
+          profile: conn.profile || conn,
+          lastMessage: null,
+          unreadCount: 0,
+          is_online: conn.is_online || false,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [threads, allConnections]);
+
   const activeThread = useMemo(
-    () => threads.find((thread) => String(thread.profile?._id) === String(activePeerId)) || null,
-    [threads, activePeerId]
+    () => mergedThreads.find((thread) => String(thread.profile?._id) === String(activePeerId)) || null,
+    [mergedThreads, activePeerId]
   );
 
   const filteredThreads = useMemo(() => {
     const value = search.trim().toLowerCase();
-    if (!value) return threads;
+    if (!value) return mergedThreads;
 
-    return threads.filter((thread) => {
+    return mergedThreads.filter((thread) => {
       const haystack = [
         connectionName(thread),
         connectionMeta(thread),
@@ -490,7 +514,7 @@ function ChatWorkspace({
 
       return haystack.includes(value);
     });
-  }, [threads, search]);
+  }, [mergedThreads, search]);
 
   const updateThreadPreview = (message) => {
     setThreads((prev) =>
@@ -889,54 +913,74 @@ function ChatWorkspace({
     );
   };
 
-  const formatBubbleStatus = (message) => {
+  const renderStatusTicks = (message) => {
     if (String(message.senderId) !== String(currentUserId)) return null;
     const status = message.status || (message.readAt ? "read" : message.deliveredAt ? "delivered" : "sent");
-    if (status === "read") return "Read";
-    if (status === "delivered") return "Delivered";
-    return "Sent";
+    if (status === "read") {
+      return (
+        <span title="Read" className="text-[#53bdeb] font-bold text-xs inline-flex ml-1.5 align-middle select-none">
+          ✓✓
+        </span>
+      );
+    }
+    if (status === "delivered") {
+      return (
+        <span title="Delivered" className="text-[#8696a0] font-bold text-xs inline-flex ml-1.5 align-middle select-none">
+          ✓✓
+        </span>
+      );
+    }
+    return (
+      <span title="Sent" className="text-[#8696a0] font-bold text-xs inline-flex ml-1.5 align-middle select-none">
+        ✓
+      </span>
+    );
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 h-[calc(100vh-100px)] max-h-[900px]">
-      <div className="grid h-full grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 overflow-hidden min-h-0">
-        {/* Sidebar */}
-        <aside className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[#E7ECF5] bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+    <div className="p-2 sm:p-4 lg:p-6 h-[calc(100vh-80px)] lg:h-[calc(100vh-100px)] max-h-[900px]">
+      <div className="flex h-full gap-4 overflow-hidden min-h-0 rounded-[20px] lg:rounded-[24px] border border-[#E7ECF5] dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+        {/* Chat List Pane */}
+        <aside
+          className={`flex flex-col h-full overflow-hidden border-r border-[#EEF2F8] dark:border-slate-700 bg-white dark:bg-slate-800 p-4 sm:p-5 w-full lg:w-[360px] shrink-0 ${
+            showMobileChat ? "hidden lg:flex" : "flex"
+          }`}
+        >
           <div className="flex items-center justify-between gap-3 shrink-0">
             <div>
-              <h2 className="text-[28px] font-bold tracking-tight text-[#172033]">Chats</h2>
-              <p className="mt-1 text-sm text-[#7A849A]">Accepted connections only.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-[#172033] dark:text-white">Chats</h2>
+              <p className="mt-0.5 text-xs sm:text-sm text-[#7A849A] dark:text-slate-400">All accepted connections</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[#E6EBF4] px-3 py-2 text-sm font-medium text-[#28324B] transition hover:bg-[#F8FAFD]"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E6EBF4] dark:border-slate-700 px-3 py-1.5 text-xs sm:text-sm font-medium text-[#28324B] dark:text-slate-200 transition hover:bg-[#F8FAFD] dark:hover:bg-slate-700 cursor-pointer"
             >
               <ArrowLeft size={16} />
-              Back
+              Close
             </button>
           </div>
 
-          <div className="relative mt-5 shrink-0">
+          <div className="relative mt-4 shrink-0">
             <Search
               size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC]"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B3B9CC] dark:text-slate-400"
             />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search chats"
-              className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] bg-[#F8FAFE] pl-11 pr-4 text-[15px] text-[#1A2540] outline-none placeholder:text-[#A4ADC1] focus:ring-2 focus:ring-[#8E1B2E]/10"
+              placeholder="Search chats..."
+              className="h-11 w-full rounded-xl border border-[#DDE4F0] dark:border-slate-700 bg-[#F8FAFE] dark:bg-slate-900 pl-10 pr-4 text-sm text-[#1A2540] dark:text-slate-100 outline-none placeholder:text-[#A4ADC1] dark:placeholder:text-slate-400 focus:ring-2 focus:ring-[#8E1B2E]/10"
             />
           </div>
 
-          <div className="mt-5 flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
+          <div className="mt-4 flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
             {threadsLoading ? (
-              <div className="rounded-2xl border border-dashed border-[#E4E9F2] px-4 py-8 text-center text-sm text-[#8E97AD]">
+              <div className="rounded-xl border border-dashed border-[#E4E9F2] dark:border-slate-700 px-4 py-8 text-center text-sm text-[#8E97AD] dark:text-slate-400">
                 Loading chats...
               </div>
             ) : filteredThreads.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#E4E9F2] px-4 py-8 text-center text-sm text-[#8E97AD]">
+              <div className="rounded-xl border border-dashed border-[#E4E9F2] dark:border-slate-700 px-4 py-8 text-center text-sm text-[#8E97AD] dark:text-slate-400">
                 No chats found.
               </div>
             ) : (
@@ -945,120 +989,123 @@ function ChatWorkspace({
                   key={thread.threadId || thread.profile?._id}
                   type="button"
                   onClick={() => openPeer(thread.profile?._id)}
-                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition cursor-pointer ${
                     String(activePeerId) === String(thread.profile?._id)
-                      ? "border-[#B52B2B] bg-[#FFF7F7]"
-                      : "border-[#EEF1F6] bg-white hover:bg-[#FBFCFF]"
+                      ? "border-[#B52B2B] bg-[#FFF7F7] dark:bg-red-950/40"
+                      : "border-[#EEF1F6] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#FBFCFF] dark:hover:bg-slate-700"
                   }`}
                 >
-                  <img
-                    src={avatarFor(thread)}
-                    alt={connectionName(thread)}
-                    className="h-12 w-12 rounded-2xl object-cover shrink-0"
-                  />
+                  <div className="relative shrink-0">
+                    <img
+                      src={avatarFor(thread)}
+                      alt={connectionName(thread)}
+                      className="h-12 w-12 rounded-full object-cover border border-gray-100 dark:border-slate-700"
+                    />
+                    {thread.is_online ? (
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#34C759] border-2 border-white dark:border-slate-800" />
+                    ) : null}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-[15px] font-semibold text-[#18213A]">
+                      <div className="truncate text-sm font-semibold text-[#18213A] dark:text-white">
                         {connectionName(thread)}
                       </div>
                       {thread.unreadCount ? (
-                        <span className="rounded-full bg-[#B52B2B] px-2 py-0.5 text-xs font-semibold text-white shrink-0">
+                        <span className="rounded-full bg-[#25D366] px-2 py-0.5 text-[11px] font-bold text-white shrink-0">
                           {thread.unreadCount}
                         </span>
                       ) : null}
                     </div>
-                    <div className="truncate text-sm text-[#8390AA]">
+                    <div className="truncate text-xs text-[#8390AA] dark:text-slate-400 mt-0.5">
                       {thread.lastMessage?.text
                         ? thread.lastMessage.text
                         : thread.lastMessage?.kind === "file"
-                          ? "File attachment"
-                          : "Start a chat"}
+                        ? "📎 Attachment"
+                        : "Start chatting"}
                     </div>
                   </div>
-                  {thread.is_online ? (
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#34C759] shrink-0" />
-                  ) : (
-                    <span className="text-xs font-semibold text-[#9AA2B8] shrink-0">Away</span>
-                  )}
                 </button>
               ))
             )}
           </div>
         </aside>
 
-        {/* Main Workspace */}
-        <section className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[#E7ECF5] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.05)] min-h-0">
+        {/* Main Conversation Pane (WhatsApp Wallpaper & Bubble Styling) */}
+        <section
+          className={`flex flex-col h-full overflow-hidden w-full flex-1 bg-[#efeae2] dark:bg-slate-950 bg-[radial-gradient(#00000008_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] ${
+            showMobileChat ? "flex" : "hidden lg:flex"
+          }`}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between gap-4 border-b border-[#EEF2F8] px-6 py-4 shrink-0">
-            <div className="flex min-w-0 items-center gap-4">
+          <div className="flex items-center justify-between gap-3 border-b border-[#E0E5EC] dark:border-slate-800 bg-[#f0f2f5] dark:bg-slate-900 px-4 py-3 shrink-0 shadow-2xs">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowMobileChat(false)}
+                className="inline-flex lg:hidden items-center justify-center h-9 w-9 rounded-full text-[#54656f] dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 transition"
+                aria-label="Back to chats list"
+              >
+                <ArrowLeft size={20} />
+              </button>
               <img
                 src={avatarFor(activePeerProfile || chatConnection || {})}
                 alt={connectionName(activePeerProfile || chatConnection || {})}
-                className="h-12 w-12 rounded-full object-cover shrink-0"
+                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full object-cover shrink-0 border border-white dark:border-slate-700"
               />
               <div className="min-w-0">
-                <h3 className="truncate text-[20px] font-bold tracking-tight text-[#172033]">
+                <h3 className="truncate text-base sm:text-lg font-bold tracking-tight text-[#111b21] dark:text-white">
                   {connectionName(activePeerProfile || chatConnection || {})}
                 </h3>
-                <p className="truncate text-xs text-[#7A849A]">
-                  {connectionMeta(activePeerProfile || chatConnection || {})}
+                <p className="truncate text-xs text-[#667781] dark:text-slate-400">
+                  {activeThread?.is_online ? "online" : connectionMeta(activePeerProfile || chatConnection || {})}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              {activeThread?.is_online ? (
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#ECF9F0] px-3 py-1.5 text-xs font-semibold text-[#179B4B]">
-                  <span className="h-2 w-2 rounded-full bg-[#34C759]" />
-                  Online
-                </span>
-              ) : (
-                <span className="rounded-full bg-[#F7F8FB] px-3 py-1.5 text-xs font-semibold text-[#8891A7]">
-                  Away
-                </span>
-              )}
-
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => initiateCall(activePeerProfile || chatConnection)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#179B4B] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#13823E]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#179B4B] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#13823E]"
+                title="Video Call"
               >
-                <Video size={16} />
+                <Video size={15} />
                 <span className="hidden sm:inline">Video Call</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onSchedule(scheduleTarget)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#B52B2B] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#972222]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#B52B2B] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#972222]"
+                title="Schedule meeting"
               >
-                <CalendarDays size={16} />
-                <span className="hidden sm:inline">Schedule meeting</span>
+                <CalendarDays size={15} />
+                <span className="hidden sm:inline">Schedule</span>
               </button>
             </div>
           </div>
 
           {error ? (
-            <div className="border-b border-[#F2D6D6] bg-[#FFF6F6] px-6 py-2 text-sm text-[#B23A3A] shrink-0">
+            <div className="border-b border-[#F2D6D6] dark:border-red-900 bg-[#FFF6F6] dark:bg-red-950/40 px-4 py-2 text-xs text-[#B23A3A] dark:text-red-300 shrink-0">
               {error}
             </div>
           ) : null}
 
-          {/* Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto bg-[#FBFCFF] px-6 py-6 space-y-4 min-h-0">
+          {/* WhatsApp Messages Canvas */}
+          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3 min-h-0">
             {messagesLoading ? (
-              <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-[#D9E0EE] bg-white px-6 py-16 text-center text-[#8E97AD]">
-                Loading conversation...
+              <div className="flex h-full items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs px-6 py-12 text-center text-sm text-[#54656f] dark:text-slate-300 shadow-xs">
+                Loading messages...
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-[#D9E0EE] bg-white px-6 py-16 text-center text-[#8E97AD]">
-                Start the conversation from here.
+              <div className="flex h-full items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs px-6 py-12 text-center text-sm text-[#54656f] dark:text-slate-300 shadow-xs">
+                🔒 Messages end-to-end encrypted. Say Hi to start chatting!
               </div>
             ) : (
               groupMessagesByDay(messages).map((group) => (
-                <div key={group.label} className="space-y-4">
-                  <div className="flex items-center justify-center">
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#8E97AD] shadow-sm">
+                <div key={group.label} className="space-y-3">
+                  <div className="flex items-center justify-center my-2">
+                    <span className="rounded-lg bg-white/90 dark:bg-slate-800/90 px-3 py-1 text-[11px] font-semibold text-[#54656f] dark:text-slate-300 shadow-2xs uppercase tracking-wider">
                       {group.label}
                     </span>
                   </div>
@@ -1066,23 +1113,18 @@ function ChatWorkspace({
                     const isMine = String(message.senderId) === String(currentUserId);
                     return (
                       <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[75%] sm:max-w-[65%] min-w-0 ${isMine ? "text-right" : "text-left"}`}>
-                          <div className={`mb-1 text-xs font-semibold text-[#172033] ${isMine ? "pr-2" : "pl-2"}`}>
-                            {isMine ? currentUserName || "You" : connectionName(activePeerProfile || chatConnection || {})}
-                          </div>
-                          <div
-                            className={`space-y-2 rounded-3xl px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed shadow-sm break-words overflow-hidden ${
-                              isMine
-                                ? "bg-[#B52B2B] text-white"
-                                : "bg-[#EEF4FB] text-[#172033]"
-                            }`}
-                          >
-                            {message.text ? <p className="whitespace-pre-wrap">{message.text}</p> : null}
-                            {renderAttachment(message)}
-                          </div>
-                          <div className={`mt-1 text-[11px] text-[#8E97AD] ${isMine ? "pr-2" : "pl-2"}`}>
-                            {formatChatTime(message.createdAt)}
-                            {formatBubbleStatus(message) ? ` • ${formatBubbleStatus(message)}` : ""}
+                        <div
+                          className={`relative max-w-[85%] sm:max-w-[70%] min-w-[120px] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] break-words overflow-hidden ${
+                            isMine
+                              ? "bg-[#d9fdd3] dark:bg-emerald-950 text-[#111b21] dark:text-emerald-100 rounded-tr-xs"
+                              : "bg-white dark:bg-slate-800 text-[#111b21] dark:text-slate-100 rounded-tl-xs"
+                          }`}
+                        >
+                          {message.text ? <p className="whitespace-pre-wrap">{message.text}</p> : null}
+                          {renderAttachment(message)}
+                          <div className="mt-1 flex items-center justify-end text-[10px] text-[#667781] dark:text-slate-400 select-none">
+                            <span>{formatChatTime(message.createdAt)}</span>
+                            {renderStatusTicks(message)}
                           </div>
                         </div>
                       </div>
@@ -1094,11 +1136,11 @@ function ChatWorkspace({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Form Input Area */}
-          <form onSubmit={sendTextMessage} className="border-t border-[#EEF2F8] bg-white px-6 py-4 shrink-0">
-            <div className="relative flex items-center gap-2 sm:gap-3 rounded-full border border-[#E0E6F0] bg-[#FBFCFF] px-3 sm:px-4 py-2 sm:py-2.5">
+          {/* WhatsApp Form Input Bar */}
+          <form onSubmit={sendTextMessage} className="border-t border-[#e9edef] dark:border-slate-800 bg-[#f0f2f5] dark:bg-slate-900 px-3 sm:px-4 py-3 shrink-0">
+            <div className="relative flex items-center gap-2 rounded-full bg-white dark:bg-slate-800 px-3 py-1.5 shadow-2xs border border-[#e9edef] dark:border-slate-700">
               {emojiOpen ? (
-                <div className="absolute bottom-full left-4 mb-3 rounded-2xl border border-[#E6EBF4] bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+                <div className="absolute bottom-full left-2 mb-3 rounded-2xl border border-[#E6EBF4] dark:border-slate-700 bg-white dark:bg-slate-800 p-3 shadow-xl z-30">
                   <div className="grid grid-cols-6 gap-2">{emojiList.map(emojiButton)}</div>
                 </div>
               ) : null}
@@ -1106,7 +1148,7 @@ function ChatWorkspace({
               <button
                 type="button"
                 onClick={() => setEmojiOpen((prev) => !prev)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#667089] transition hover:bg-[#EEF2F8] shrink-0"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#54656f] dark:text-slate-300 transition hover:bg-black/5 dark:hover:bg-white/5 shrink-0 cursor-pointer"
                 aria-label="Add emoji"
               >
                 <Smile size={20} />
@@ -1122,38 +1164,38 @@ function ChatWorkspace({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#667089] transition hover:bg-[#EEF2F8] shrink-0"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#54656f] dark:text-slate-300 transition hover:bg-black/5 dark:hover:bg-white/5 shrink-0 cursor-pointer"
                 aria-label="Attach file"
               >
-                <Paperclip size={18} />
+                <Paperclip size={19} />
               </button>
 
               <button
                 type="button"
                 onClick={recording ? stopRecording : startRecording}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition shrink-0 ${
-                  recording ? "bg-[#B52B2B] text-white" : "text-[#667089] hover:bg-[#EEF2F8]"
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition shrink-0 cursor-pointer ${
+                  recording ? "bg-[#B52B2B] text-white" : "text-[#54656f] dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5"
                 }`}
                 aria-label="Voice note"
               >
-                {recording ? <Square size={16} /> : <Mic size={18} />}
+                {recording ? <Square size={16} /> : <Mic size={19} />}
               </button>
 
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={recording ? `Recording ${recordingSeconds}s...` : "Type a message..."}
-                className="min-w-0 flex-1 bg-transparent text-[15px] text-[#172033] outline-none placeholder:text-[#9AA3B8]"
+                className="min-w-0 flex-1 bg-transparent text-sm text-[#111b21] dark:text-slate-100 outline-none placeholder:text-[#8696a0] dark:placeholder:text-slate-400"
                 disabled={recording}
               />
 
               <button
                 type="submit"
                 disabled={sending || recording || (!draft.trim() && !recording)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#B52B2B] text-white transition hover:bg-[#972222] disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#00a884] text-white transition hover:bg-[#008f70] disabled:cursor-not-allowed disabled:opacity-50 shrink-0 cursor-pointer"
                 aria-label="Send message"
               >
-                <Send size={18} />
+                <Send size={16} />
               </button>
             </div>
           </form>
@@ -1262,12 +1304,15 @@ export default function ConnectionsPage() {
   }, [groups, search, tab]);
 
   const pageCountLabel = useMemo(() => {
-    const count = summary[tab] || 0;
+    const count = summary[tab] || (tab === "pending" ? summary.pending_requests : 0) || 0;
     if (tab === "active") {
       return `You have ${count} active connection${count === 1 ? "" : "s"}`;
     }
+    if (tab === "online") {
+      return `You have ${count} online connection${count === 1 ? "" : "s"}`;
+    }
     if (tab === "pending") {
-      return `You have ${count} pending connection${count === 1 ? "" : "s"}`;
+      return `You have ${count} pending connection request${count === 1 ? "" : "s"}`;
     }
     return `You have ${count} rejected connection${count === 1 ? "" : "s"}`;
   }, [summary, tab]);
@@ -1333,22 +1378,25 @@ export default function ConnectionsPage() {
     <>
       <Sidebar />
 
-      <div className="min-h-screen bg-[linear-gradient(180deg,#F7F9FD_0%,#EEF3F8_100%)] lg:ml-75">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#F7F9FD_0%,#EEF3F8_100%)] lg:ml-75 pt-16 lg:pt-0">
         <div className="sticky top-0 z-20 border-b border-[#E4E9F1] bg-white/95 backdrop-blur">
-          <div className="flex flex-col gap-5 px-6 py-5 xl:flex-row xl:items-center xl:justify-between xl:px-10">
-            <h1 className="text-[30px] font-bold tracking-tight text-[#111827]">
+          <div className="flex flex-col gap-3 px-4 py-4 sm:px-6 sm:py-5 xl:flex-row xl:items-center xl:justify-between xl:px-10">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
               Connections
             </h1>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none pb-1 w-full xl:w-auto">
               <TabButton active={tab === "active"} onClick={() => setTab("active")}>
-                Active
+                Active ({summary.active || 0})
+              </TabButton>
+              <TabButton active={tab === "online"} onClick={() => setTab("online")}>
+                Online ({summary.online || 0})
               </TabButton>
               <TabButton active={tab === "pending"} onClick={() => setTab("pending")}>
-                Pending
+                Pending ({summary.pending_requests || summary.pending || 0})
               </TabButton>
               <TabButton active={tab === "rejected"} onClick={() => setTab("rejected")}>
-                Rejected
+                Rejected ({summary.rejected || 0})
               </TabButton>
             </div>
           </div>
@@ -1359,11 +1407,12 @@ export default function ConnectionsPage() {
             currentUserId={user?._id}
             currentUserName={user?.name}
             chatConnection={chatConnection}
+            allConnections={groups.active || []}
             onClose={closeChat}
             onSchedule={scheduleCall}
           />
         ) : (
-          <div className="grid gap-6 px-6 py-8 xl:grid-cols-[minmax(0,1fr)_446px] xl:px-10">
+          <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-8 xl:grid-cols-[minmax(0,1fr)_380px] xl:px-10 max-w-full overflow-hidden">
             <main className="space-y-6">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <p className="text-[22px] font-medium tracking-tight text-[#12213D]">

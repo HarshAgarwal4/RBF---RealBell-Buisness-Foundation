@@ -61,20 +61,20 @@ function emptyComposer() {
   };
 }
 
-function StatCard({ label, value, icon, tone = "bg-white" }) {
+function StatCard({ label, value, icon, tone = "bg-white dark:bg-slate-800" }) {
   const Icon = icon;
 
   return (
-    <div className={`rounded-[22px] border border-[#E7ECF5] ${tone} px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]`}>
+    <div className={`rounded-[22px] border border-[#E7ECF5] dark:border-slate-700 ${tone} px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]`}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#93A0B8]">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#93A0B8] dark:text-slate-400">
             <Icon size={15} />
             <span>{label}</span>
           </div>
-          <div className="mt-2 text-3xl font-bold text-[#152033]">{value}</div>
+          <div className="mt-2 text-3xl font-bold text-[#152033] dark:text-white">{value}</div>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4F6FB] text-[#0F3D4A]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4F6FB] dark:bg-slate-700 text-[#0F3D4A] dark:text-slate-100">
           <Icon size={18} />
         </div>
       </div>
@@ -89,8 +89,8 @@ function FilterChip({ active, children, onClick }) {
       onClick={onClick}
       className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
         active
-          ? "bg-[#0F3D4A] text-white shadow-sm"
-          : "bg-white text-[#536075] hover:bg-[#f3f6fb]"
+          ? "bg-[#0F3D4A] dark:bg-slate-700 text-white shadow-sm"
+          : "bg-white dark:bg-slate-800 text-[#536075] dark:text-slate-300 hover:bg-[#f3f6fb] dark:hover:bg-slate-700"
       }`}
     >
       {children}
@@ -114,15 +114,15 @@ function ComposerCard({
   const canSubmit = value.post_type === "poll" ? canPostPoll : canPostText || !!value.imageFile;
 
   return (
-    <div className="rounded-[28px] border border-[#E7ECF5] bg-white p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[28px] border border-[#E7ECF5] dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#8E1B2E]">
             Start a conversation
           </p>
-          <h2 className="mt-2 text-2xl font-bold text-[#142036]">Community Post</h2>
+          <h2 className="mt-2 text-2xl font-bold text-[#142036] dark:text-white">Community Post</h2>
         </div>
-        <div className="flex rounded-full bg-[#F4F6FB] p-1">
+        <div className="flex rounded-full bg-[#F4F6FB] dark:bg-slate-900 p-1">
           <FilterChip
             active={value.post_type === "text"}
             onClick={() => setValue((prev) => ({ ...prev, post_type: "text" }))}
@@ -144,7 +144,7 @@ function ComposerCard({
           setValue((prev) => ({ ...prev, content: event.target.value }))
         }
         placeholder="Share something useful with the community..."
-        className="mt-5 min-h-[150px] w-full resize-none rounded-[24px] border border-[#E6EBF4] bg-[#FBFCFF] px-5 py-4 text-[16px] leading-7 text-[#1D2940] outline-none placeholder:text-[#A6AEC0] focus:ring-2 focus:ring-[#0F3D4A]/10"
+        className="mt-5 min-h-[150px] w-full resize-none rounded-[24px] border border-[#E6EBF4] dark:border-slate-700 bg-[#FBFCFF] dark:bg-slate-900 px-5 py-4 text-[16px] leading-7 text-[#1D2940] dark:text-slate-100 outline-none placeholder:text-[#A6AEC0] dark:placeholder:text-slate-400 focus:ring-2 focus:ring-[#0F3D4A]/10"
       />
 
       {value.imagePreview ? (
@@ -364,13 +364,13 @@ function PostCard({
           </div>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[20px] border border-[#EEF2F8] bg-[#FBFCFF] px-4 py-4">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#3B4660] shadow-sm">
-            <MessageCircle size={16} className="text-[#A4ACBE]" />
+        <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-[#EEF2F8] bg-[#FBFCFF] p-3 sm:p-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-[#3B4660] shadow-xs">
+            <MessageCircle size={14} className="text-[#A4ACBE]" />
             {post.comments} comments
           </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#3B4660] shadow-sm">
-            <ThumbsUp size={16} className="text-[#A4ACBE]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-[#3B4660] shadow-xs">
+            <ThumbsUp size={14} className="text-[#A4ACBE]" />
             {post.reactions} reactions
           </span>
 
@@ -378,13 +378,13 @@ function PostCard({
             type="button"
             onClick={() => onReaction(post._id, "like")}
             disabled={reactionBusy === post._id}
-            className={`ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition cursor-pointer ${
               post.user_reaction_kind === "like"
                 ? "bg-[#F0F8F9] text-[#0F3D4A]"
                 : "bg-white text-[#667089] hover:bg-[#F4F6FB]"
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            <ThumbsUp size={16} />
+            <ThumbsUp size={14} />
             {post.user_reaction_kind === "like" ? "Liked" : "Like"}
           </button>
 
@@ -392,64 +392,69 @@ function PostCard({
             type="button"
             onClick={() => onReaction(post._id, "support")}
             disabled={reactionBusy === post._id}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition cursor-pointer ${
               post.user_reaction_kind === "support"
                 ? "bg-[#FFF4EA] text-[#9B4A13]"
                 : "bg-white text-[#667089] hover:bg-[#F4F6FB]"
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            <ThumbsUp size={16} />
+            <ThumbsUp size={14} />
             {post.user_reaction_kind === "support" ? "Supporting" : "Support"}
           </button>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-[#EEF2F8] bg-[#FBFCFF] px-4 py-4">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#8A95AB]">
-            <Users size={16} />
+        <div className="mt-4 rounded-2xl border border-[#EEF2F8] bg-[#FBFCFF] p-3 sm:p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#8A95AB]">
+            <Users size={14} />
             Comments
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2.5">
             {(post.comment_items || []).length > 0 ? (
               post.comment_items.map((comment, index) => (
                 <div
                   key={`${post._id}-comment-${index}`}
-                  className="rounded-[18px] border border-[#E6EBF4] bg-white px-4 py-3"
+                  className="rounded-xl border border-[#E6EBF4] bg-white p-3"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semibold text-[#1C2740]">
+                      <p className="text-xs sm:text-sm font-semibold text-[#1C2740]">
                         {comment?.author?.company_name || comment?.author?.name || "Community member"}
                       </p>
-                      <p className="text-xs text-[#9AA2B6]">{timeAgo(comment.createdAt)}</p>
+                      <p className="text-[11px] text-[#9AA2B6]">{timeAgo(comment.createdAt)}</p>
                     </div>
                   </div>
-                  <p className="mt-2 text-[15px] leading-7 text-[#40506A]">{comment.text}</p>
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#40506A] break-words">{comment.text}</p>
                 </div>
               ))
             ) : (
-              <div className="rounded-[18px] border border-dashed border-[#E3E8F2] bg-white px-4 py-4 text-sm text-[#94A0B6]">
+              <div className="rounded-xl border border-dashed border-[#E3E8F2] bg-white p-3 text-xs sm:text-sm text-[#94A0B6]">
                 No comments yet. Be the first to respond.
               </div>
             )}
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onCommentSubmit(post._id);
+            }}
+            className="mt-3 flex gap-2 sm:gap-3"
+          >
             <input
               value={commentDraft}
               onChange={(event) => onCommentChange(post._id, event.target.value)}
               placeholder="Write a comment..."
-              className="h-12 flex-1 rounded-2xl border border-[#E3E8F2] bg-white px-4 text-[15px] outline-none focus:ring-2 focus:ring-[#0F3D4A]/10"
+              className="h-10 sm:h-11 flex-1 min-w-0 rounded-xl border border-[#E3E8F2] bg-white px-3 sm:px-4 text-xs sm:text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0F3D4A]/10"
             />
             <button
-              type="button"
-              onClick={() => onCommentSubmit(post._id)}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#8E1B2E] px-5 text-[15px] font-semibold text-white transition hover:bg-[#741728]"
+              type="submit"
+              className="inline-flex h-10 sm:h-11 items-center justify-center gap-1.5 rounded-xl bg-[#8E1B2E] px-4 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#741728] shrink-0 cursor-pointer"
             >
-              <Send size={16} />
+              <Send size={15} />
               Post
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </article>
@@ -674,14 +679,14 @@ export default function CommunityWall() {
     <>
       <Sidebar />
 
-      <div className="ml-75 min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,61,74,0.07),_transparent_25%),linear-gradient(180deg,_#F6F8FC_0%,_#EEF3F8_100%)]">
+      <div className="ml-0 lg:ml-75 pt-16 lg:pt-0 min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,61,74,0.07),_transparent_25%),linear-gradient(180deg,_#F6F8FC_0%,_#EEF3F8_100%)]">
         <div className="sticky top-0 z-20 border-b border-[#E4E9F1] bg-white/95 backdrop-blur">
-          <div className="flex items-center justify-between px-8 py-5 xl:px-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 xl:px-10">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#8E1B2E]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8E1B2E]">
                 Community Wall
               </p>
-              <h1 className="mt-2 text-[30px] font-black tracking-tight text-[#132034]">
+              <h1 className="mt-1 text-xl sm:text-2xl font-extrabold tracking-tight text-[#132034]">
                 Feed, polls, and conversations
               </h1>
             </div>
@@ -690,29 +695,29 @@ export default function CommunityWall() {
               type="button"
               onClick={() => setShowComposer((prev) => !prev)}
               aria-expanded={showComposer}
-              className="inline-flex h-14 items-center gap-2 rounded-2xl bg-[#0F3D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#0b313b]"
+              className="inline-flex h-10 sm:h-11 items-center justify-center gap-2 rounded-xl bg-[#0F3D4A] px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-[#0b313b] cursor-pointer self-start sm:self-auto shrink-0"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               {showComposer ? "Close form" : "Create post"}
             </button>
           </div>
         </div>
 
-        <div className="grid gap-6 px-8 py-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:px-10">
-          <main className="space-y-6">
-            <div className="rounded-[28px] border border-[#E5EAF3] bg-white p-5 shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:px-10 max-w-full overflow-hidden">
+          <main className="space-y-6 min-w-0">
+            <div className="rounded-2xl sm:rounded-[28px] border border-[#E5EAF3] bg-white p-4 sm:p-5 shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#8A95AB]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8A95AB]">
                     Feed
                   </p>
-                  <h2 className="mt-2 text-2xl font-bold text-[#152033]">All community posts</h2>
-                  <p className="mt-3 text-sm leading-7 text-[#6E7B92]">
+                  <h2 className="mt-1 text-lg sm:text-xl font-bold text-[#152033]">All community posts</h2>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#6E7B92]">
                     Browse every update, poll, and conversation from the community in one place.
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto flex-nowrap">
                   <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
                     All
                   </FilterChip>

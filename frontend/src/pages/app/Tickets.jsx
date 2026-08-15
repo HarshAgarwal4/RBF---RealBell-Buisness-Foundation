@@ -181,7 +181,7 @@ export default function Tickets() {
   return (
     <>
       <Sidebar />
-      <div className="ml-75 min-h-screen bg-[#F8FAFC] p-6 md:p-8 font-sans antialiased text-gray-800 max-w-[1400px]">
+      <div className="ml-0 lg:ml-75 pt-20 lg:pt-8 min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans antialiased text-gray-800 max-w-[1400px]">
         <header className="flex items-center justify-between pb-6 mb-6 border-b border-gray-200/80">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tickets</h1>

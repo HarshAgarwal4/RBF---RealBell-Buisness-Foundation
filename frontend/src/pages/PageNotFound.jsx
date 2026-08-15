@@ -10,7 +10,7 @@ const PageNotFound = () => {
     <>
       <Sidebar />
 
-      <div className="ml-75 flex min-h-screen items-center justify-center bg-[#f8f8f8] px-6 py-10">
+      <div className="ml-0 lg:ml-75 pt-16 lg:pt-0 flex min-h-screen items-center justify-center bg-[#f8f8f8] px-6 py-10">
 
         <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
 

@@ -59,7 +59,7 @@ export default function Events() {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -156,55 +156,21 @@ export default function Events() {
       <Sidebar />
 
       <main
+        className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen"
         style={{
-          marginLeft: 300,
-          flex: 1,
           fontFamily: "'Inter', system-ui, sans-serif",
-          minHeight: "100vh",
-          paddingBottom: 40,
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            background: "#fff",
-            borderBottom: `1px solid ${COLORS.border}`,
-            padding: "24px 36px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-        >
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1
-              style={{
-                fontSize: 24,
-                fontWeight: 800,
-                color: COLORS.ink,
-                margin: 0,
-                letterSpacing: -0.3,
-              }}
-            >
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
               Events
             </h1>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "#F7F8FA",
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: 10,
-              padding: "7px 14px",
-              width: 280,
-            }}
-          >
-            <Search size={15} color={COLORS.muted} />
+          <div className="flex items-center gap-2.5 bg-[#F7F8FA] border border-gray-200 rounded-xl px-3.5 py-2 w-full sm:w-72">
+            <Search size={15} color={COLORS.muted} className="shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -222,15 +188,8 @@ export default function Events() {
           </div>
         </div>
 
-        {/* Main 2-Column Content Layout matching screenshot */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 340px",
-            gap: 24,
-            padding: "32px 36px",
-          }}
-        >
+        {/* Main 2-Column Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 px-4 py-6 sm:px-6 lg:px-8 max-w-full overflow-hidden">
           {/* LEFT COLUMN: Calendar Card */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div
@@ -242,19 +201,11 @@ export default function Events() {
                 boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
               }}
             >
-              {/* Calendar Header Controls matching screenshot design */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 24,
-                }}
-              >
+              {/* Calendar Header Controls */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div
+                  className="text-lg sm:text-xl font-extrabold"
                   style={{
-                    fontSize: 20,
-                    fontWeight: 800,
                     color: COLORS.primary,
                     fontFamily: "'Playfair Display', Georgia, serif",
                   }}
@@ -262,65 +213,22 @@ export default function Events() {
                   {monthNames[month]} {year}
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    background: "#EBECEF",
-                    borderRadius: 10,
-                    padding: 3,
-                  }}
-                >
+                <div className="flex items-center gap-1 bg-[#EBECEF] rounded-xl p-1 self-start sm:self-auto">
                   <button
                     onClick={prevMonth}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      padding: "6px 14px",
-                      borderRadius: 8,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "#4A4A5A",
-                      cursor: "pointer",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                    }}
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider hover:bg-white/50 transition cursor-pointer"
                   >
-                    PREVIOUS
+                    PREV
                   </button>
                   <button
                     onClick={goToday}
-                    style={{
-                      border: "none",
-                      background: "#fff",
-                      padding: "6px 16px",
-                      borderRadius: 8,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "#4A4A5A",
-                      cursor: "pointer",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    }}
+                    className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider bg-white shadow-xs transition cursor-pointer"
                   >
                     TODAY
                   </button>
                   <button
                     onClick={nextMonth}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      padding: "6px 14px",
-                      borderRadius: 8,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "#4A4A5A",
-                      cursor: "pointer",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                    }}
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider hover:bg-white/50 transition cursor-pointer"
                   >
                     NEXT
                   </button>
@@ -328,19 +236,9 @@ export default function Events() {
               </div>
 
               {/* Day Headers */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, 1fr)",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  color: COLORS.ink,
-                  marginBottom: 12,
-                }}
-              >
+              <div className="grid grid-cols-7 text-center font-bold text-[10px] sm:text-xs md:text-sm text-gray-700 mb-2">
                 {daysOfWeek.map((day) => (
-                  <div key={day} style={{ padding: "8px 0" }}>
+                  <div key={day} className="py-1.5">
                     {day}
                   </div>
                 ))}
@@ -351,7 +249,6 @@ export default function Events() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(7, 1fr)",
-                  gridAutoRows: "minmax(64px, auto)",
                   borderTop: `1px solid ${COLORS.border}`,
                   borderLeft: `1px solid ${COLORS.border}`,
                 }}
@@ -377,10 +274,10 @@ export default function Events() {
                           setSelectedDate(isSelected ? null : cell);
                         }
                       }}
+                      className="p-1 sm:p-2 min-h-[48px] sm:min-h-[64px] relative transition-colors cursor-pointer"
                       style={{
                         borderRight: `1px solid ${COLORS.border}`,
                         borderBottom: `1px solid ${COLORS.border}`,
-                        padding: "8px 6px",
                         background: isSelected
                           ? `${COLORS.primary}12`
                           : isToday
@@ -389,54 +286,53 @@ export default function Events() {
                           ? "#fff"
                           : "#FAFAFA",
                         cursor: dayEvents.length > 0 ? "pointer" : "default",
-                        transition: "background 0.15s",
-                        position: "relative",
-                        minHeight: 64,
                       }}
                     >
                       <div
+                        className="text-xs sm:text-sm font-semibold mb-1 text-right"
                         style={{
-                          fontSize: 13,
-                          fontWeight: isToday ? 800 : cell.isCurrentMonth ? 500 : 400,
                           color: !cell.isCurrentMonth
-                            ? "#C5C7D0"
+                            ? "#D1D5DB"
                             : isToday
                             ? COLORS.primary
-                            : COLORS.ink,
-                          textAlign: "right",
-                          marginBottom: 4,
+                            : "#1F2937",
                         }}
                       >
                         {cell.day}
                       </div>
 
                       {/* Event Badges on Calendar Day */}
-                      {dayEvents.map((evt) => (
-                        <div
-                          key={evt._id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/events/${evt._id}`);
-                          }}
-                          title={evt.title}
-                          style={{
-                            background: evt.event_type === "paid" ? COLORS.primary : "#2E7D32",
-                            color: "#fff",
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "3px 6px",
-                            borderRadius: 6,
-                            marginBottom: 3,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            cursor: "pointer",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
-                          }}
-                        >
-                          {evt.title}
-                        </div>
-                      ))}
+                      <div className="flex flex-col sm:block gap-1 mt-0.5">
+                        {dayEvents.map((evt) => (
+                          <div
+                            key={evt._id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/events/${evt._id}`);
+                            }}
+                            title={evt.title}
+                            className="cursor-pointer"
+                          >
+                            {/* Mobile dot indicator */}
+                            <div
+                              className="block sm:hidden w-2 h-2 rounded-full mx-auto my-0.5"
+                              style={{
+                                background: evt.event_type === "paid" ? COLORS.primary : "#2E7D32",
+                              }}
+                            />
+                            {/* Desktop/Tablet text badge */}
+                            <div
+                              className="hidden sm:block text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-md truncate shadow-xs mb-1"
+                              style={{
+                                background: evt.event_type === "paid" ? COLORS.primary : "#2E7D32",
+                                color: "#fff",
+                              }}
+                            >
+                              {evt.title}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}

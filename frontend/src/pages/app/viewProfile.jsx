@@ -48,7 +48,7 @@ function renderPrimitive(value) {
         return value.toLocaleString();
     }
 
-    return <span className="wrap-break-words text-slate-800">{String(value)}</span>;
+    return <span className="break-words break-all text-slate-800 leading-relaxed">{String(value)}</span>;
 }
 
 function DynamicNode({ label, value, depth = 0 }) {
@@ -342,25 +342,25 @@ export default function ViewProfile() {
     return (
         <>
             <Sidebar />
-            <div className="min-h-screen bg-[#f5f7fb] lg:ml-75">
+            <div className="min-h-screen bg-[#f5f7fb] lg:ml-75 pt-16 lg:pt-0">
                 <div className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
-                    <div className="flex flex-col gap-4 px-6 py-5 xl:flex-row xl:items-center xl:justify-between xl:px-10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 xl:px-10">
                         <Link
                             to={`/connect/${type}`}
-                            className="inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                            className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                         >
-                            <ArrowLeft size={16} />
+                            <ArrowLeft size={15} />
                             Back to {type}
                         </Link>
 
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
                             <button
                                 type="button"
                                 onClick={handleSave}
                                 disabled={saving || !profile}
-                                className="inline-flex h-14 items-center gap-2 rounded-2xl border border-[#8E1B2E] bg-white px-5 font-semibold text-[#8E1B2E] transition hover:bg-[#fcf5f6] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-xl border border-[#8E1B2E] bg-white px-3.5 text-xs sm:text-sm font-semibold text-[#8E1B2E] transition hover:bg-[#fcf5f6] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                             >
-                                <Bookmark size={18} />
+                                <Bookmark size={16} />
                                 {saved ? "Saved" : saving ? "Saving..." : "Save"}
                             </button>
 
@@ -368,9 +368,9 @@ export default function ViewProfile() {
                                 type="button"
                                 onClick={handleConnect}
                                 disabled={connecting || !profile}
-                                className="inline-flex h-14 items-center gap-2 rounded-2xl bg-[#8E1B2E] px-6 font-semibold text-white transition hover:bg-[#741728] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-xl bg-[#8E1B2E] px-4 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#741728] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                             >
-                                <ConnectionIcon size={18} />
+                                <ConnectionIcon size={16} />
                                 {connecting
                                     ? "Please wait..."
                                     : connectionState.label}

@@ -122,28 +122,29 @@ export default function GlossaryPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
-      <main style={{ marginLeft: 300, flex: 1, padding: "36px 40px", minHeight: "100vh" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1a1a2e" }}>Glossary</h1>
-          <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
-            <input placeholder="Search for a word" value={search} onChange={(e) => { setSearch(e.target.value); setSelectedLetter(null); }} style={{ ...inputStyle, paddingLeft: 36, width: "100%", boxSizing: "border-box" }} />
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#1a1a2e" }}>Glossary</h1>
+            <div className="relative w-full sm:w-64">
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <input placeholder="Search for a word..." value={search} onChange={(e) => { setSearch(e.target.value); setSelectedLetter(null); }} style={{ ...inputStyle, paddingLeft: 36, width: "100%", boxSizing: "border-box" }} />
+            </div>
           </div>
-          <div style={{ flex: 1 }} />
           {isAdmin && (
-            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
               <Plus size={16} /> Add Term
             </button>
           )}
         </div>
 
         {/* Alphabet Bar */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 28 }}>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-6">
           {ALPHABET.map((l) => {
             const hasEntries = availableLetters.includes(l);
             const active = selectedLetter === l;
             return (
-              <button key={l} onClick={() => setSelectedLetter(active ? null : l)} disabled={!hasEntries} style={{ width: 34, height: 34, borderRadius: 8, border: "none", background: active ? COLORS.primary : hasEntries ? "#fff" : "#f3f4f6", color: active ? "#fff" : hasEntries ? "#1a1a2e" : "#d1d5db", fontWeight: active ? 700 : 600, fontSize: 13, cursor: hasEntries ? "pointer" : "default", boxShadow: hasEntries && !active ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
+              <button key={l} onClick={() => setSelectedLetter(active ? null : l)} disabled={!hasEntries} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: active ? COLORS.primary : hasEntries ? "#fff" : "#f3f4f6", color: active ? "#fff" : hasEntries ? "#1a1a2e" : "#d1d5db", fontWeight: active ? 700 : 600, fontSize: 12, cursor: hasEntries ? "pointer" : "default", boxShadow: hasEntries && !active ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
                 {l}
               </button>
             );
@@ -151,11 +152,11 @@ export default function GlossaryPage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 80, color: "#aaa" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
         ) : availableLetters.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 80, color: "#bbb" }}>No terms found.{isAdmin && " Click 'Add Term' to get started."}</div>
+          <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No terms found.{isAdmin && " Click 'Add Term' to get started."}</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {availableLetters.map((letter) => (
               <div key={letter} style={{ background: "#fff", borderRadius: 14, padding: "20px 22px", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
                 <h2 style={{ margin: "0 0 14px", fontSize: 22, fontWeight: 800, color: "#1a1a2e", borderBottom: "2px solid #F0E8E8", paddingBottom: 8 }}>{letter}</h2>

@@ -211,46 +211,46 @@ export default function Meetings() {
     return (
         <>
             <Sidebar />
-            <div className="ml-75 min-h-screen bg-[#f5f7fb] p-8">
+            <div className="ml-0 lg:ml-75 pt-20 lg:pt-6 px-3 sm:px-6 lg:px-8 pb-10 min-h-screen bg-[#f5f7fb] max-w-full overflow-hidden">
 
                 {/* HEADER */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Meetings</h1>
-                        <p className="mt-1 text-gray-500">Manage and schedule meetings.</p>
+                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">Meetings</h1>
+                        <p className="mt-0.5 text-xs sm:text-sm text-gray-500">Manage and schedule meetings.</p>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
                             onClick={() => setShowScheduleModal(true)}
-                            className="flex items-center gap-2 rounded-xl bg-[#b03052] px-5 py-3 font-semibold text-white hover:bg-[#96263f]"
+                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-[#b03052] px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-[#96263f] cursor-pointer"
                         >
-                            <Plus size={18} />
+                            <Plus size={16} />
                             Schedule Meeting
                         </button>
 
                         <button
                             onClick={() => setShowAvailabilityModal(true)}
-                            className="flex items-center gap-2 rounded-xl bg-[#0b1a3a] px-5 py-3 font-semibold text-white hover:bg-[#132b5c]"
+                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-[#0b1a3a] px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-[#132b5c] cursor-pointer"
                         >
-                            <Pencil size={16} />
+                            <Pencil size={15} />
                             Edit Availability
                         </button>
                     </div>
                 </div>
 
-                <div className="mt-8 grid grid-cols-12 gap-6">
+                <div className="mt-6 grid grid-cols-12 gap-4 sm:gap-6">
 
                     {/* LEFT */}
-                    <div className="col-span-12 rounded-3xl bg-white p-6 shadow-sm lg:col-span-8">
+                    <div className="col-span-12 rounded-3xl bg-white p-4 sm:p-6 shadow-sm lg:col-span-8">
 
                         <div className="flex items-center justify-between">
-                            <div className="flex gap-3">
+                            <div className="flex gap-2">
                                 <button
-                                    className={`rounded-xl px-5 py-2 font-medium transition ${
+                                    className={`rounded-xl px-3.5 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
                                         activeTab === "meetings"
                                             ? "bg-[#b03052] text-white"
-                                            : "bg-gray-100 text-gray-600"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                     }`}
                                     onClick={() => setActiveTab("meetings")}
                                 >
@@ -258,10 +258,10 @@ export default function Meetings() {
                                 </button>
 
                                 <button
-                                    className={`rounded-xl px-5 py-2 font-medium transition ${
+                                    className={`rounded-xl px-3.5 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
                                         activeTab === "notes"
                                             ? "bg-[#b03052] text-white"
-                                            : "bg-gray-100 text-gray-600"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                     }`}
                                     onClick={() => setActiveTab("notes")}
                                 >
@@ -271,25 +271,25 @@ export default function Meetings() {
                         </div>
 
                         {/* Calendar nav */}
-                        <div className="mt-6 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-[#b03052]">{monthName}</h2>
+                        <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <h2 className="text-lg sm:text-xl font-bold text-[#b03052]">{monthName}</h2>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={() => goToMonth(-1)}
-                                    className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-100"
+                                    className="flex-1 sm:flex-initial rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                 >
                                     Previous
                                 </button>
                                 <button
                                     onClick={goToToday}
-                                    className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-100"
+                                    className="flex-1 sm:flex-initial rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                 >
                                     Today
                                 </button>
                                 <button
                                     onClick={() => goToMonth(1)}
-                                    className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-100"
+                                    className="flex-1 sm:flex-initial rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                 >
                                     Next
                                 </button>
@@ -597,18 +597,20 @@ export default function Meetings() {
                 )}
 
                 {showAvailabilityModal && (
-                    <EditAvailabilityModal onClose={() => setShowAvailabilityModal(false)} />
-                )}
-            </div>
-        </>
-    );
-}
+                                                    <EditAvailabilityModal onClose={() => setShowAvailabilityModal(false)} />
+                                                )}
+                                            </div>
+                                        </>
+                                    );
+                                }
 
-/* ---------------------------- schedule modal ---------------------------- */
+/* -------------------------- schedule meeting modal -------------------------- */
 
-export function ScheduleMeetingModal({ connections, selectedConnection, onClose, onScheduled }) {
+export function ScheduleMeetingModal({ onClose, targetConnection = null }) {
+    const { user } = useStore();
+    const [connections, setConnections] = useState([]);
     const [form, setForm] = useState({
-        attendee: selectedConnection?._id || "",
+        with: targetConnection?._id || "",
         title: "",
         duration: 30,
         agenda: "",
@@ -618,14 +620,25 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
         meetingTool: "In-built",
         meetingUrl: "",
     });
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        if (selectedConnection?._id) {
-            setForm((prev) => ({ ...prev, attendee: selectedConnection._id }));
+        if (!targetConnection) {
+            axios.get("/connect/connections").then((res) => {
+                if (res.data?.status === 1) {
+                    const active = res.data.connections?.active || [];
+                    setConnections(
+                        active.map((c) => ({
+                            _id: c.profile?._id || c._id,
+                            name: c.profile?.name || c.profile?.company_name || "Connection",
+                            company_name: c.profile?.company_name,
+                        }))
+                    );
+                }
+            });
         }
-    }, [selectedConnection]);
+    }, [targetConnection]);
 
     const handleChange = (e) => {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -635,68 +648,74 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
         e.preventDefault();
         setError("");
 
-        if (!form.attendee || !form.title || !form.agenda || !form.date || !form.startTime) {
+        if (!form.with || !form.title || !form.agenda || !form.date || !form.startTime) {
             setError("Please fill all required fields.");
-            return;
-        }
-
-        if (form.mode === "Online" && form.meetingTool === "External" && !form.meetingUrl) {
-            setError("Please provide the external meeting URL.");
             return;
         }
 
         try {
             setLoading(true);
-            await axios.post("/meetings", form);
-            onScheduled && onScheduled();
+            const payload = {
+                with: form.with,
+                title: form.title,
+                duration: Number(form.duration),
+                agenda: form.agenda,
+                date: form.date,
+                startTime: form.startTime,
+                mode: form.mode,
+                meetingTool: form.mode === "Online" ? form.meetingTool : undefined,
+                meetingUrl:
+                    form.mode === "Online" && form.meetingTool === "External"
+                        ? form.meetingUrl
+                        : undefined,
+            };
+
+            await axios.post("/meetings", payload);
             onClose();
         } catch (err) {
-            setError(err?.response?.data?.message || "Failed to schedule meeting.");
+            setError(err?.response?.data?.message || err?.response?.data?.msg || "Failed to schedule meeting.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-8">
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">Schedule Meeting</h2>
-                    <button onClick={onClose} type="button">
-                        <X className="text-gray-500 hover:text-black" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+            <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-7 shadow-2xl border border-gray-100 dark:border-slate-700 text-gray-900 dark:text-slate-100">
+                <div className="mb-4 sm:mb-6 flex items-center justify-between">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Schedule a Meeting</h2>
+                    <button onClick={onClose} type="button" className="p-1 text-gray-500 hover:text-black dark:hover:text-white cursor-pointer">
+                        <X size={20} />
                     </button>
                 </div>
 
                 {error && (
-                    <div className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                    <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-2 text-xs sm:text-sm text-red-600 dark:text-red-300">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                            Who would you prefer to schedule a meeting with?
+                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
+                            Participant <span className="text-red-500">*</span>
                         </label>
-                        {selectedConnection ? (
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                                <p className="font-medium text-gray-900">
-                                    {selectedConnection.name}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    {selectedConnection.company_name ? selectedConnection.company_name : "Selected connection"}
-                                </p>
-                                <input type="hidden" name="attendee" value={form.attendee} />
-                            </div>
+                        {targetConnection ? (
+                            <input
+                                type="text"
+                                readOnly
+                                value={targetConnection.name || targetConnection.company_name || "Connection"}
+                                className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700"
+                            />
                         ) : (
                             <select
-                                name="attendee"
-                                value={form.attendee}
+                                name="with"
+                                value={form.with}
                                 onChange={handleChange}
                                 required
-                                className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                             >
-                                <option value="">Select a name</option>
+                                <option value="">Select Connection</option>
                                 {connections.map((c) => (
                                     <option key={c._id} value={c._id}>
                                         {c.name} {c.company_name ? `- ${c.company_name}` : ""}
@@ -706,9 +725,9 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                                 Meeting Title <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -716,12 +735,12 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                 value={form.title}
                                 onChange={handleChange}
                                 required
-                                className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                                 Duration (mins) <span className="text-red-500">*</span>
                             </label>
                             <div className="flex gap-2">
@@ -732,8 +751,8 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                         onClick={() => setForm((prev) => ({ ...prev, duration: d }))}
                                         className={`flex-1 rounded-lg py-3 text-sm font-medium transition ${
                                             form.duration === d
-                                                ? "bg-black text-white"
-                                                : "bg-gray-100 text-gray-700"
+                                                ? "bg-black dark:bg-slate-900 text-white"
+                                                : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200"
                                         }`}
                                     >
                                         {d}
@@ -743,9 +762,9 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                                 Agenda <span className="text-red-500">*</span>
                             </label>
                             <textarea
@@ -754,13 +773,13 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                 onChange={handleChange}
                                 required
                                 rows={5}
-                                className="w-full resize-none rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                className="w-full resize-none rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                             />
                         </div>
 
                         <div className="space-y-5">
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                                     Date <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -769,12 +788,12 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                     value={form.date}
                                     onChange={handleChange}
                                     required
-                                    className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                    className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                                     Start Time <span className="text-red-500">*</span>
                                 </label>
                                 <select
@@ -782,7 +801,7 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                     value={form.startTime}
                                     onChange={handleChange}
                                     required
-                                    className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                    className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                                 >
                                     <option value="">Select Time</option>
                                     {TIME_SLOTS.map((t) => (
@@ -796,7 +815,7 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                             Mode of Meeting <span className="text-red-500">*</span>
                         </label>
                         <div className="mb-3 flex gap-2">
@@ -806,7 +825,7 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                     key={m}
                                     onClick={() => setForm((prev) => ({ ...prev, mode: m }))}
                                     className={`flex-1 rounded-lg py-3 text-sm font-medium transition ${
-                                        form.mode === m ? "bg-black text-white" : "bg-gray-100 text-gray-700"
+                                        form.mode === m ? "bg-black dark:bg-slate-900 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200"
                                     }`}
                                 >
                                     {m}
@@ -825,7 +844,7 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                         onChange={handleChange}
                                         className="accent-black"
                                     />
-                                    <span className="text-sm text-gray-700">In-built Meeting Tool</span>
+                                    <span className="text-sm text-gray-700 dark:text-slate-200">In-built Meeting Tool</span>
                                 </label>
 
                                 <label className="flex cursor-pointer items-center gap-2">
@@ -837,7 +856,7 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                         onChange={handleChange}
                                         className="accent-black"
                                     />
-                                    <span className="text-sm text-gray-700">External Meeting URL</span>
+                                    <span className="text-sm text-gray-700 dark:text-slate-200">External Meeting URL</span>
                                 </label>
 
                                 {form.meetingTool === "External" && (
@@ -848,18 +867,18 @@ export function ScheduleMeetingModal({ connections, selectedConnection, onClose,
                                         onChange={handleChange}
                                         placeholder="https://..."
                                         required
-                                        className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                        className="w-full rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 outline-none text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-black"
                                     />
                                 )}
                             </div>
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-3">
+                    <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                            className="rounded-lg border border-gray-200 dark:border-slate-700 px-6 py-3 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                         >
                             Cancel
                         </button>
@@ -917,29 +936,29 @@ function EditAvailabilityModal({ onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-lg rounded-2xl bg-white p-8">
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">Edit Availability</h2>
-                    <button onClick={onClose} type="button">
-                        <X className="text-gray-500 hover:text-black" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+            <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-7 shadow-xl border border-gray-100 dark:border-slate-700 text-gray-900 dark:text-slate-100">
+                <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-gray-100 dark:border-slate-700 pb-3">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Edit Availability</h2>
+                    <button onClick={onClose} type="button" className="p-1 text-gray-500 hover:text-black dark:hover:text-white cursor-pointer">
+                        <X size={20} />
                     </button>
                 </div>
 
                 {error && (
-                    <div className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                    <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-2 text-xs sm:text-sm text-red-600 dark:text-red-300">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSave} className="space-y-5">
+                <form onSubmit={handleSave} className="space-y-4 sm:space-y-5">
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">Status</label>
+                        <label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-200">Status</label>
                         <select
                             name="type"
                             value={availability.type}
                             onChange={handleChange}
-                            className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                            className="w-full rounded-xl bg-gray-100 dark:bg-slate-900 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-black"
                         >
                             <option value="Anytime">Anytime</option>
                             <option value="Temporary Unavailable">Temporary Unavailable</option>
@@ -948,32 +967,32 @@ function EditAvailabilityModal({ onClose }) {
                     </div>
 
                     {availability.type === "Temporary Unavailable" && (
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">From</label>
+                                <label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-200">From</label>
                                 <input
                                     type="date"
                                     name="unavailable_from"
                                     value={availability.unavailable_from}
                                     onChange={handleChange}
-                                    className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                    className="w-full rounded-xl bg-gray-100 dark:bg-slate-900 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-black"
                                 />
                             </div>
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">To</label>
+                                <label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-200">To</label>
                                 <input
                                     type="date"
                                     name="unavailable_to"
                                     value={availability.unavailable_to}
                                     onChange={handleChange}
-                                    className="w-full rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                                    className="w-full rounded-xl bg-gray-100 dark:bg-slate-900 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-black"
                                 />
                             </div>
                         </div>
                     )}
 
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                             Reason (optional)
                         </label>
                         <textarea
@@ -981,15 +1000,15 @@ function EditAvailabilityModal({ onClose }) {
                             value={availability.reason}
                             onChange={handleChange}
                             rows={3}
-                            className="w-full resize-none rounded-lg bg-gray-100 px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                            className="w-full resize-none rounded-lg bg-gray-100 dark:bg-slate-900 px-4 py-3 text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-3">
+                    <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                            className="rounded-lg border border-gray-200 dark:border-slate-700 px-6 py-3 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                         >
                             Cancel
                         </button>

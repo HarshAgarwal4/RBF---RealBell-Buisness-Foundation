@@ -163,7 +163,19 @@ export async function listAcceptedChatConnections(userId) {
 }
 
 export async function isUserOnline(userId) {
-  const sockets = await getRedisSet(CHAT_KEYS.presence(userId));
+  if (!userId) return false;
+  try {
+    const { getIO } = await import("./socket.js");
+    const io = getIO();
+    if (io && io.sockets && io.sockets.adapter) {
+      const room = io.sockets.adapter.rooms.get(`user:${String(userId)}`);
+      return Boolean(room && room.size > 0);
+    }
+  } catch (e) {
+    // fallback if socket server not yet initialized
+  }
+
+  const sockets = await getRedisSet(CHAT_KEYS.presence(String(userId)));
   return Array.isArray(sockets) && sockets.length > 0;
 }
 

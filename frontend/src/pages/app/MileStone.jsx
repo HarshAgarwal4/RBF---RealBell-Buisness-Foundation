@@ -189,21 +189,21 @@ export default function Milestones() {
     return (
         <>
             <Sidebar />
-            <div className="ml-75 flex min-h-screen flex-col bg-[#f5f7fb]">
-                <div className="flex-1 p-8">
+            <div className="ml-0 lg:ml-75 pt-16 lg:pt-0 flex min-h-screen flex-col bg-[#f5f7fb]">
+                <div className="flex-1 p-4 sm:p-8 max-w-full overflow-hidden">
 
                     {/* HEADER */}
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-3xl font-bold text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">
                             {view === "list" ? "Milestones" : "Create a new milestone"}
                         </h1>
 
                         {view === "list" && (
                             <button
                                 onClick={() => setView("create")}
-                                className="flex items-center gap-2 rounded-xl bg-[#b03052] px-5 py-3 font-semibold text-white hover:bg-[#96263f]"
+                                className="flex items-center justify-center gap-2 rounded-xl bg-[#b03052] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-[#96263f] shrink-0 cursor-pointer self-start sm:self-auto"
                             >
-                                <Plus size={18} />
+                                <Plus size={16} />
                                 Add Milestone
                             </button>
                         )}
@@ -212,22 +212,22 @@ export default function Milestones() {
                     {view === "list" ? (
                         <>
                             {/* Count + search */}
-                            <div className="mt-6 flex items-center justify-between">
-                                <p className="text-gray-700">
+                            <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <p className="text-xs sm:text-sm text-gray-700">
                                     You have <span className="font-bold">{activeCount}</span> active
                                     milestones
                                 </p>
 
-                                <div className="relative w-80">
+                                <div className="relative w-full sm:w-80">
                                     <Search
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                        size={18}
+                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                                        size={16}
                                     />
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search a milestone"
-                                        className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 outline-none focus:border-black"
+                                        placeholder="Search a milestone..."
+                                        className="w-full rounded-xl border bg-white py-2.5 pl-10 pr-3.5 text-xs sm:text-sm outline-none focus:border-black"
                                     />
                                 </div>
                             </div>

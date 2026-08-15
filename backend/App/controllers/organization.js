@@ -21,7 +21,7 @@ function normalizeCompanyType(type = "") {
         "incubators/accelerators": "incubator/accelerator",
     };
 
-    return map[value] || null;
+    return map[value] || value;
 }
 
 async function signUp(req, res) {

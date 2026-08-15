@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
 import axios from "../../services/axios";
 import { toast } from "react-toastify";
-import { ArrowLeft, Ticket, Users, Search, Download } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 
 export default function AdminEventAttendees() {
   const { id } = useParams();
@@ -44,119 +44,88 @@ export default function AdminEventAttendees() {
 
   return (
     <AdminLayout title="Event Attendees">
-      <div style={{ padding: "24px" }}>
+      <div>
         {/* Navigation / Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={() => navigate("/admin/events")}
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "none",
-                color: "#94a3b8",
-                padding: "8px 12px",
-                borderRadius: 8,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
+              className="admin-btn admin-btn-secondary"
+              style={{ padding: "6px 12px", fontSize: 12 }}
             >
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={14} /> Back
             </button>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>
+              <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #e2e8f0)", margin: 0 }}>
                 {event?.title || "Event"} Attendees
               </h1>
-              <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--admin-text-subtle, #64748b)", marginTop: 2 }}>
                 Total Tickets Registered: {attendees.length}
               </div>
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 10,
-              padding: "6px 14px",
-              width: 260,
-            }}
-          >
-            <Search size={15} color="#64748b" />
+          <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, email, ticket…"
-              style={{
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                color: "#e2e8f0",
-                fontSize: 13,
-                width: "100%",
-              }}
+              className="admin-search-input"
+              placeholder="🔍  Search by name, email, ticket…"
+              style={{ minWidth: 220 }}
             />
           </div>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#64748b" }}>Loading attendees…</div>
+          <div style={{ textAlign: "center", padding: "50px 0", color: "var(--admin-text-subtle, #64748b)", fontSize: 13 }}>Loading attendees…</div>
         ) : filtered.length === 0 ? (
           <div
             style={{
               textAlign: "center",
-              padding: "80px 0",
-              background: "rgba(255,255,255,0.02)",
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.06)",
-              color: "#64748b",
+              padding: "60px 0",
+              background: "var(--admin-card-bg, rgba(255,255,255,0.02))",
+              borderRadius: 12,
+              border: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
+              color: "var(--admin-text-subtle, #64748b)",
+              fontSize: 13,
             }}
           >
             No attendees found.
           </div>
         ) : (
-          <div
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.06)",
-              overflow: "hidden",
-            }}
-          >
-            <table style={{ width: "100%", borderCollapse: "collapse", color: "#e2e8f0", fontSize: 13.5 }}>
+          <div className="admin-table-container">
+            <table className="admin-table">
               <thead>
-                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "left" }}>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Ticket #</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Attendee</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Payment Method</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Registered Date</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Status</th>
+                <tr>
+                  <th>Ticket #</th>
+                  <th>Attendee</th>
+                  <th>Payment Method</th>
+                  <th>Registered Date</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((att) => (
-                  <tr key={att._id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "14px 18px", fontWeight: 700, color: "#818cf8" }}>
-                      {att.ticket_number}
+                  <tr key={att._id}>
+                    <td>
+                      <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#818cf8", fontFamily: "monospace" }}>
+                        {att.ticket_number}
+                      </span>
                     </td>
-                    <td style={{ padding: "14px 18px" }}>
-                      <div style={{ fontWeight: 600, color: "#e2e8f0" }}>{att.user?.name || "User"}</div>
-                      <div style={{ fontSize: 12, color: "#64748b" }}>{att.user?.email}</div>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "var(--admin-text-primary, #e2e8f0)", fontSize: "0.78rem" }}>{att.user?.name || "User"}</div>
+                      <div style={{ fontSize: "0.68rem", color: "var(--admin-text-subtle, #64748b)" }}>{att.user?.email}</div>
                     </td>
-                    <td style={{ padding: "14px 18px" }}>
-                      <span style={{ background: "rgba(255,255,255,0.06)", padding: "3px 10px", borderRadius: 20, fontSize: 12, textTransform: "capitalize" }}>
+                    <td>
+                      <span style={{ background: "var(--admin-card-bg, rgba(255,255,255,0.06))", padding: "2px 8px", borderRadius: 20, fontSize: "0.68rem", textTransform: "capitalize" }}>
                         {att.registration_type} {att.amount_paid ? `(₹${att.amount_paid})` : att.tokens_used ? `(${att.tokens_used} tokens)` : ""}
                       </span>
                     </td>
-                    <td style={{ padding: "14px 18px", color: "#94a3b8" }}>
+                    <td style={{ fontSize: "0.72rem", color: "var(--admin-text-muted, #94a3b8)" }}>
                       {new Date(att.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
-                    <td style={{ padding: "14px 18px" }}>
-                      <span style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                    <td>
+                      <span style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", padding: "2px 8px", borderRadius: 20, fontSize: "0.68rem", fontWeight: 700 }}>
                         {att.status}
                       </span>
                     </td>

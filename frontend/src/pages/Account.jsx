@@ -362,7 +362,6 @@ export function AccountPage() {
     }
 
     // Append the account object as a JSON string
-    // Mongoose/Body-parser will need to handle this or you can append individual keys
     data.append("account", JSON.stringify(formData.account));
 
     console.log(formData)
@@ -388,10 +387,10 @@ export function AccountPage() {
   return (
     <div className="flex">
       <Sidebar />
-      <div className="ml-75 flex-1" style={{ padding: "26px 30px", background: COLORS.bg, minHeight: "100vh" }}>
-        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 22 }}>Account Settings</div>
+      <div className="ml-0 lg:ml-75 flex-1 pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen" style={{ background: COLORS.bg }}>
+        <div className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-5">Account Settings</div>
 
-        <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 8, display: "flex", gap: 6, marginBottom: 20 }}>
+        <div className="bg-white border border-gray-200 rounded-xl p-2 flex items-center gap-1.5 sm:gap-2 mb-5 overflow-x-auto scrollbar-none">
           {["Personal Information", "Availability Hours", "Email Notifications"].map(t => (
             <TabButton key={t} label={t} active={tab === t} onClick={() => setTab(t)} />
           ))}
@@ -418,7 +417,6 @@ export function AccountPage() {
             onSave={handleSubmit}
           />
         )}
-        {/* Pass same props to other tabs as needed */}
       </div>
     </div>
   );

@@ -301,7 +301,7 @@ export default function Job() {
     return (
         <>
             <Sidebar />
-            <div className="ml-75 min-h-screen bg-[#F8FAFC] p-6 md:p-8 font-sans antialiased text-gray-800 max-w-[1400px]">
+            <div className="ml-0 lg:ml-75 pt-20 lg:pt-8 min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans antialiased text-gray-800 max-w-[1400px]">
                 {/* Top Header */}
                 <header className="flex items-center justify-between pb-6 mb-6 border-b border-gray-200/80">
                     <div>
@@ -552,16 +552,14 @@ export default function Job() {
                             </div>
                         </div>
                     </div>
-                )}
-
-                {/* VIEW 2: CREATE JOB FORM (Matching Screenshots 2 & 3) */}
+                )}                {/* VIEW 2: CREATE JOB FORM (Matching Screenshots 2 & 3) */}
                 {currentView === "create" && (
-                    <form onSubmit={handleSaveJob} className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-xs max-w-5xl space-y-8">
+                    <form onSubmit={handleSaveJob} className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 border border-gray-100 dark:border-slate-700 shadow-xs max-w-5xl space-y-8 text-gray-800 dark:text-slate-100">
                         {/* Section 1: Brief Information */}
                         <div className="space-y-6">
-                            <div className="flex items-center space-x-2 border-b border-gray-100 pb-2">
+                            <div className="flex items-center space-x-2 border-b border-gray-100 dark:border-slate-700 pb-2">
                                 <div className="w-1 h-5 bg-[#8B1D2C] rounded-full"></div>
-                                <h2 className="text-base font-bold text-gray-900">Brief Information</h2>
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white">Brief Information</h2>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -569,7 +567,7 @@ export default function Job() {
                                 <div className="space-y-4">
                                     {/* Job Title */}
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                             Job Title <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -577,7 +575,7 @@ export default function Job() {
                                             placeholder="Enter a job title e.g. (Angular Developer)"
                                             value={jobForm.title}
                                             onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
+                                            className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
                                             required
                                         />
                                     </div>
@@ -585,13 +583,13 @@ export default function Job() {
                                     {/* Employment Type & Workplace Type */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                                 Employment Type <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={jobForm.employment_type}
                                                 onChange={(e) => setJobForm({ ...jobForm, employment_type: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
+                                                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
                                                 required
                                             >
                                                 <option value="">Choose employment type</option>
@@ -604,13 +602,13 @@ export default function Job() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                                 Workplace Type <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={jobForm.workplace_type}
                                                 onChange={(e) => setJobForm({ ...jobForm, workplace_type: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
+                                                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
                                                 required
                                             >
                                                 <option value="">Choose workplace type</option>
@@ -624,13 +622,13 @@ export default function Job() {
                                     {/* Industry & Positions Open */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                                 Industry <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={jobForm.industry}
                                                 onChange={(e) => setJobForm({ ...jobForm, industry: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
+                                                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
                                                 required
                                             >
                                                 <option value="">Choose an industry</option>
@@ -648,7 +646,7 @@ export default function Job() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                                 Position Open <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -657,7 +655,7 @@ export default function Job() {
                                                 placeholder="No. of positions open"
                                                 value={jobForm.position_open}
                                                 onChange={(e) => setJobForm({ ...jobForm, position_open: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
+                                                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] transition-all outline-none"
                                                 required
                                             />
                                         </div>
@@ -666,29 +664,29 @@ export default function Job() {
 
                                 {/* Right Column: Job Overview Editor (Matching Screenshot 2) */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                         Job Overview <span className="text-red-500">*</span>
                                     </label>
-                                    <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#8B1D2C]/20 focus-within:border-[#8B1D2C]">
+                                    <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#8B1D2C]/20 focus-within:border-[#8B1D2C]">
                                         {/* Rich text formatting bar toolbar */}
-                                        <div className="bg-gray-50 border-b border-gray-200 p-2 flex items-center space-x-3 text-gray-600 text-xs">
-                                            <button type="button" className="p-1 hover:bg-gray-200 rounded font-bold" title="Bold">
+                                        <div className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-2 flex items-center space-x-3 text-gray-600 dark:text-slate-300 text-xs">
+                                            <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded font-bold" title="Bold">
                                                 <Bold className="w-3.5 h-3.5" />
                                             </button>
-                                            <button type="button" className="p-1 hover:bg-gray-200 rounded italic" title="Italic">
+                                            <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded italic" title="Italic">
                                                 <Italic className="w-3.5 h-3.5" />
                                             </button>
-                                            <button type="button" className="p-1 hover:bg-gray-200 rounded underline" title="Underline">
+                                            <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded underline" title="Underline">
                                                 <Underline className="w-3.5 h-3.5" />
                                             </button>
-                                            <div className="w-px h-4 bg-gray-300"></div>
-                                            <span className="font-bold text-xs cursor-pointer hover:text-gray-900">H1</span>
-                                            <span className="font-bold text-xs cursor-pointer hover:text-gray-900">H2</span>
-                                            <div className="w-px h-4 bg-gray-300"></div>
-                                            <button type="button" className="p-1 hover:bg-gray-200 rounded" title="List">
+                                            <div className="w-px h-4 bg-gray-300 dark:bg-slate-700"></div>
+                                            <span className="font-bold text-xs cursor-pointer hover:text-gray-900 dark:hover:text-white">H1</span>
+                                            <span className="font-bold text-xs cursor-pointer hover:text-gray-900 dark:hover:text-white">H2</span>
+                                            <div className="w-px h-4 bg-gray-300 dark:bg-slate-700"></div>
+                                            <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded" title="List">
                                                 <List className="w-3.5 h-3.5" />
                                             </button>
-                                            <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Align Left">
+                                            <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded" title="Align Left">
                                                 <AlignLeft className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -698,7 +696,7 @@ export default function Job() {
                                             placeholder="Enter some description about the job"
                                             value={jobForm.job_overview}
                                             onChange={(e) => setJobForm({ ...jobForm, job_overview: e.target.value })}
-                                            className="w-full p-3.5 text-xs text-gray-800 border-none outline-none resize-none bg-white"
+                                            className="w-full p-3.5 text-xs text-gray-800 dark:text-slate-100 border-none outline-none resize-none bg-white dark:bg-slate-900"
                                             required
                                         ></textarea>
                                     </div>
@@ -707,16 +705,16 @@ export default function Job() {
                         </div>
 
                         {/* Section 2: Preference Information */}
-                        <div className="space-y-6 pt-4 border-t border-gray-100">
-                            <div className="flex items-center space-x-2 border-b border-gray-100 pb-2">
+                        <div className="space-y-6 pt-4 border-t border-gray-100 dark:border-slate-700">
+                            <div className="flex items-center space-x-2 border-b border-gray-100 dark:border-slate-700 pb-2">
                                 <div className="w-1 h-5 bg-[#8B1D2C] rounded-full"></div>
-                                <h2 className="text-base font-bold text-gray-900">Preference information</h2>
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white">Preference information</h2>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Locations Field */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                         Locations <span className="text-red-500">*</span>
                                     </label>
                                     <div className="flex items-center space-x-2">
@@ -726,12 +724,12 @@ export default function Job() {
                                             value={locationInput}
                                             onChange={(e) => setLocationInput(e.target.value)}
                                             onKeyDown={handleAddLocation}
-                                            className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] outline-none"
+                                            className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-100 rounded-xl text-xs focus:ring-2 focus:ring-[#8B1D2C]/20 focus:border-[#8B1D2C] outline-none"
                                         />
                                         <button
                                             type="button"
                                             onClick={handleAddLocation}
-                                            className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold"
+                                            className="px-3 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold"
                                         >
                                             Add
                                         </button>
@@ -741,7 +739,7 @@ export default function Job() {
                                             {jobForm.locations.map((loc, idx) => (
                                                 <span
                                                     key={idx}
-                                                    className="px-2.5 py-1 bg-red-50 text-[#8B1D2C] border border-red-100 rounded-lg text-xs flex items-center space-x-1"
+                                                    className="px-2.5 py-1 bg-red-50 dark:bg-red-950/40 text-[#8B1D2C] dark:text-red-300 border border-red-100 dark:border-red-900 rounded-lg text-xs flex items-center space-x-1"
                                                 >
                                                     <span>{loc}</span>
                                                     <button type="button" onClick={() => handleRemoveLocation(loc)}>
@@ -755,7 +753,7 @@ export default function Job() {
 
                                 {/* Required Skills Field (max 5) */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1">
                                         Required Skills (max. 5) <span className="text-red-500">*</span>
                                     </label>
                                     <div className="flex items-center space-x-2">

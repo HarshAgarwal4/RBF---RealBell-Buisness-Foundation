@@ -29,22 +29,22 @@ function Logo() {
 
 function LeftPanel() {
   return (
-    <div className="hidden lg:flex w-full max-w-md flex-col justify-between border-r border-slate-200 bg-stone-50 px-10 py-12">
+    <div className="hidden lg:flex w-full max-w-md flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 px-10 py-12">
       <div>
         <Logo />
 
-        <h1 className="mt-10 text-4xl font-extrabold leading-tight text-slate-900">
+        <h1 className="mt-10 text-4xl font-extrabold leading-tight text-slate-900 dark:text-white">
           Welcome Back.
           <br />
           Let's Continue.
         </h1>
 
-        <p className="mt-6 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-6 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           Login to RealBell Business Foundation and continue building,
           connecting and growing your startup ecosystem.
         </p>
 
-        <ul className="mt-8 space-y-3 text-[15px] text-slate-600">
+        <ul className="mt-8 space-y-3 text-[15px] text-slate-600 dark:text-slate-300">
           <li>• Access your dashboard</li>
           <li>• Connect with founders & investors</li>
           <li>• Join programs & events</li>
@@ -61,7 +61,7 @@ function LeftPanel() {
 
 function MobileHeader() {
   return (
-    <div className="border-b border-slate-200 bg-stone-50 px-6 py-6 lg:hidden">
+    <div className="border-b border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 px-6 py-6 lg:hidden">
       <Logo />
     </div>
   );
@@ -301,7 +301,7 @@ export default function LoginPage() {
 
   return (
 
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">
 
       <LeftPanel />
 

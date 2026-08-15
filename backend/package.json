@@ -1,7 +1,7 @@
 {
-  "name": "video_call",
+  "name": "RBF",
   "version": "1.0.0",
-  "description": "an video call application",
+  "description": "RealBell Buisness Foundations",
   "license": "ISC",
   "author": "Harsh Agarwal",
   "type": "module",
@@ -27,6 +27,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.11",
     "nodemon": "^3.1.11",
+    "razorpay": "^2.9.8",
     "socket.io": "^4.8.3"
   }
 }

@@ -174,33 +174,34 @@ export default function VideosPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
-      <main style={{ marginLeft: 300, flex: 1, padding: "36px 40px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1a1a2e" }}>Videos</h1>
-          <div style={{ position: "relative" }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
-            <input placeholder="Search videos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: 220 }} />
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#1a1a2e" }}>Videos</h1>
+            <div className="relative w-full sm:w-52">
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <input placeholder="Search videos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: "100%" }} />
+            </div>
+            <div className="relative w-full sm:w-44 flex items-center">
+              <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
+              <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", width: "100%" }}>
+                {INDUSTRIES.map((i) => <option key={i}>{i}</option>)}
+              </select>
+            </div>
           </div>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-            <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", minWidth: 180 }}>
-              {INDUSTRIES.map((i) => <option key={i}>{i}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: 1 }} />
           {isAdmin && (
-            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowModal(true)} style={{ ...submitBtnStyle, display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
               <Plus size={16} /> Add Video
             </button>
           )}
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 80, color: "#aaa" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 80, color: "#bbb" }}>No videos found.{isAdmin && " Click 'Add Video' to get started."}</div>
+          <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No videos found.{isAdmin && " Click 'Add Video' to get started."}</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 22 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((v) => <VideoCard key={v._id} item={v} isAdmin={isAdmin} onDelete={handleDelete} />)}
           </div>
         )}

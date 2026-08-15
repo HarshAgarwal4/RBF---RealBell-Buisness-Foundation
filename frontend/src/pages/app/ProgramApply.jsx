@@ -401,9 +401,8 @@ export default function ProgramApply() {
     <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
       <Sidebar />
       <main
+        className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0 pb-16"
         style={{
-          marginLeft: 300,
-          flex: 1,
           fontFamily: "'Inter', system-ui, sans-serif",
         }}
       >

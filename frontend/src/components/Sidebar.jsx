@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../zustand/store";
+import axios from "../services/axios";
 import { COLORS } from "./colors";
+import { useTheme } from "../context/ThemeProvider";
 import {
   MessageCircle,
   Users,
@@ -28,6 +30,12 @@ import {
   BookMarked,
   BarChart2,
   Video,
+  CreditCard,
+  Menu,
+  X,
+  ShieldCheck,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 /**
@@ -65,7 +73,10 @@ const NAV_ITEMS = [
   },
   { path: "/programs", label: "Programs", icon: HandCoins },
   { path: "/events", label: "Events", icon: Megaphone },
+  { path: "/resources/news", label: "News", icon: Newspaper },
+  { path: "/resources/videos", label: "Videos", icon: Video },
   { path: "/jobs", label: "Jobs", icon: Briefcase },
+  { path: "/subscription", label: "Subscriptions", icon: CreditCard },
   { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
   {
     key: "resources",
@@ -75,8 +86,6 @@ const NAV_ITEMS = [
       { path: "/resources/contracts", label: "Contracts & Legal Templates", icon: FileArchive },
       { path: "/resources/glossary",  label: "Glossary",                   icon: BookMarked },
       { path: "/resources/reports",   label: "Reports",                    icon: BarChart2  },
-      { path: "/resources/news",      label: "News",                       icon: Newspaper  },
-      { path: "/resources/videos",    label: "Videos",                     icon: Video      },
     ],
   },
   { path: "/tickets", label: "Tickets", icon: Ticket },
@@ -92,10 +101,10 @@ const pillBtnStyle = {
   padding: "9px 0",
   borderRadius: 20,
   border: `1px solid ${COLORS.border}`,
-  background: "#fff",
+  background: COLORS.card,
   fontSize: 13,
   fontWeight: 600,
-  color: "#3A3A46",
+  color: COLORS.ink,
   cursor: "pointer",
 };
 
@@ -107,6 +116,28 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useStore();
+  const { theme, toggleTheme } = useTheme();
+
+  const [activeCount, setActiveCount] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    async function loadConnectionsCount() {
+      try {
+        const res = await axios.get("/connect/connections");
+        if (res.data?.status === 1) {
+          setActiveCount(res.data.summary?.active || 0);
+        }
+      } catch (e) {
+        console.error("Sidebar connection count fetch error:", e);
+      }
+    }
+    loadConnectionsCount();
+  }, []);
 
   // Tracks which expandable items are open, e.g. { connect: true }
   const [openKeys, setOpenKeys] = useState({});
@@ -248,29 +279,100 @@ export default function Sidebar() {
   };
 
   return (
-    <aside
-      style={{
-        width: 300,
-        minWidth: 300,
-        background: COLORS.card,
-        borderRight: `1px solid ${COLORS.border}`,
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        fontFamily: "'Inter', system-ui, sans-serif",
-        zIndex: 100,
-      }}
-    >
+    <>
+      {/* Top Mobile Navbar with Hamburger Button (appears on mobile/tablet screen sizes < 1024px) */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-[#E4E9F1] bg-white px-4 lg:hidden shadow-xs">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F6F7FA] text-[#18213A] hover:bg-[#EEF0F5] transition active:scale-95 cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/dashboard")}>
+            <img
+              src="/logo.png"
+              alt="RealBell"
+              className="h-8 w-8 object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontWeight: 800,
+                fontSize: 16,
+                color: COLORS.ink,
+                letterSpacing: 0.2,
+              }}
+            >
+              REAL<span style={{ color: COLORS.primary }}>BELL</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+            title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          >
+            {theme === "dark" ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="#6366f1" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/connections?section=chat")}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F6E9EB] text-[#B52B2B] hover:bg-[#F0D5D8] transition cursor-pointer"
+            title="Messages"
+          >
+            <MessageCircle size={18} />
+          </button>
+          <div
+            onClick={() => navigate("/profile")}
+            className="h-9 w-9 rounded-full bg-[#FDEB6B] overflow-hidden border border-gray-200 cursor-pointer"
+            title="Profile"
+          >
+            <img
+              src={user?.profile?.logo || "/default_user.png"}
+              alt="Profile"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Backdrop for mobile drawer */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity lg:hidden"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Main Sidebar Drawer: Fixed on Desktop (>= 1024px), Slide-in Overlay on Mobile (< 1024px) */}
+      <aside
+        className={`fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col border-r border-[#E4E9F1] bg-white transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
+        style={{
+          width: 300,
+          minWidth: 300,
+          background: COLORS.card,
+          fontFamily: "'Inter', system-ui, sans-serif",
+        }}
+      >
       {/* Logo */}
-      <div style={{ padding: "20px 22px 16px", borderBottom: `1px solid ${COLORS.border}` }}>
+      <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img
             src="/logo.png"
             alt="RealBell Business Foundation"
-            style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }}
+            style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }}
             onError={(e) => {
               e.currentTarget.style.display = "none";
               e.currentTarget.nextSibling.style.display = "flex";
@@ -279,9 +381,9 @@ export default function Sidebar() {
           <div
             style={{
               display: "none",
-              width: 40,
-              height: 40,
-              borderRadius: 10,
+              width: 34,
+              height: 34,
+              borderRadius: 8,
               background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
               alignItems: "center",
               justifyContent: "center",
@@ -298,28 +400,58 @@ export default function Sidebar() {
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontWeight: 800,
-                fontSize: 16,
+                fontSize: 15,
                 color: COLORS.ink,
                 letterSpacing: 0.2,
               }}
             >
               REAL<span style={{ color: COLORS.primary }}>BELL</span>
             </div>
-            <div style={{ fontSize: 9.5, color: COLORS.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>
+            <div style={{ fontSize: 9, color: COLORS.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
               Business Foundation
             </div>
           </div>
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            style={{
+              display: "flex",
+              height: 32,
+              width: 32,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 8,
+              border: `1px solid ${COLORS.border}`,
+              background: COLORS.bg,
+              cursor: "pointer",
+            }}
+            title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          >
+            {theme === "dark" ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} color="#6366f1" />}
+          </button>
+          {/* Mobile Close Button inside Sidebar */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition cursor-pointer"
+            title="Close sidebar"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Profile */}
-      <div style={{ padding: "18px 22px", borderBottom: `1px solid ${COLORS.border}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ padding: "14px 20px", borderBottom: `1px solid ${COLORS.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ position: "relative" }}>
             <div
               style={{
-                width: 46,
-                height: 46,
+                width: 38,
+                height: 38,
                 borderRadius: "50%",
                 background: "#FDEB6B",
                 display: "flex",
@@ -335,38 +467,30 @@ export default function Sidebar() {
               />
             </div>
           </div>
-          <div onClick={() => navigate("/profile")} style={{ flex: 1, cursor: "pointer" }}>
-            <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.ink }}>{user?.name}</div>
-            <button
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                margin: 0,
-                fontWeight: 600,
-                fontSize: 12.5,
-                color: COLORS.muted,
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
+          <div onClick={() => navigate("/profile")} style={{ flex: 1, cursor: "pointer", minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 13.5, color: COLORS.ink }} className="truncate">{user?.name}</div>
+            <span style={{ fontSize: 11.5, color: COLORS.muted, fontWeight: 500 }}>
               My Profile
-            </button>
+            </span>
           </div>
           <div
+            title="Total Active Connections"
+            onClick={() => navigate("/connections")}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 4,
-              background: "#EFEFF3",
-              borderRadius: 20,
               padding: "4px 9px",
-              fontSize: 12.5,
-              color: COLORS.muted,
-              fontWeight: 600,
+              borderRadius: 14,
+              background: "#F6E9EB",
+              color: "#B52B2B",
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: "pointer",
             }}
           >
-            <Eye size={13} /> 2
+            <Users size={12} />
+            {activeCount}
           </div>
         </div>
 
@@ -381,7 +505,35 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+      <nav
+        className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-gray-200"
+        style={{ overflowY: "auto", maxH: "100%", WebkitOverflowScrolling: "touch" }}
+      >
+        {(user?.role === "admin" || user?.role === "super_admin") && (
+          <button
+            onClick={() => navigate("/admin")}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 12px",
+              marginBottom: 6,
+              borderRadius: 10,
+              border: `1px solid ${COLORS.primary}40`,
+              cursor: "pointer",
+              background: location.pathname.startsWith("/admin") ? COLORS.primary : "#FFF5F6",
+              color: location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary,
+              fontWeight: 700,
+              fontSize: 14.5,
+              textAlign: "left",
+              transition: "all 0.15s",
+            }}
+          >
+            <ShieldCheck size={18} color={location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary} />
+            <span style={{ flex: 1 }}>Admin Panel</span>
+          </button>
+        )}
         {NAV_ITEMS.map((item) => renderNavItem(item))}
       </nav>
 
@@ -409,5 +561,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

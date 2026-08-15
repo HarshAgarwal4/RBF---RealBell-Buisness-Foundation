@@ -17,6 +17,11 @@ import adminRouter from './App/routes/admin.js';
 import resourceRouter from './App/routes/resource.js';
 import programsRouter from './App/routes/programs.js';
 import eventsRouter from './App/routes/events.js';
+import roleRouter from './App/routes/role.js';
+import planRouter from './App/routes/plan.js';
+import paymentRouter from './App/routes/payment.js';
+import { seedDefaultRoles } from './App/controllers/roleController.js';
+import { seedDefaultPlans } from './App/controllers/planController.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 
@@ -35,6 +40,9 @@ app.get('/', (req, res) => {
     res.send("Hello World");
 })
 app.use('/' , organizationRoutes)
+app.use('/roles', roleRouter)
+app.use('/plans', planRouter)
+app.use('/payment', paymentRouter)
 app.use('/connect', connectRoutes)
 app.use('/community', communityRoutes)
 app.use('/meetings' , meetingRouter)
@@ -77,8 +85,11 @@ registerSocketServer(server, app);
 mongoose.connect(process.env.DB_URL, {
     dbName: "RBF"
 }).then(() => {
-    console.log("Connected to MongoDB Atlas")
+    console.log("Connected to MongoDB Atlas");
+    seedDefaultRoles();
+    seedDefaultPlans();
     server.listen(process.env.PORT, () => {
         console.log("Server is running on port", process.env.PORT);
     })
 })
+

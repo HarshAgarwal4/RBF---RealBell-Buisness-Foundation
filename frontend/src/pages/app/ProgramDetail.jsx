@@ -269,23 +269,10 @@ export default function ProgramDetail() {
     <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7", fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Sidebar />
 
-      <main style={{ marginLeft: 300, flex: 1, minWidth: 0 }}>
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0">
 
         {/* ── Sticky top nav bar ── */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.95)",
-            backdropFilter: "blur(12px)",
-            borderBottom: `1px solid ${COLORS.border}`,
-            padding: "12px 32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            zIndex: 20,
-          }}
-        >
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             onClick={() => navigate("/programs")}
             style={{
@@ -309,7 +296,7 @@ export default function ProgramDetail() {
             <ArrowLeft size={15} /> Back to Programs
           </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {appConf && (
               <span
                 style={{
@@ -355,7 +342,7 @@ export default function ProgramDetail() {
 
         {loading ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", color: COLORS.muted, fontSize: 15 }}>
-            Loading program…
+            Loading program details…
           </div>
         ) : !program ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 12, color: COLORS.muted }}>
@@ -371,7 +358,7 @@ export default function ProgramDetail() {
               style={{
                 position: "relative",
                 width: "100%",
-                minHeight: program.banner_image ? 340 : 160,
+                minHeight: program.banner_image ? 300 : 160,
                 background: program.banner_image
                   ? `url(${program.banner_image}) center/cover no-repeat`
                   : `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 60%, #c94060 100%)`,
@@ -384,29 +371,19 @@ export default function ProgramDetail() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%)",
+                  background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.78) 100%)",
                 }}
               />
 
               {/* Hero content */}
-              <div
-                style={{
-                  position: "relative",
-                  zIndex: 2,
-                  width: "100%",
-                  padding: "32px 48px 36px",
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: 22,
-                }}
-              >
+              <div className="relative z-2 w-full px-4 py-6 sm:px-8 sm:py-8 lg:px-12 flex flex-col sm:flex-row sm:items-end gap-4">
                 {/* Logo */}
                 {program.logo && (
                   <div
                     style={{
-                      width: 72,
-                      height: 72,
-                      borderRadius: 16,
+                      width: 64,
+                      height: 64,
+                      borderRadius: 14,
                       border: "3px solid rgba(255,255,255,0.9)",
                       overflow: "hidden",
                       flexShrink: 0,
@@ -442,24 +419,14 @@ export default function ProgramDetail() {
                     </div>
                   )}
 
-                  <h1
-                    style={{
-                      fontSize: 28,
-                      fontWeight: 900,
-                      color: "#fff",
-                      margin: "0 0 8px",
-                      lineHeight: 1.2,
-                      letterSpacing: "-0.02em",
-                      textShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                    }}
-                  >
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-2 leading-tight tracking-tight drop-shadow-md">
                     {program.title}
                   </h1>
 
                   {program.short_description && (
                     <p
                       style={{
-                        fontSize: 15,
+                        fontSize: 14,
                         color: "rgba(255,255,255,0.85)",
                         margin: 0,
                         lineHeight: 1.55,
@@ -505,17 +472,8 @@ export default function ProgramDetail() {
             {/* ════════════════════════════
                 BODY — two-column layout
             ════════════════════════════ */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 320px",
-                gap: 24,
-                padding: "28px 32px",
-                maxWidth: 1100,
-                margin: "0 auto",
-                boxSizing: "border-box",
-              }}
-            >
+            {/* BODY — two-column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 sm:gap-8 px-4 py-6 sm:px-6 lg:px-10 max-w-7xl mx-auto min-w-0 overflow-hidden">
               {/* ── Left column: main content ── */}
               <div style={{ minWidth: 0 }}>
 

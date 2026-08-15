@@ -1,0 +1,24 @@
+{
+  "short_name": "RealBell",
+  "name": "RealBell Business Foundation",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#8E1B2E",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "RealBell Business Foundation Official Application"
+}

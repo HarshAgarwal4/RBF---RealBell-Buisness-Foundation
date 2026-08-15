@@ -175,8 +175,8 @@ const OrganizationSchema = new mongoose.Schema(
   {
     company_type: {
       type: String,
-      enum: ["startup", "investor", "mentor", "incubator/accelerator"],
       required: true,
+      trim: true,
     },
 
     investing_as: {
@@ -246,6 +246,16 @@ const OrganizationSchema = new mongoose.Schema(
     connections: {
       type: [ConnectionSchema],
       default: [],
+    },
+
+    subscription: {
+      planKey: { type: String, default: "free" },
+      planName: { type: String, default: "Free Starter" },
+      status: { type: String, enum: ["active", "expired", "inactive"], default: "active" },
+      startDate: { type: Date },
+      endDate: { type: Date },
+      razorpayPaymentId: { type: String, default: "" },
+      razorpayOrderId: { type: String, default: "" },
     },
 
     sessions: [

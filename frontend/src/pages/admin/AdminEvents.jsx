@@ -8,9 +8,7 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Eye,
   Users,
-  ChevronDown,
   X,
   GripVertical,
   Loader,
@@ -19,10 +17,7 @@ import {
   LayoutList,
   Calendar,
   Tag,
-  MapPin,
   Ticket as TicketIcon,
-  Coins,
-  DollarSign,
 } from "lucide-react";
 
 const STATUS_OPTS = ["draft", "published", "closed"];
@@ -65,12 +60,12 @@ const newBlock = (type) => ({
 function BlockEditor({ block, onChange, onDelete }) {
   const inputStyle = {
     width: "100%",
-    padding: "8px 12px",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 7,
-    background: "rgba(255,255,255,0.05)",
-    color: "#e2e8f0",
-    fontSize: 13.5,
+    padding: "7px 10px",
+    border: "1px solid var(--admin-input-border, rgba(255,255,255,0.1))",
+    borderRadius: 6,
+    background: "var(--admin-input-bg, rgba(255,255,255,0.05))",
+    color: "var(--admin-input-text, #e2e8f0)",
+    fontSize: 13,
     fontFamily: "inherit",
     outline: "none",
     boxSizing: "border-box",
@@ -79,22 +74,22 @@ function BlockEditor({ block, onChange, onDelete }) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10,
-        padding: "14px 16px",
-        marginBottom: 10,
+        background: "var(--admin-card-bg, rgba(255,255,255,0.04))",
+        border: "1px solid var(--admin-card-border, rgba(255,255,255,0.08))",
+        borderRadius: 8,
+        padding: "12px 14px",
+        marginBottom: 8,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <GripVertical size={14} color="#475569" style={{ cursor: "grab" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <GripVertical size={13} color="#475569" style={{ cursor: "grab" }} />
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
               textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              letterSpacing: "0.05em",
               color:
                 block.type === "heading"
                   ? "#818cf8"
@@ -107,7 +102,7 @@ function BlockEditor({ block, onChange, onDelete }) {
                   : block.type === "paragraph"
                   ? "rgba(148,163,184,0.1)"
                   : "rgba(52,211,153,0.1)",
-              padding: "2px 8px",
+              padding: "2px 6px",
               borderRadius: 20,
             }}
           >
@@ -117,7 +112,7 @@ function BlockEditor({ block, onChange, onDelete }) {
             <select
               value={block.level}
               onChange={(e) => onChange({ ...block, level: parseInt(e.target.value) })}
-              style={{ ...inputStyle, width: 70, padding: "4px 8px" }}
+              style={{ ...inputStyle, width: 60, padding: "3px 6px" }}
             >
               <option value={2}>H2</option>
               <option value={3}>H3</option>
@@ -127,9 +122,9 @@ function BlockEditor({ block, onChange, onDelete }) {
         </div>
         <button
           onClick={onDelete}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4 }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 2 }}
         >
-          <X size={15} />
+          <X size={14} />
         </button>
       </div>
 
@@ -151,7 +146,7 @@ function BlockEditor({ block, onChange, onDelete }) {
         />
       )}
       {block.type === "faq" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <input
             value={block.question}
             onChange={(e) => onChange({ ...block, question: e.target.value })}
@@ -174,12 +169,12 @@ function BlockEditor({ block, onChange, onDelete }) {
 /* ── Custom Form field editor ── */
 function FieldEditor({ field, onChange, onDelete }) {
   const inputStyle = {
-    padding: "7px 12px",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 7,
-    background: "rgba(255,255,255,0.05)",
-    color: "#e2e8f0",
-    fontSize: 13,
+    padding: "6px 10px",
+    border: "1px solid var(--admin-input-border, rgba(255,255,255,0.1))",
+    borderRadius: 6,
+    background: "var(--admin-input-bg, rgba(255,255,255,0.05))",
+    color: "var(--admin-input-text, #e2e8f0)",
+    fontSize: 12.5,
     fontFamily: "inherit",
     outline: "none",
   };
@@ -196,22 +191,22 @@ function FieldEditor({ field, onChange, onDelete }) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10,
-        padding: "14px 16px",
-        marginBottom: 10,
+        background: "var(--admin-card-bg, rgba(255,255,255,0.04))",
+        border: "1px solid var(--admin-card-border, rgba(255,255,255,0.08))",
+        borderRadius: 8,
+        padding: "12px 14px",
+        marginBottom: 8,
       }}
     >
-      <div style={{ display: "flex", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <GripVertical size={14} color="#475569" />
+      <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <GripVertical size={13} color="#475569" />
         </div>
         <input
           value={field.label}
           onChange={(e) => onChange({ ...field, label: e.target.value })}
           placeholder="Field label *"
-          style={{ ...inputStyle, flex: 1, minWidth: 140 }}
+          style={{ ...inputStyle, flex: 1, minWidth: 120 }}
         />
         <select
           value={field.type}
@@ -226,37 +221,37 @@ function FieldEditor({ field, onChange, onDelete }) {
           value={field.placeholder}
           onChange={(e) => onChange({ ...field, placeholder: e.target.value })}
           placeholder="Placeholder…"
-          style={{ ...inputStyle, width: 160 }}
+          style={{ ...inputStyle, width: 130 }}
         />
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#94a3b8", cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--admin-text-subtle, #94a3b8)", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={field.required}
             onChange={(e) => onChange({ ...field, required: e.target.checked })}
             style={{ accentColor: "#6366f1" }}
           />
-          Required
+          Req
         </label>
         <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444" }}>
-          <Trash2 size={14} />
+          <Trash2 size={13} />
         </button>
       </div>
 
       {needsOptions && (
         <div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
             {field.options.map((opt, i) => (
               <span
                 key={i}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 4,
                   background: "rgba(99,102,241,0.15)",
                   color: "#a5b4fc",
-                  padding: "3px 10px",
+                  padding: "2px 8px",
                   borderRadius: 20,
-                  fontSize: 12,
+                  fontSize: 11,
                 }}
               >
                 {opt}
@@ -264,12 +259,12 @@ function FieldEditor({ field, onChange, onDelete }) {
                   onClick={() => onChange({ ...field, options: field.options.filter((_, j) => j !== i) })}
                   style={{ background: "none", border: "none", cursor: "pointer", color: "#a5b4fc", padding: 0 }}
                 >
-                  <X size={11} />
+                  <X size={10} />
                 </button>
               </span>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 6 }}>
             <input
               value={optInput}
               onChange={(e) => setOptInput(e.target.value)}
@@ -283,10 +278,10 @@ function FieldEditor({ field, onChange, onDelete }) {
                 background: "rgba(99,102,241,0.2)",
                 border: "1px solid rgba(99,102,241,0.3)",
                 color: "#a5b4fc",
-                borderRadius: 7,
-                padding: "6px 12px",
+                borderRadius: 6,
+                padding: "5px 10px",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 11,
               }}
             >
               + Add
@@ -325,13 +320,8 @@ function EventModal({ event, onClose, onSaved }) {
     }
   );
 
-  const [tagInput, setTagInput] = useState("");
-  const [linkLabel, setLinkLabel] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
-
-  // File states
   const [bannerFile, setBannerFile] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(event?.banner_image || "");
@@ -372,26 +362,6 @@ function EventModal({ event, onClose, onSaved }) {
 
   const deleteField = (id) =>
     set("custom_form_fields", form.custom_form_fields.filter((f) => f.id !== id));
-
-  const addTag = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      set("tags", [...form.tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
-
-  const addLink = () => {
-    if (linkLabel.trim() && linkUrl.trim()) {
-      let url = linkUrl.trim();
-      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-      set("external_links", [...(form.external_links || []), { label: linkLabel.trim(), url }]);
-      setLinkLabel("");
-      setLinkUrl("");
-    }
-  };
-
-  const removeLink = (idx) =>
-    set("external_links", (form.external_links || []).filter((_, i) => i !== idx));
 
   const generateAI = async () => {
     if (!form.ai_raw_input?.trim()) {
@@ -470,60 +440,49 @@ function EventModal({ event, onClose, onSaved }) {
   const s = {
     label: {
       display: "block",
-      fontSize: 12.5,
+      fontSize: 11,
       fontWeight: 600,
-      color: "#94a3b8",
-      marginBottom: 5,
+      color: "var(--admin-text-subtle, #94a3b8)",
+      marginBottom: 4,
       textTransform: "uppercase",
-      letterSpacing: "0.05em",
+      letterSpacing: "0.04em",
     },
     input: {
       width: "100%",
-      padding: "9px 12px",
-      border: "1px solid rgba(255,255,255,0.1)",
-      borderRadius: 8,
-      background: "rgba(255,255,255,0.05)",
-      color: "#e2e8f0",
-      fontSize: 13.5,
+      padding: "8px 10px",
+      border: "1px solid var(--admin-input-border, rgba(255,255,255,0.1))",
+      borderRadius: 6,
+      background: "var(--admin-input-bg, rgba(255,255,255,0.05))",
+      color: "var(--admin-input-text, #e2e8f0)",
+      fontSize: 13,
       fontFamily: "inherit",
       outline: "none",
       boxSizing: "border-box",
     },
     section: {
-      marginBottom: 24,
-      paddingBottom: 24,
-      borderBottom: "1px solid rgba(255,255,255,0.06)",
+      marginBottom: 20,
+      paddingBottom: 20,
+      borderBottom: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
     },
     sectionTitle: {
-      fontSize: 13,
+      fontSize: 12.5,
       fontWeight: 700,
-      color: "#e2e8f0",
-      marginBottom: 14,
+      color: "var(--admin-text-primary, #e2e8f0)",
+      marginBottom: 12,
       display: "flex",
       alignItems: "center",
-      gap: 7,
+      gap: 6,
     },
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.75)",
-        zIndex: 200,
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "flex-end",
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <div className="admin-modal-overlay" style={{ justifyContent: "flex-end", padding: 0 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div
         style={{
-          width: "min(780px, 100vw)",
+          width: "min(720px, 100vw)",
           height: "100vh",
-          background: "#0f1117",
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          background: "var(--admin-modal-bg, #0f1117)",
+          borderLeft: "1px solid var(--admin-modal-border, rgba(255,255,255,0.08))",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -532,117 +491,67 @@ function EventModal({ event, onClose, onSaved }) {
         {/* Drawer Header */}
         <div
           style={{
-            padding: "18px 24px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            padding: "14px 20px",
+            borderBottom: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
           }}
         >
-          <div style={{ fontWeight: 700, fontSize: 16, color: "#e2e8f0" }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "var(--admin-text-primary, #e2e8f0)" }}>
             {event?._id ? "Edit Event" : "Create Event"}
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{
-                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                padding: "8px 18px",
-                fontWeight: 600,
-                fontSize: 13.5,
-                cursor: saving ? "not-allowed" : "pointer",
-                fontFamily: "inherit",
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              {saving ? <Loader size={14} style={{ animation: "spin 1s linear infinite" }} /> : null}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary" style={{ padding: "6px 14px", fontSize: 13, opacity: saving ? 0.7 : 1 }}>
               {saving ? "Saving…" : event?._id ? "Update Event" : "Create Event"}
             </button>
-            <button
-              onClick={onClose}
-              style={{ background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: "8px 12px", cursor: "pointer", color: "#94a3b8" }}
-            >
-              <X size={16} />
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-text-subtle, #94a3b8)" }}>
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Scrollable Form Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
           {/* Section 1: Basic Details */}
           <div style={s.section}>
-            <div style={s.sectionTitle}><Calendar size={15} color="#6366f1" /> Basic Event Details</div>
+            <div style={s.sectionTitle}><Calendar size={14} color="#6366f1" /> Basic Event Details</div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div className="admin-grid-2col" style={{ marginBottom: 12 }}>
               <div>
                 <label style={s.label}>Event Title *</label>
-                <input
-                  value={form.title}
-                  onChange={(e) => set("title", e.target.value)}
-                  style={s.input}
-                  placeholder="e.g. Global Founder Summit 2026"
-                />
+                <input value={form.title} onChange={(e) => set("title", e.target.value)} style={s.input} placeholder="e.g. Global Founder Summit" />
               </div>
               <div>
                 <label style={s.label}>Status</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                  style={{ ...s.input, cursor: "pointer" }}
-                >
+                <select value={form.status} onChange={(e) => set("status", e.target.value)} style={{ ...s.input, cursor: "pointer" }}>
                   {STATUS_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 12 }}>
               <label style={s.label}>Short Tagline / Description</label>
-              <textarea
-                value={form.short_description}
-                onChange={(e) => set("short_description", e.target.value)}
-                rows={2}
-                style={{ ...s.input, resize: "vertical" }}
-                placeholder="Brief summary for event cards…"
-              />
+              <textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} rows={2} style={{ ...s.input, resize: "vertical" }} placeholder="Brief summary for event cards…" />
             </div>
 
             {/* Date & Location */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div className="admin-grid-2col" style={{ marginBottom: 12 }}>
               <div>
-                <label style={s.label}>Event Start Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  value={form.event_date ? new Date(form.event_date).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => set("event_date", e.target.value)}
-                  style={s.input}
-                />
+                <label style={s.label}>Start Date & Time *</label>
+                <input type="datetime-local" value={form.event_date ? new Date(form.event_date).toISOString().slice(0, 16) : ""} onChange={(e) => set("event_date", e.target.value)} style={s.input} />
               </div>
               <div>
-                <label style={s.label}>Event End Date & Time</label>
-                <input
-                  type="datetime-local"
-                  value={form.event_end_date ? new Date(form.event_end_date).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => set("event_end_date", e.target.value)}
-                  style={s.input}
-                />
+                <label style={s.label}>End Date & Time</label>
+                <input type="datetime-local" value={form.event_end_date ? new Date(form.event_end_date).toISOString().slice(0, 16) : ""} onChange={(e) => set("event_end_date", e.target.value)} style={s.input} />
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div className="admin-grid-2col" style={{ marginBottom: 12 }}>
               <div>
                 <label style={s.label}>Location Type</label>
-                <select
-                  value={form.location_type}
-                  onChange={(e) => set("location_type", e.target.value)}
-                  style={{ ...s.input, cursor: "pointer" }}
-                >
+                <select value={form.location_type} onChange={(e) => set("location_type", e.target.value)} style={{ ...s.input, cursor: "pointer" }}>
                   <option value="online">Online / Virtual</option>
                   <option value="in_person">In Person / Physical</option>
                   <option value="hybrid">Hybrid</option>
@@ -650,63 +559,24 @@ function EventModal({ event, onClose, onSaved }) {
               </div>
               <div>
                 <label style={s.label}>Venue Address / Meeting Link</label>
-                <input
-                  value={form.venue}
-                  onChange={(e) => set("venue", e.target.value)}
-                  style={s.input}
-                  placeholder="e.g. Zoom link or Hall A, Convention Center"
-                />
+                <input value={form.venue} onChange={(e) => set("venue", e.target.value)} style={s.input} placeholder="Zoom link or venue address" />
               </div>
             </div>
 
             {/* Banner & Logo */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="admin-grid-2col">
               <div>
                 <label style={s.label}>Banner Image</label>
-                <div
-                  onClick={() => bannerRef.current.click()}
-                  style={{
-                    border: "1.5px dashed rgba(255,255,255,0.15)",
-                    borderRadius: 10,
-                    minHeight: 80,
-                    cursor: "pointer",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  {bannerPreview ? (
-                    <img src={bannerPreview} alt="banner" style={{ width: "100%", height: 80, objectFit: "cover" }} />
-                  ) : (
-                    <span style={{ color: "#64748b", fontSize: 12 }}>Click to upload banner</span>
-                  )}
+                <div onClick={() => bannerRef.current.click()} style={{ border: "1.5px dashed var(--admin-border-subtle, rgba(255,255,255,0.15))", borderRadius: 8, minHeight: 75, cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-card-bg, rgba(255,255,255,0.03))" }}>
+                  {bannerPreview ? <img src={bannerPreview} alt="banner" style={{ width: "100%", height: 75, objectFit: "cover" }} /> : <span style={{ color: "var(--admin-text-subtle, #64748b)", fontSize: 11 }}>Click to upload banner</span>}
                 </div>
                 <input ref={bannerRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFileChange(e, "banner")} />
               </div>
 
               <div>
                 <label style={s.label}>Logo</label>
-                <div
-                  onClick={() => logoRef.current.click()}
-                  style={{
-                    border: "1.5px dashed rgba(255,255,255,0.15)",
-                    borderRadius: 10,
-                    minHeight: 80,
-                    cursor: "pointer",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="logo" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }} />
-                  ) : (
-                    <span style={{ color: "#64748b", fontSize: 12 }}>Click to upload logo</span>
-                  )}
+                <div onClick={() => logoRef.current.click()} style={{ border: "1.5px dashed var(--admin-border-subtle, rgba(255,255,255,0.15))", borderRadius: 8, minHeight: 75, cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-card-bg, rgba(255,255,255,0.03))" }}>
+                  {logoPreview ? <img src={logoPreview} alt="logo" style={{ width: 55, height: 55, objectFit: "cover", borderRadius: 6 }} /> : <span style={{ color: "var(--admin-text-subtle, #64748b)", fontSize: 11 }}>Click to upload logo</span>}
                 </div>
                 <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFileChange(e, "logo")} />
               </div>
@@ -715,16 +585,12 @@ function EventModal({ event, onClose, onSaved }) {
 
           {/* Section 2: Ticket Pricing & Seats */}
           <div style={s.section}>
-            <div style={s.sectionTitle}><TicketIcon size={15} color="#6366f1" /> Ticket Pricing & Seats</div>
+            <div style={s.sectionTitle}><TicketIcon size={14} color="#6366f1" /> Ticket Pricing & Seats</div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div className="admin-grid-2col" style={{ marginBottom: 12 }}>
               <div>
                 <label style={s.label}>Event Type</label>
-                <select
-                  value={form.event_type}
-                  onChange={(e) => set("event_type", e.target.value)}
-                  style={{ ...s.input, cursor: "pointer" }}
-                >
+                <select value={form.event_type} onChange={(e) => set("event_type", e.target.value)} style={{ ...s.input, cursor: "pointer" }}>
                   <option value="free">Free Event</option>
                   <option value="paid">Paid Event</option>
                 </select>
@@ -732,37 +598,19 @@ function EventModal({ event, onClose, onSaved }) {
 
               <div>
                 <label style={s.label}>Total Seat Limit (0 = Unlimited)</label>
-                <input
-                  type="number"
-                  value={form.total_tickets}
-                  onChange={(e) => set("total_tickets", parseInt(e.target.value) || 0)}
-                  style={s.input}
-                />
+                <input type="number" value={form.total_tickets} onChange={(e) => set("total_tickets", parseInt(e.target.value) || 0)} style={s.input} />
               </div>
             </div>
 
             {form.event_type === "paid" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, background: "rgba(99,102,241,0.06)", padding: 14, borderRadius: 10 }}>
+              <div className="admin-grid-2col" style={{ background: "rgba(99,102,241,0.06)", padding: 12, borderRadius: 8 }}>
                 <div>
                   <label style={s.label}>Ticket Price (₹ INR)</label>
-                  <input
-                    type="number"
-                    value={form.price}
-                    onChange={(e) => set("price", parseFloat(e.target.value) || 0)}
-                    style={s.input}
-                    placeholder="e.g. 499"
-                  />
+                  <input type="number" value={form.price} onChange={(e) => set("price", parseFloat(e.target.value) || 0)} style={s.input} placeholder="e.g. 499" />
                 </div>
-
                 <div>
-                  <label style={s.label}>Token Price (Tokens count)</label>
-                  <input
-                    type="number"
-                    value={form.token_price}
-                    onChange={(e) => set("token_price", parseInt(e.target.value) || 0)}
-                    style={s.input}
-                    placeholder="e.g. 50"
-                  />
+                  <label style={s.label}>Token Price (Tokens)</label>
+                  <input type="number" value={form.token_price} onChange={(e) => set("token_price", parseInt(e.target.value) || 0)} style={s.input} placeholder="e.g. 50" />
                 </div>
               </div>
             )}
@@ -770,30 +618,16 @@ function EventModal({ event, onClose, onSaved }) {
 
           {/* Section 3: Rich Description */}
           <div style={s.section}>
-            <div style={s.sectionTitle}><FileText size={15} color="#6366f1" /> Event Content Description</div>
+            <div style={s.sectionTitle}><FileText size={14} color="#6366f1" /> Event Content Description</div>
 
-            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               {CONTENT_MODES.map((m) => {
                 const MIcon = m.icon;
                 const active = form.content_type === m.key;
                 return (
-                  <button
-                    key={m.key}
-                    onClick={() => set("content_type", m.key)}
-                    style={{
-                      flex: 1,
-                      padding: "10px 14px",
-                      borderRadius: 10,
-                      border: active ? "1.5px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                      background: active ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.03)",
-                      color: active ? "#a5b4fc" : "#64748b",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      textAlign: "left",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: 13 }}>
-                      <MIcon size={14} /> {m.label}
+                  <button key={m.key} onClick={() => set("content_type", m.key)} style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: active ? "1.5px solid rgba(99,102,241,0.5)" : "1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))", background: active ? "rgba(99,102,241,0.12)" : "var(--admin-card-bg, rgba(255,255,255,0.03))", color: active ? "#a5b4fc" : "var(--admin-text-subtle, #64748b)", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 }}>
+                      <MIcon size={13} /> {m.label}
                     </div>
                   </button>
                 );
@@ -802,55 +636,26 @@ function EventModal({ event, onClose, onSaved }) {
 
             {form.content_type === "ai_text" ? (
               <div>
-                <textarea
-                  value={form.ai_raw_input}
-                  onChange={(e) => set("ai_raw_input", e.target.value)}
-                  rows={5}
-                  style={{ ...s.input, resize: "vertical", marginBottom: 10 }}
-                  placeholder="Paste your event details here. AI will structure and format it beautifully…"
-                />
-                <button
-                  onClick={generateAI}
-                  disabled={generating}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "8px 16px",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: generating ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <Wand2 size={14} /> {generating ? "Generating AI Markdown…" : "Generate AI Content"}
+                <textarea value={form.ai_raw_input} onChange={(e) => set("ai_raw_input", e.target.value)} rows={4} style={{ ...s.input, resize: "vertical", marginBottom: 8 }} placeholder="Paste event details here for AI formatting…" />
+                <button onClick={generateAI} disabled={generating} className="admin-btn admin-btn-primary" style={{ padding: "6px 14px", fontSize: 12, marginBottom: 12 }}>
+                  <Wand2 size={13} /> {generating ? "Generating…" : "Generate AI Content"}
                 </button>
-
                 {form.ai_content && (
-                  <div style={{ marginTop: 14, background: "rgba(255,255,255,0.03)", padding: 14, borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, marginBottom: 8 }}>PREVIEW:</div>
+                  <div style={{ marginTop: 10, background: "var(--admin-card-bg, rgba(255,255,255,0.03))", padding: 12, borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: "var(--admin-text-subtle, #94a3b8)", fontWeight: 700, marginBottom: 6 }}>PREVIEW:</div>
                     <ReactMarkdown>{form.ai_content}</ReactMarkdown>
                   </div>
                 )}
               </div>
             ) : (
               <div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                  <button onClick={() => addBlock("heading")} style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "none", padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>+ Heading</button>
-                  <button onClick={() => addBlock("paragraph")} style={{ background: "rgba(148,163,184,0.15)", color: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>+ Paragraph</button>
-                  <button onClick={() => addBlock("faq")} style={{ background: "rgba(52,211,153,0.15)", color: "#6ee7b7", border: "none", padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>+ FAQ Item</button>
+                <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                  <button onClick={() => addBlock("heading")} className="admin-btn admin-btn-secondary" style={{ padding: "4px 8px", fontSize: 11 }}>+ Heading</button>
+                  <button onClick={() => addBlock("paragraph")} className="admin-btn admin-btn-secondary" style={{ padding: "4px 8px", fontSize: 11 }}>+ Paragraph</button>
+                  <button onClick={() => addBlock("faq")} className="admin-btn admin-btn-secondary" style={{ padding: "4px 8px", fontSize: 11 }}>+ FAQ Item</button>
                 </div>
-
                 {form.rich_blocks.map((block) => (
-                  <BlockEditor
-                    key={block.id}
-                    block={block}
-                    onChange={(updated) => updateBlock(block.id, updated)}
-                    onDelete={() => deleteBlock(block.id)}
-                  />
+                  <BlockEditor key={block.id} block={block} onChange={(updated) => updateBlock(block.id, updated)} onDelete={() => deleteBlock(block.id)} />
                 ))}
               </div>
             )}
@@ -858,18 +663,12 @@ function EventModal({ event, onClose, onSaved }) {
 
           {/* Section 4: Custom Form Fields */}
           <div style={s.section}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div style={s.sectionTitle}><Tag size={15} color="#6366f1" /> Custom Registration Fields</div>
-              <button onClick={addField} style={{ background: "rgba(99,102,241,0.2)", color: "#a5b4fc", border: "none", padding: "5px 12px", borderRadius: 7, cursor: "pointer", fontSize: 12 }}>+ Add Field</button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={s.sectionTitle}><Tag size={14} color="#6366f1" /> Custom Registration Fields</div>
+              <button onClick={addField} className="admin-btn admin-btn-secondary" style={{ padding: "4px 10px", fontSize: 11 }}>+ Add Field</button>
             </div>
-
             {form.custom_form_fields.map((field) => (
-              <FieldEditor
-                key={field.id}
-                field={field}
-                onChange={(updated) => updateField(field.id, updated)}
-                onDelete={() => deleteField(field.id)}
-              />
+              <FieldEditor key={field.id} field={field} onChange={(updated) => updateField(field.id, updated)} onDelete={() => deleteField(field.id)} />
             ))}
           </div>
         </div>
@@ -917,52 +716,37 @@ export default function AdminEvents() {
 
   return (
     <AdminLayout title="Events Management">
-      <div style={{ padding: "24px" }}>
+      <div>
         {/* Header bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>Events</h1>
-            <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Create and manage events, tickets, and attendees</p>
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #e2e8f0)", margin: 0 }}>Events</h1>
+            <p style={{ fontSize: "0.8rem", color: "var(--admin-text-subtle, #64748b)", margin: "2px 0 0" }}>Create and manage events, tickets, and attendees</p>
           </div>
 
-          <button
-            onClick={() => { setModalEvent(null); setShowModal(true); }}
-            style={{
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              padding: "10px 20px",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <Plus size={16} /> Create Event
+          <button onClick={() => { setModalEvent(null); setShowModal(true); }} className="admin-btn admin-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }}>
+            <Plus size={15} /> Create Event
           </button>
         </div>
 
         {/* Events Table */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#64748b" }}>Loading events…</div>
+          <div style={{ textAlign: "center", padding: "50px 0", color: "var(--admin-text-subtle, #64748b)", fontSize: 13 }}>Loading events…</div>
         ) : events.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0", background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", color: "#64748b" }}>
+          <div style={{ textAlign: "center", padding: "60px 0", background: "var(--admin-card-bg, rgba(255,255,255,0.02))", borderRadius: 12, border: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))", color: "var(--admin-text-subtle, #64748b)" }}>
             No events found. Click "+ Create Event" to add your first event.
           </div>
         ) : (
-          <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", color: "#e2e8f0", fontSize: 13.5 }}>
+          <div className="admin-table-container">
+            <table className="admin-table">
               <thead>
-                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "left" }}>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Event Title</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Date</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Type / Price</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Registrations</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700 }}>Status</th>
-                  <th style={{ padding: "14px 18px", fontWeight: 700, textAlign: "right" }}>Actions</th>
+                <tr>
+                  <th>Event Title</th>
+                  <th>Date</th>
+                  <th>Type / Price</th>
+                  <th>Registrations</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -971,45 +755,35 @@ export default function AdminEvents() {
                   const dateStr = evt.event_date ? new Date(evt.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "TBA";
 
                   return (
-                    <tr key={evt._id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <td style={{ padding: "14px 18px", fontWeight: 600 }}>
-                        <div style={{ fontSize: 14.5, color: "#e2e8f0" }}>{evt.title}</div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{evt.location_type}</div>
+                    <tr key={evt._id}>
+                      <td>
+                        <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--admin-text-primary, #e2e8f0)" }}>{evt.title}</div>
+                        <div style={{ fontSize: "0.68rem", color: "var(--admin-text-subtle, #64748b)" }}>{evt.location_type}</div>
                       </td>
-                      <td style={{ padding: "14px 18px", color: "#94a3b8" }}>{dateStr}</td>
-                      <td style={{ padding: "14px 18px" }}>
-                        <span style={{ background: evt.event_type === "free" ? "rgba(34,197,94,0.15)" : "rgba(99,102,241,0.15)", color: evt.event_type === "free" ? "#4ade80" : "#a5b4fc", padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                      <td style={{ fontSize: "0.72rem", color: "var(--admin-text-muted, #94a3b8)" }}>{dateStr}</td>
+                      <td>
+                        <span style={{ background: evt.event_type === "free" ? "rgba(34,197,94,0.15)" : "rgba(99,102,241,0.15)", color: evt.event_type === "free" ? "#4ade80" : "#a5b4fc", padding: "2px 8px", borderRadius: 20, fontSize: "0.68rem", fontWeight: 700 }}>
                           {evt.event_type === "free" ? "Free" : `₹${evt.price} / ${evt.token_price} Tks`}
                         </span>
                       </td>
-                      <td style={{ padding: "14px 18px", color: "#94a3b8" }}>
+                      <td style={{ fontSize: "0.75rem", color: "var(--admin-text-muted, #94a3b8)" }}>
                         {evt.tickets_sold} {evt.total_tickets > 0 ? `/ ${evt.total_tickets}` : "tickets"}
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
-                        <span style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                      <td>
+                        <span style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, padding: "2px 8px", borderRadius: 20, fontSize: "0.68rem", fontWeight: 700 }}>
                           {evt.status}
                         </span>
                       </td>
-                      <td style={{ padding: "14px 18px", textAlign: "right" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                          <button
-                            onClick={() => navigate(`/admin/events/${evt._id}/attendees`)}
-                            title="View Attendees"
-                            style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#94a3b8", padding: "6px 10px", borderRadius: 7, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}
-                          >
-                            <Users size={14} /> Attendees
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5 }}>
+                          <button onClick={() => navigate(`/admin/events/${evt._id}/attendees`)} className="admin-btn admin-btn-secondary" style={{ padding: "4px 8px", fontSize: 11 }}>
+                            <Users size={12} /> Attendees
                           </button>
-                          <button
-                            onClick={() => { setModalEvent(evt); setShowModal(true); }}
-                            style={{ background: "rgba(99,102,241,0.15)", border: "none", color: "#a5b4fc", padding: "6px 10px", borderRadius: 7, cursor: "pointer" }}
-                          >
-                            <Edit2 size={14} />
+                          <button onClick={() => { setModalEvent(evt); setShowModal(true); }} className="admin-btn admin-btn-secondary" style={{ padding: "4px 8px" }}>
+                            <Edit2 size={12} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(evt._id)}
-                            style={{ background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", padding: "6px 10px", borderRadius: 7, cursor: "pointer" }}
-                          >
-                            <Trash2 size={14} />
+                          <button onClick={() => handleDelete(evt._id)} className="admin-btn admin-btn-danger" style={{ padding: "4px 8px" }}>
+                            <Trash2 size={12} />
                           </button>
                         </div>
                       </td>
@@ -1025,7 +799,7 @@ export default function AdminEvents() {
           <EventModal
             event={modalEvent}
             onClose={() => setShowModal(false)}
-            onSaved={(savedEvt) => {
+            onSaved={() => {
               setShowModal(false);
               fetchEvents();
             }}

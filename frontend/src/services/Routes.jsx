@@ -39,6 +39,10 @@ import EventDetail from '../pages/app/EventDetail.jsx';
 import EventApply from '../pages/app/EventApply.jsx';
 import AdminEvents from '../pages/admin/AdminEvents.jsx';
 import AdminEventAttendees from '../pages/admin/AdminEventAttendees.jsx';
+import AdminRoles from '../pages/admin/AdminRoles.jsx';
+import Subscription from '../pages/Subscription.jsx';
+import AdminSubscriptions from '../pages/admin/AdminSubscriptions.jsx';
+import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -56,6 +60,10 @@ const Routes = createBrowserRouter([
     {
         path: '/dashboard',
         element: <ProtectedRoute><Main /></ProtectedRoute>
+    },
+    {
+        path: '/subscription',
+        element: <ProtectedRoute><Subscription /></ProtectedRoute>
     },
     {
         path: '/account',
@@ -109,6 +117,18 @@ const Routes = createBrowserRouter([
     {
         path: '/admin',
         element: <ProtectedRoute><IsAdminRoute><AdminDashboard /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/roles',
+        element: <ProtectedRoute><IsAdminRoute><AdminRoles /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/subscriptions',
+        element: <ProtectedRoute><IsAdminRoute><AdminSubscriptions /></IsAdminRoute></ProtectedRoute>
+    },
+    {
+        path: '/admin/theme-customizer',
+        element: <ProtectedRoute><IsAdminRoute><AdminThemeCustomizer /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '/admin/users',

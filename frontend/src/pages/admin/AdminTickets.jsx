@@ -20,7 +20,7 @@ const issueTypeColors = {
 
 function Badge({ color, bg, children }) {
     return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 10px', borderRadius: '99px', fontSize: '0.7rem', fontWeight: '600', color, background: bg, border: `1px solid ${color}33` }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', fontSize: '0.68rem', fontWeight: '600', color, background: bg, border: `1px solid ${color}33` }}>
             {children}
         </span>
     );
@@ -28,7 +28,7 @@ function Badge({ color, bg, children }) {
 
 function StatusDot({ status }) {
     const cfg = statusConfig[status] || {};
-    return <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: cfg.dot || '#64748b', display: 'inline-block', marginRight: '2px' }} />;
+    return <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: cfg.dot || '#64748b', display: 'inline-block', marginRight: '2px' }} />;
 }
 
 function TicketDetailModal({ open, onClose, ticket, onStatusUpdate }) {
@@ -46,38 +46,36 @@ function TicketDetailModal({ open, onClose, ticket, onStatusUpdate }) {
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-            onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{ background: '#161b2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2rem', maxWidth: '560px', width: '100%', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div className="admin-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+            <div className="admin-modal-box" style={{ maxWidth: '520px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.15rem' }}>
                     <div>
-                        <div style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{ticket.ticket_number}</div>
-                        <h3 style={{ color: '#f1f5f9', fontSize: '1.1rem', fontWeight: '700' }}>{ticket.title}</h3>
+                        <div style={{ fontSize: '0.65rem', color: '#6366f1', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>{ticket.ticket_number}</div>
+                        <h3 style={{ color: 'var(--admin-text-primary, #f1f5f9)', fontSize: '1rem', fontWeight: '700' }}>{ticket.title}</h3>
                     </div>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#475569', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem' }}>✕</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--admin-text-subtle, #475569)', fontSize: '1.1rem', cursor: 'pointer', padding: '0.2rem' }}>✕</button>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
                     <Badge color={issueTypeColors[ticket.issue_type]?.color || '#94a3b8'} bg={issueTypeColors[ticket.issue_type]?.bg || 'rgba(148,163,184,0.1)'}>{ticket.issue_type}</Badge>
                     <Badge color={statusConfig[ticket.status]?.color || '#64748b'} bg={statusConfig[ticket.status]?.bg || 'rgba(100,116,139,0.1)'}><StatusDot status={ticket.status} />{ticket.status}</Badge>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.7 }}>
+                <div style={{ background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', borderRadius: '10px', padding: '0.85rem', marginBottom: '1.25rem', fontSize: '0.8rem', color: 'var(--admin-text-muted, #94a3b8)', lineHeight: 1.6 }}>
                     {ticket.description}
                 </div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Update Status</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.68rem', color: 'var(--admin-text-subtle, #64748b)', fontWeight: '600', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Update Status</label>
+                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
                         {Object.keys(statusConfig).map(s => (
                             <button key={s} onClick={() => setNewStatus(s)}
-                                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: `1px solid ${newStatus === s ? statusConfig[s].color + '55' : 'rgba(255,255,255,0.07)'}`, background: newStatus === s ? statusConfig[s].bg : 'transparent', color: newStatus === s ? statusConfig[s].color : '#64748b', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                                style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', border: `1px solid ${newStatus === s ? statusConfig[s].color + '55' : 'var(--admin-border-subtle, rgba(255,255,255,0.07))'}`, background: newStatus === s ? statusConfig[s].bg : 'transparent', color: newStatus === s ? statusConfig[s].color : 'var(--admin-text-muted, #64748b)', fontSize: '0.72rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
                                 {s}
                             </button>
                         ))}
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: '0.7rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8', fontFamily: 'inherit', cursor: 'pointer' }}>Close</button>
-                    <button onClick={save} disabled={saving}
-                        style={{ flex: 1, padding: '0.7rem', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', fontFamily: 'inherit', fontWeight: '600', cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                <div style={{ display: 'flex', gap: '0.65rem' }}>
+                    <button onClick={onClose} className="admin-btn admin-btn-secondary" style={{ flex: 1, padding: '0.55rem' }}>Close</button>
+                    <button onClick={save} disabled={saving} className="admin-btn admin-btn-primary" style={{ flex: 1, padding: '0.55rem', opacity: saving ? 0.7 : 1 }}>
                         {saving ? 'Saving...' : 'Update Status'}
                     </button>
                 </div>
@@ -124,54 +122,49 @@ export default function AdminTickets() {
         } catch { showToast('Server error', 'error'); }
     };
 
-    const tdStyle = { padding: '0.9rem 1rem', fontSize: '0.8rem', color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' };
-    const thStyle = { padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.06)' };
-
     return (
         <AdminLayout title="Tickets">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
             {toast && (
-                <div style={{ position: 'fixed', top: '80px', right: '2rem', zIndex: 9999, padding: '0.75rem 1.25rem', borderRadius: '10px', fontFamily: 'Inter,sans-serif', fontSize: '0.85rem', fontWeight: '500', background: toast.type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(52,211,153,0.15)', color: toast.type === 'error' ? '#f87171' : '#34d399', border: `1px solid ${toast.type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(52,211,153,0.3)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+                <div style={{ position: 'fixed', top: '70px', right: '1.5rem', zIndex: 9999, padding: '0.6rem 1.1rem', borderRadius: '8px', fontFamily: 'Inter,sans-serif', fontSize: '0.8rem', fontWeight: '500', background: toast.type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(52,211,153,0.15)', color: toast.type === 'error' ? '#f87171' : '#34d399', border: `1px solid ${toast.type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(52,211,153,0.3)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
                     {toast.type === 'error' ? '✕ ' : '✓ '}{toast.msg}
                 </div>
             )}
 
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#f1f5f9', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>Support Tickets</h1>
-                <p style={{ color: '#475569', fontSize: '0.85rem' }}>{pagination.total} total tickets</p>
+            <div style={{ marginBottom: '1.25rem' }}>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Support Tickets</h1>
+                <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>{pagination.total} total tickets</p>
             </div>
 
             {/* Status Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px,1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px,1fr))', gap: '0.65rem', marginBottom: '1.25rem' }}>
                 {Object.entries(statusConfig).map(([status, cfg]) => (
                     <div key={status} onClick={() => setFilterStatus(filterStatus === status ? '' : status)}
-                        style={{ padding: '1rem', borderRadius: '12px', border: `1px solid ${filterStatus === status ? cfg.color + '55' : 'rgba(255,255,255,0.06)'}`, background: filterStatus === status ? cfg.bg : 'rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.7rem', color: cfg.color, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{status}</div>
+                        style={{ padding: '0.75rem 0.85rem', borderRadius: '10px', border: `1px solid ${filterStatus === status ? cfg.color + '55' : 'var(--admin-border-subtle, rgba(255,255,255,0.06))'}`, background: filterStatus === status ? cfg.bg : 'var(--admin-card-bg, rgba(255,255,255,0.03))', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: cfg.color, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{status}</div>
                     </div>
                 ))}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <input id="admin-tickets-search" type="text" placeholder="🔍  Search by title or ticket number..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-                    style={{ flex: 1, minWidth: '220px', padding: '0.65rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontFamily: 'inherit', fontSize: '0.85rem', outline: 'none' }} />
-                <select id="admin-tickets-filter-type" value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}
-                    style={{ padding: '0.65rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: '#1a1f2e', color: '#94a3b8', fontFamily: 'inherit', fontSize: '0.85rem', cursor: 'pointer' }}>
+            <div className="admin-filter-bar">
+                <input id="admin-tickets-search" className="admin-search-input" type="text" placeholder="🔍  Search by title or ticket number..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+                <select id="admin-tickets-filter-type" className="admin-select-input" value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}>
                     <option value="">All Issue Types</option>
                     {Object.keys(issueTypeColors).map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
+            <div className="admin-table-container">
                 {loading ? (
-                    <div style={{ padding: '4rem', textAlign: 'center' }}>
-                        <div style={{ width: '32px', height: '32px', border: '3px solid rgba(99,102,241,0.2)', borderTop: '3px solid #6366f1', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
+                    <div style={{ padding: '3rem', textAlign: 'center' }}>
+                        <div style={{ width: '30px', height: '30px', border: '3px solid rgba(99,102,241,0.2)', borderTop: '3px solid #6366f1', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 0.75rem' }} />
                         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-                        <span style={{ color: '#475569', fontSize: '0.85rem' }}>Loading tickets...</span>
+                        <span style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>Loading tickets...</span>
                     </div>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table className="admin-table">
                         <thead>
-                            <tr>{['Ticket #', 'Title', 'Issue Type', 'Organization', 'Status', 'Created', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr>
+                            <tr>{['Ticket #', 'Title', 'Issue Type', 'Organization', 'Status', 'Created', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
                         </thead>
                         <tbody>
                             {tickets.map(ticket => {
@@ -179,26 +172,26 @@ export default function AdminTickets() {
                                 const ic = issueTypeColors[ticket.issue_type] || { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)' };
                                 const org = ticket.organization;
                                 return (
-                                    <tr key={ticket._id} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ transition: 'background 0.15s' }}>
-                                        <td style={tdStyle}><span style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: '600', fontFamily: 'monospace' }}>{ticket.ticket_number}</span></td>
-                                        <td style={tdStyle}><div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#e2e8f0', fontWeight: '500' }}>{ticket.title}</div></td>
-                                        <td style={tdStyle}><Badge color={ic.color} bg={ic.bg}>{ticket.issue_type}</Badge></td>
-                                        <td style={tdStyle}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                {org?.account?.image ? <img src={org.account.image} alt="" style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700', color: '#fff', flexShrink: 0 }}>{org?.company_name?.[0] || '?'}</div>}
-                                                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{org?.company_name || '—'}</span>
+                                    <tr key={ticket._id}>
+                                        <td><span style={{ fontSize: '0.68rem', color: '#6366f1', fontWeight: '600', fontFamily: 'monospace' }}>{ticket.ticket_number}</span></td>
+                                        <td><div style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--admin-text-primary, #e2e8f0)', fontWeight: '500', fontSize: '0.78rem' }}>{ticket.title}</div></td>
+                                        <td><Badge color={ic.color} bg={ic.bg}>{ticket.issue_type}</Badge></td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                                {org?.account?.image ? <img src={org.account.image} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: '700', color: '#fff', flexShrink: 0 }}>{org?.company_name?.[0] || '?'}</div>}
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted, #94a3b8)' }}>{org?.company_name || '—'}</span>
                                             </div>
                                         </td>
-                                        <td style={tdStyle}><Badge color={sc.color} bg={sc.bg}><StatusDot status={ticket.status} />{ticket.status}</Badge></td>
-                                        <td style={tdStyle}>{new Date(ticket.createdAt).toLocaleDateString('en-IN')}</td>
-                                        <td style={tdStyle}>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <td><Badge color={sc.color} bg={sc.bg}><StatusDot status={ticket.status} />{ticket.status}</Badge></td>
+                                        <td style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted, #94a3b8)' }}>{new Date(ticket.createdAt).toLocaleDateString('en-IN')}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', gap: '0.4rem' }}>
                                                 <button id={`admin-ticket-view-${ticket._id}`} onClick={() => setDetailModal({ open: true, ticket })}
-                                                    style={{ padding: '0.35rem 0.75rem', borderRadius: '7px', border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#818cf8', fontSize: '0.72rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                                    className="admin-btn admin-btn-secondary" style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem' }}>
                                                     View
                                                 </button>
                                                 <button id={`admin-ticket-delete-${ticket._id}`} onClick={() => handleDelete(ticket._id)}
-                                                    style={{ padding: '0.35rem 0.75rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.07)', color: '#f87171', fontSize: '0.72rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                                    className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem' }}>
                                                     Delete
                                                 </button>
                                             </div>
@@ -209,12 +202,12 @@ export default function AdminTickets() {
                         </tbody>
                     </table>
                 )}
-                {!loading && tickets.length === 0 && <div style={{ padding: '3rem', textAlign: 'center', color: '#334155' }}><div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎫</div><p style={{ fontSize: '0.9rem' }}>No tickets found</p></div>}
+                {!loading && tickets.length === 0 && <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--admin-text-subtle, #334155)' }}><div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎫</div><p style={{ fontSize: '0.82rem' }}>No tickets found</p></div>}
                 {pagination.pages > 1 && (
-                    <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#475569' }}>Page {pagination.page} of {pagination.pages}</span>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {[...Array(Math.min(pagination.pages, 7))].map((_, i) => { const p = i + 1; return <button key={p} onClick={() => setPage(p)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: `1px solid ${page === p ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.07)'}`, background: page === p ? 'rgba(99,102,241,0.15)' : 'transparent', color: page === p ? '#818cf8' : '#64748b', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>{p}</button>; })}
+                    <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--admin-text-subtle, #475569)' }}>Page {pagination.page} of {pagination.pages}</span>
+                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            {[...Array(Math.min(pagination.pages, 7))].map((_, i) => { const p = i + 1; return <button key={p} onClick={() => setPage(p)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${page === p ? 'rgba(99,102,241,0.4)' : 'var(--admin-border-subtle, rgba(255,255,255,0.07))'}`, background: page === p ? 'rgba(99,102,241,0.15)' : 'transparent', color: page === p ? '#818cf8' : 'var(--admin-text-muted, #64748b)', fontSize: '0.72rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>{p}</button>; })}
                         </div>
                     </div>
                 )}

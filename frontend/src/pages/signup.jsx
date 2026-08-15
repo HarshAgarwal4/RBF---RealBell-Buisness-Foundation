@@ -12,15 +12,28 @@ import {
   TrendingUp,
   Users,
   Building2,
-  CheckCircle2,
-  Loader2,
+  Briefcase,
+  Award,
+  GraduationCap,
+  Globe,
 } from "lucide-react";
 
-const USER_TYPES = [
+const ICON_MAP = {
+  Rocket: Rocket,
+  TrendingUp: TrendingUp,
+  Users: Users,
+  Building2: Building2,
+  Briefcase: Briefcase,
+  Award: Award,
+  GraduationCap: GraduationCap,
+  Globe: Globe,
+};
+
+const DEFAULT_USER_TYPES = [
   { id: "startup", label: "Startup", icon: Rocket },
-  { id: "investor", label: "Investor", icon: TrendingUp },
+  { id: "investor", label: "Investor", icon: TrendingUp, hasSubtypes: true },
   { id: "mentor", label: "Mentor", icon: Users },
-  { id: "incubator", label: "Incubator/Accelerator", icon: Building2 },
+  { id: "incubator/accelerator", label: "Incubator/Accelerator", icon: Building2 },
 ];
 
 const INVESTOR_SUBTYPES = [
@@ -53,29 +66,29 @@ function Logo() {
 
 function LeftPanel() {
   return (
-    <div className="hidden w-full max-w-md flex-col justify-between border-r border-slate-200 bg-stone-50 px-10 py-12 lg:flex">
+    <div className="hidden w-full max-w-md flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 px-10 py-12 lg:flex">
       <div>
         <Logo />
 
-        <h1 className="mt-10 text-4xl font-extrabold leading-tight tracking-tight text-slate-900">
+        <h1 className="mt-10 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white">
           Ring In Growth,
           <br />
           Together.
         </h1>
 
-        <p className="mt-6 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-6 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           Welcome to RealBell Connect!
         </p>
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-4 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           Join a growing foundation where founders, investors, mentors and
           incubators come together to build, fund and scale real businesses.
         </p>
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-4 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           Whether you're launching your first venture, backing the next big
           idea, or guiding founders forward, this is your one-stop-shop.
         </p>
 
-        <ul className="mt-4 space-y-2 text-[15px] text-slate-600">
+        <ul className="mt-4 space-y-2 text-[15px] text-slate-600 dark:text-slate-300">
           <li className="flex gap-2">
             <span className="text-amber-700">•</span>
             Connect with a vetted community of founders and backers
@@ -94,13 +107,13 @@ function LeftPanel() {
           </li>
         </ul>
 
-        <p className="mt-6 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-6 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           Your journey starts here. Let's build something real, together.
         </p>
 
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
+        <p className="mt-4 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
           An initiative brought to you by{" "}
-          <span className="font-bold text-slate-900">
+          <span className="font-bold text-slate-900 dark:text-white">
             RealBell Business Foundation.
           </span>
         </p>
@@ -117,7 +130,7 @@ function LeftPanel() {
 
 function MobileHeader() {
   return (
-    <div className="border-b border-slate-200 bg-stone-50 px-6 py-6 lg:hidden">
+    <div className="border-b border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 px-6 py-6 lg:hidden">
       <Logo />
     </div>
   );
@@ -222,6 +235,29 @@ export default function SignUpPage() {
   const [verifying, setVerifying] = useState(false);
   const otpRefs = useRef([]);
 
+  const [userTypes, setUserTypes] = useState(DEFAULT_USER_TYPES);
+
+  useEffect(() => {
+    async function loadRoles() {
+      try {
+        const res = await axios.get("/roles");
+        if (res.data.status === 1 && Array.isArray(res.data.roles) && res.data.roles.length > 0) {
+          const mapped = res.data.roles.map((r) => ({
+            id: r.key,
+            label: r.label,
+            icon: ICON_MAP[r.icon] || Building2,
+            hasSubtypes: r.hasSubtypes,
+            subtypes: r.subtypes,
+          }));
+          setUserTypes(mapped);
+        }
+      } catch (err) {
+        console.error("Error loading signup roles:", err);
+      }
+    }
+    loadRoles();
+  }, []);
+
   useEffect(() => {
     if (step === 3 && resendTimer > 0) {
       const t = setTimeout(() => setResendTimer((r) => r - 1), 1000);
@@ -233,8 +269,11 @@ export default function SignUpPage() {
     if (user) navigate("/dashboard")
   }, [user])
 
+  const selectedRoleObj = userTypes.find((t) => t.id === userType);
+  const requiresSubtype = Boolean(selectedRoleObj?.hasSubtypes || userType === "investor");
+
   const canContinueStep1 = Boolean(
-    userType && (userType !== "investor" || investorType)
+    userType && (!requiresSubtype || investorType)
   );
 
   const updateForm = (key, value) => {
@@ -386,7 +425,7 @@ export default function SignUpPage() {
 
   // ---------- Steps 1–3 shared shell ----------
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">
       <LeftPanel />
 
       <div className="flex flex-1 flex-col">
@@ -405,7 +444,7 @@ export default function SignUpPage() {
                 </h2>
 
                 <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {USER_TYPES.map((t) => (
+                  {userTypes.map((t) => (
                     <TypeCard
                       key={t.id}
                       label={t.label}
@@ -413,7 +452,7 @@ export default function SignUpPage() {
                       active={userType === t.id}
                       onClick={() => {
                         setUserType(t.id);
-                        if (t.id !== "investor") setInvestorType(null);
+                        if (!t.hasSubtypes && t.id !== "investor") setInvestorType(null);
                       }}
                     />
                   ))}

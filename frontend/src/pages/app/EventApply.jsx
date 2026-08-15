@@ -127,7 +127,7 @@ export default function EventApply() {
     <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7", fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Sidebar />
 
-      <main style={{ marginLeft: 300, flex: 1, minWidth: 0, paddingBottom: 60 }}>
+      <main className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0 pb-16">
         {/* Header bar */}
         <div
           style={{

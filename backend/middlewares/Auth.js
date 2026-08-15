@@ -1,7 +1,7 @@
 import userModel from "../App/models/organization.js"
 import { getUser } from "../services/Auth.js"
 
-let allowedPaths = ['/', '/signup', '/login', '/sendotp']
+let allowedPaths = ['/', '/signup', '/login', '/sendotp', '/roles']
 
 async function isLoggedIn(req, res, next) {
     if (allowedPaths.includes(req.path)) return next()
