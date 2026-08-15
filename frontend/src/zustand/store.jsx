@@ -21,7 +21,7 @@ export const useStore = create((set, get) => ({
         try {
 
             // Temporary 5-second delay for testing loading screen
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            // await new Promise((resolve) => setTimeout(resolve, 5000));
 
             // 1. Check user session
             let user = null;
