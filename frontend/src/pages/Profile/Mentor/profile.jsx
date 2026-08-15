@@ -9,7 +9,7 @@ const Tag = ({ children }) => (
 
 const SectionHeader = ({ children }) => (
   <div className="flex items-center mb-4">
-    <span className="w-1.5 h-5 bg-[#8E1B2E] rounded-sm mr-3" />
+    <span className="w-1.5 h-5 bg-[#8E1B2E] rounded-sm mr-3 flex-shrink-0" />
     <h2 className="text-lg font-bold text-gray-900">{children}</h2>
   </div>
 );
@@ -40,17 +40,19 @@ export default function MentorProfile() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 p-6 md:p-10 font-sans">
+    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans">
       {/* Header Banner */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 mb-6 sm:mb-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 sm:gap-6 min-w-0">
           <img
             src={avatar}
             alt="Mentor Logo"
-            className="w-24 h-24 rounded-2xl object-cover border border-gray-200 bg-gray-50 shadow-sm"
+            className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl object-cover border border-gray-200 bg-gray-50 shadow-sm flex-shrink-0"
           />
-          <div>
-            <h1 className="text-2xl font-bold text-[#172033]">{profile?.name || user?.name || "Mentor Name"}</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#172033]">
+              {profile?.name || user?.name || "Mentor Name"}
+            </h1>
             <p className="text-sm font-semibold text-[#8E1B2E] mt-1">
               {profile?.designation ? `${profile.designation} at ` : ""}
               {profile?.currentOrganization || user?.company_name || "Mentor"}
@@ -61,20 +63,20 @@ export default function MentorProfile() {
 
         <a
           href="/profile/edit"
-          className="px-6 py-3 bg-[#8E1B2E] text-white font-bold text-sm rounded-xl hover:bg-[#721524] transition text-center shadow-sm"
+          className="self-start sm:self-auto flex-shrink-0 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#8E1B2E] text-white font-bold text-sm rounded-xl hover:bg-[#721524] transition text-center shadow-sm whitespace-nowrap"
         >
           Edit Profile
         </a>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
           {/* Headline & About */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
             <SectionHeader>Headline</SectionHeader>
-            <p className="text-base font-semibold text-gray-800 italic mb-6">
-              "{profile?.headline || "No headline provided."}"
+            <p className="text-base font-semibold text-gray-800 italic mb-6 leading-relaxed">
+              &ldquo;{profile?.headline || "No headline provided."}&rdquo;
             </p>
 
             <SectionHeader>About</SectionHeader>
@@ -84,7 +86,7 @@ export default function MentorProfile() {
           </div>
 
           {/* Mentorship Domains */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
             <SectionHeader>Mentorship Domains</SectionHeader>
             <div>
               {profile?.mentorshipDomains?.length ? (
@@ -96,7 +98,7 @@ export default function MentorProfile() {
           </div>
 
           {/* Industry Specialisations */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
             <SectionHeader>Industry Specialisations</SectionHeader>
             <div>
               {profile?.industrySpecialisations?.length ? (
@@ -109,8 +111,8 @@ export default function MentorProfile() {
         </div>
 
         {/* Right Column */}
-        <div className="space-y-8">
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+        <div className="space-y-6 sm:space-y-8">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
             <SectionHeader>Social Links</SectionHeader>
             <div className="space-y-3">
               {socialLinks.length ? (
@@ -135,3 +137,5 @@ export default function MentorProfile() {
     </div>
   );
 }
+
+

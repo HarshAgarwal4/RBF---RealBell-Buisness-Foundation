@@ -20,17 +20,17 @@ const SectionHeader = ({ children, action }) => (
 const Field = ({ label, value }) => (
   <div className="mb-5">
     <p className="text-sm text-gray-500 mb-1">{label}</p>
-    <p className="text-base font-semibold text-gray-900">{value ?? "â€”"}</p>
+    <p className="text-base font-semibold text-gray-900">{value ?? "—"}</p>
   </div>
 );
 
 const TeamMember = ({ initial, name, role, linkedinUrl }) => (
   <div className="flex items-center gap-4">
-    <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-lg font-bold text-blue-900">
+    <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-lg font-bold text-blue-900 flex-shrink-0">
       {initial || "?"}
     </div>
     <div>
-      <p className="font-bold text-gray-900">{name || "â€”"}</p>
+      <p className="font-bold text-gray-900">{name || "—"}</p>
       {role && <p className="text-sm text-gray-500 -mt-0.5">{role}</p>}
       {linkedinUrl ? (
         <a
@@ -54,7 +54,6 @@ export default function StartupProfile() {
   useEffect(() => {
     try {
       const profile = user?.profile?.profile;
-
       setProfile(profile ? JSON.parse(profile) : {});
     } catch (err) {
       console.error("Invalid profile JSON:", err);
@@ -62,12 +61,10 @@ export default function StartupProfile() {
     }
   }, [user]);
 
-  // Helper to format location
   const location = [profile?.city, profile?.state, profile?.country]
     .filter(Boolean)
     .join(", ") || '';
 
-  // Process social links dynamically
   const socialLinks = profile?.socialLinks
     ? Object.entries(profile.socialLinks)
       .filter(([_, url]) => Boolean(url))
@@ -79,32 +76,31 @@ export default function StartupProfile() {
 
   if (!user) {
     return (
-      <div className="flex bg-gray-50 min-h-screen">
-        <div className="ml-75 w-full flex items-center justify-center h-screen text-gray-400">
-          Loading profileâ€¦
-        </div>
+      <div className="min-h-screen bg-gray-50 lg:ml-75 pt-20 lg:pt-0 flex items-center justify-center text-gray-400 p-6">
+        Loading profile…
       </div>
     );
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <div className="ml-75 w-full px-10 py-8">
+    <div className="min-h-screen bg-gray-50 lg:ml-75 pt-20 lg:pt-0">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8">
+
         {/* Header Section */}
-        <div className="flex items-start justify-between bg-white rounded-xl border border-gray-100 p-8 mb-6">
-          <div className="flex gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between bg-white rounded-xl border border-gray-100 p-5 sm:p-8 mb-6 gap-4">
+          <div className="flex flex-col xs:flex-row gap-4 sm:gap-6">
             <img
               src={profile?.logo || "/default_user.png"}
               alt="logo"
-              className="w-24 h-24 rounded-xl object-cover bg-gray-50 border border-gray-200"
+              className="w-16 h-16 sm:w-24 sm:h-24 rounded-xl object-cover bg-gray-50 border border-gray-200 flex-shrink-0"
             />
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 leading-tight uppercase">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight uppercase break-words">
                 {profile?.companyName || user?.company_name || 'No Company Name'}
               </h1>
-              <div className="flex items-center gap-6 mt-3 text-gray-600 text-sm font-medium">
-                <span>{location}</span>
-                <span>Estd. in {profile?.yearOfIncorporation}</span>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-6 mt-2 text-gray-600 text-sm font-medium">
+                {location && <span>{location}</span>}
+                {profile?.yearOfIncorporation && <span>Estd. in {profile.yearOfIncorporation}</span>}
                 {profile?.isIncorporated && (
                   <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Incorporated</span>
                 )}
@@ -114,22 +110,22 @@ export default function StartupProfile() {
 
           <a
             href="/profile/edit"
-            className="flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white font-bold px-5 py-3 rounded-lg text-sm"
+            className="self-start sm:self-auto flex-shrink-0 flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white font-bold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg text-sm whitespace-nowrap"
           >
             Edit Profile
           </a>
         </div>
 
         {!profile ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center text-red-600 font-semibold text-lg">
+          <div className="bg-white rounded-xl border border-gray-100 p-8 sm:p-12 text-center text-red-600 font-semibold text-lg">
             Profile details not found. Please click &ldquo;Edit Profile&rdquo; above.
           </div>
         ) : (
           <>
             {/* Elevator Pitch */}
             {profile?.elevatorPitch && (
-              <div className="bg-white rounded-xl border border-gray-100 p-8 mb-6 text-center">
-                <p className="italic font-semibold text-gray-800 text-lg leading-relaxed">
+              <div className="bg-white rounded-xl border border-gray-100 p-6 sm:p-8 mb-6 text-center">
+                <p className="italic font-semibold text-gray-800 text-base sm:text-lg leading-relaxed">
                   &ldquo;{profile.elevatorPitch}&rdquo;
                 </p>
               </div>
@@ -137,7 +133,7 @@ export default function StartupProfile() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
-              <div className="bg-white rounded-xl border border-gray-100 p-8">
+              <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-8">
                 <SectionHeader>Company Metrics</SectionHeader>
                 <Field label="Revenue Stage" value={profile?.revenueStage} />
                 <Field label="Time to Commercialise" value={profile?.timeToCommercialise} />
@@ -153,7 +149,7 @@ export default function StartupProfile() {
                 <div className="mb-5">
                   {profile?.businessModels?.length
                     ? profile.businessModels.map((m) => <Tag key={m}>{m}</Tag>)
-                    : "â€”"}
+                    : "—"}
                 </div>
 
                 <SectionHeader>Intellectual Property</SectionHeader>
@@ -166,13 +162,13 @@ export default function StartupProfile() {
                 <div className="mb-4">
                   {profile?.industryDomains?.length
                     ? profile.industryDomains.map((d) => <Tag key={d}>{d}</Tag>)
-                    : "â€”"}
+                    : "—"}
                 </div>
                 <p className="text-sm text-gray-500 mb-2">Technology Domains</p>
                 <div className="mb-5">
                   {profile?.technologyDomains?.length
                     ? profile.technologyDomains.map((d) => <Tag key={d}>{d}</Tag>)
-                    : "â€”"}
+                    : "—"}
                 </div>
 
                 <SectionHeader>Online Presence</SectionHeader>
@@ -186,16 +182,16 @@ export default function StartupProfile() {
                         rel="noopener noreferrer"
                         className="text-red-700 font-medium hover:underline flex items-center gap-1"
                       >
-                        â€” {s.label}
+                        — {s.label}
                       </a>
                     ))
-                    : "â€”"}
+                    : "—"}
                 </div>
               </div>
 
               {/* Right Column */}
               <div className="flex flex-col gap-6">
-                <div className="bg-white rounded-xl border border-gray-100 p-8">
+                <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-8">
                   <SectionHeader
                     action={
                       profile?.pitchDeckUrl ? (
@@ -203,7 +199,7 @@ export default function StartupProfile() {
                           onClick={() => setPitchDeckFullScreen(true)}
                           className="flex items-center gap-1 text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50"
                         >
-                          â›¶ Full Screen
+                          ⛶ Full Screen
                         </button>
                       ) : null
                     }
@@ -212,16 +208,16 @@ export default function StartupProfile() {
                   </SectionHeader>
                   {profile?.pitchDeckUrl ? (
                     <iframe
-                      src={profile.pitchDeckUrl}c
+                      src={profile.pitchDeckUrl}
                       title="Pitch Deck Preview"
-                      className="w-full h-100 rounded-lg border border-gray-200"
+                      className="w-full h-64 sm:h-80 lg:h-96 rounded-lg border border-gray-200"
                     />
                   ) : (
                     <p className="text-gray-400 text-sm italic">No pitch deck available.</p>
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-100 p-8">
+                <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-8">
                   <SectionHeader>Leadership Team</SectionHeader>
                   <div className="flex flex-col gap-6 mb-8">
                     {profile?.leadershipTeam?.length ? (
@@ -256,7 +252,7 @@ export default function StartupProfile() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-100 p-8">
+                <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-8">
                   <SectionHeader>Company Brief</SectionHeader>
                   <p className="text-gray-800 leading-relaxed whitespace-pre-line">
                     {profile?.companyBrief || "No company brief provided."}
@@ -268,7 +264,7 @@ export default function StartupProfile() {
         )}
 
         <footer className="text-center text-xs text-gray-400 mt-10">
-          Copyright Â© {new Date().getFullYear()} ecosystem.firstwingsconnect.com. All rights reserved.
+          Copyright © {new Date().getFullYear()} ecosystem.firstwingsconnect.com. All rights reserved.
         </footer>
       </div>
 
@@ -286,9 +282,9 @@ export default function StartupProfile() {
             />
             <button
               onClick={() => setPitchDeckFullScreen(false)}
-              className="absolute -top-12 right-0 text-white text-3xl font-bold"
+              className="absolute -top-10 sm:-top-12 right-0 text-white text-2xl sm:text-3xl font-bold"
             >
-              Ã— Close
+              × Close
             </button>
           </div>
         </div>
@@ -296,4 +292,3 @@ export default function StartupProfile() {
     </div>
   );
 }
-

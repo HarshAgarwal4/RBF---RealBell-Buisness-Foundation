@@ -54,9 +54,9 @@ export default function DynamicProfileView({ profile = {}, roleKey, isOwn = true
   const accentColor = uiConfig.accentColor || "#d97706";
 
   return (
-    <div className="mx-auto max-w-5xl p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans">
       {/* Profile Banner */}
-      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mb-6 sm:mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span

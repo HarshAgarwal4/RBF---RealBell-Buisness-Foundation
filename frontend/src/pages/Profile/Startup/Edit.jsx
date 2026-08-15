@@ -685,32 +685,32 @@ export default function EditProfile({ profile }) {
 
     return (
         <div className="flex bg-gray-50 min-h-screen">
-            <div className="ml-75 w-full px-10 py-8">
-                <h1 className="text-2xl font-extrabold text-gray-900 mb-6">
+            <div className="lg:ml-75 w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-20 lg:pt-8 pb-8">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
                     Edit Startup Details
                 </h1>
 
                 {/* Tabs */}
-                <div className="flex gap-2 bg-white rounded-xl border border-gray-100 p-2 mb-6">
+                <div className="flex gap-2 bg-white rounded-xl border border-gray-100 p-2 mb-6 overflow-x-auto scrollbar-none">
                     {TABS.map((tab, i) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(i)}
-                            className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold ${activeTab === i
-                                ? "bg-gray-50 text-red-700"
+                            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${activeTab === i
+                                ? "bg-gray-50 text-red-700 font-bold"
                                 : "text-gray-500 hover:bg-gray-50"
                                 }`}
                         >
                             {tab}
 
-                            <span className="w-4 h-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center">
+                            <span className="w-4 h-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center flex-shrink-0">
                                 ✓
                             </span>
                         </button>
                     ))}
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-100 p-8 min-h-105">
+                <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 md:p-8 min-h-105">
                     {/* --- Basic Information --- */}
                     {activeTab === 0 && (
                         <div>

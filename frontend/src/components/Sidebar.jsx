@@ -506,8 +506,14 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav
-        className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-gray-200"
-        style={{ overflowY: "auto", maxH: "100%", WebkitOverflowScrolling: "touch" }}
+        className="flex-1 overflow-y-auto px-3 py-2 scrollbar-none"
+        style={{
+          overflowY: "auto",
+          maxHeight: "100%",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+        }}
       >
         {(user?.role === "admin" || user?.role === "super_admin") && (
           <button

@@ -117,23 +117,23 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
   const currentStep = steps[activeStepIdx] || steps[0];
 
   return (
-    <div className="mx-auto max-w-5xl p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans">
       {/* Header Banner */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <span
           className="inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white"
           style={{ backgroundColor: accentColor }}
         >
           {roleData?.label || roleKey}
         </span>
-        <h1 className="mt-2 text-3xl font-extrabold text-slate-900">{bannerTitle}</h1>
-        <p className="mt-1 text-sm text-slate-500">{bannerSubtitle}</p>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">{bannerTitle}</h1>
+        <p className="mt-1 text-xs sm:text-sm text-slate-500">{bannerSubtitle}</p>
       </div>
 
       {/* Multi-step Navigation Stepper */}
       {steps.length > 1 && (
-        <div className="mb-8 border-b border-slate-200 bg-white p-4 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8 border-b border-slate-200 bg-white p-3 sm:p-4 rounded-xl shadow-sm overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-between min-w-max sm:min-w-0">
             {steps.map((step, idx) => {
               const isActive = idx === activeStepIdx;
               const isCompleted = idx < activeStepIdx;

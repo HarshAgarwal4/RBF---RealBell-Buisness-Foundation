@@ -183,31 +183,31 @@ export default function MentorEditProfile({ profile = {} }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 p-6 md:p-10 font-sans">
+    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8 bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-[#172033]">Edit profile</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your mentor profile information & domain expertise</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#172033]">Edit profile</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage your mentor profile information & domain expertise</p>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-600">Profile completion</span>
-            <div className="w-32 bg-gray-200 h-2.5 rounded-full overflow-hidden">
+            <span className="text-xs sm:text-sm font-semibold text-gray-600">Profile completion</span>
+            <div className="w-24 sm:w-32 bg-gray-200 h-2.5 rounded-full overflow-hidden">
               <div
                 className="bg-[#34C759] h-full transition-all duration-300"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
-            <span className="text-sm font-bold text-[#172033]">{completionPercentage}%</span>
+            <span className="text-xs sm:text-sm font-bold text-[#172033]">{completionPercentage}%</span>
           </div>
 
           <button
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2.5 bg-[#8E1B2E] text-white font-semibold text-sm rounded-xl hover:bg-[#721524] transition disabled:opacity-50"
+            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#8E1B2E] text-white font-semibold text-xs sm:text-sm rounded-xl hover:bg-[#721524] transition disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? "SAVING..." : "SUBMIT"}
           </button>
@@ -215,11 +215,11 @@ export default function MentorEditProfile({ profile = {} }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-4 border-b border-gray-200 mb-8">
+      <div className="flex items-center gap-4 border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveTab(0)}
-          className={`pb-4 px-2 text-sm font-bold transition-all relative ${
+          className={`pb-4 px-2 text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap flex-shrink-0 ${
             activeTab === 0 ? "text-[#8E1B2E] border-b-2 border-[#8E1B2E]" : "text-gray-500 hover:text-gray-800"
           }`}
         >
@@ -229,7 +229,7 @@ export default function MentorEditProfile({ profile = {} }) {
         <button
           type="button"
           onClick={() => setActiveTab(1)}
-          className={`pb-4 px-2 text-sm font-bold transition-all relative ${
+          className={`pb-4 px-2 text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap flex-shrink-0 ${
             activeTab === 1 ? "text-[#8E1B2E] border-b-2 border-[#8E1B2E]" : "text-gray-500 hover:text-gray-800"
           }`}
         >
@@ -239,7 +239,7 @@ export default function MentorEditProfile({ profile = {} }) {
 
       {/* TAB 1: BASIC INFORMATION */}
       {activeTab === 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 md:p-8 shadow-sm space-y-6 sm:space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Photo / Logo Upload */}
             <div className="lg:col-span-3 flex flex-col items-center">
@@ -479,7 +479,7 @@ export default function MentorEditProfile({ profile = {} }) {
 
       {/* TAB 2: DOMAIN EXPERTISE */}
       {activeTab === 1 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 md:p-8 shadow-sm space-y-6 sm:space-y-8">
           {/* Mentorship Domains */}
           <div>
             <h2 className="text-lg font-bold text-[#8E1B2E] mb-2">Domain Expertise</h2>
