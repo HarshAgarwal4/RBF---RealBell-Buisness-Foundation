@@ -148,33 +148,35 @@ export default function MyLegalApplications() {
     <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#E2E8F0] font-sans">
       <Sidebar />
 
-      <main className="flex-1 lg:pl-[300px] pt-16 lg:pt-0 min-h-screen flex flex-col">
+      <main className="flex-1 lg:pl-[300px] pt-16 lg:pt-0 min-h-screen flex flex-col w-full">
         {/* Top Header */}
-        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-6 lg:px-10 py-8">
+        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B52B2B] mb-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B52B2B] mb-1.5">
                   <Scale size={16} /> Legal & Regulatory Dashboard
                 </div>
-                <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
                   My Compliance Applications
                 </h1>
-                <p className="text-sm text-[#64748B] dark:text-[#94A3B8] mt-1">
+                <p className="text-xs sm:text-sm text-[#64748B] dark:text-[#94A3B8] mt-1">
                   Track dynamic status updates, review remarks, timeline audit history, and download issued compliance certificates.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <button
+                  type="button"
                   onClick={() => navigate("/legal-compliances")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#B52B2B] hover:bg-[#9B1B2A] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-[#B52B2B] hover:bg-[#9B1B2A] text-white text-xs font-bold transition shadow-xs cursor-pointer"
                 >
                   <Plus size={16} /> Avail New Service
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate("/legal-compliances/documents")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#CBD5E1] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-bold text-[#334155] dark:text-[#E2E8F0] hover:bg-[#F1F5F9] transition shadow-xs cursor-pointer"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl border border-[#CBD5E1] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-bold text-[#334155] dark:text-[#E2E8F0] hover:bg-[#F1F5F9] transition shadow-xs cursor-pointer"
                 >
                   <FolderLock size={16} className="text-[#B52B2B]" /> Legal Documents
                 </button>
@@ -182,44 +184,44 @@ export default function MyLegalApplications() {
             </div>
 
             {/* Quick Stats Banner */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1F2937]">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1F2937]">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                   Total Applications
                 </div>
-                <div className="text-2xl font-extrabold text-[#0F172A] dark:text-white mt-1">
+                <div className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white mt-1">
                   {stats.total}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#EFF6FF] dark:bg-[#172554]/30 border border-[#BFDBFE] dark:border-[#1E3A8A]">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB]">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] dark:bg-[#172554]/30 border border-[#BFDBFE] dark:border-[#1E3A8A]">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#2563EB]">
                   In Progress
                 </div>
-                <div className="text-2xl font-extrabold text-[#1E40AF] dark:text-[#93C5FD] mt-1">
+                <div className="text-xl sm:text-2xl font-extrabold text-[#1E40AF] dark:text-[#93C5FD] mt-1">
                   {stats.inProgress}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#F0FDF4] dark:bg-[#052E16]/30 border border-[#BBF7D0] dark:border-[#14532D]">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#16A34A]">
-                  Completed & Issued
+              <div className="p-3.5 sm:p-4 rounded-xl bg-[#F0FDF4] dark:bg-[#052E16]/30 border border-[#BBF7D0] dark:border-[#14532D]">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#16A34A]">
+                  Completed
                 </div>
-                <div className="text-2xl font-extrabold text-[#15803D] dark:text-[#86EFAC] mt-1">
+                <div className="text-xl sm:text-2xl font-extrabold text-[#15803D] dark:text-[#86EFAC] mt-1">
                   {stats.completed}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#FFF7ED] dark:bg-[#431407]/30 border border-[#FED7AA] dark:border-[#7C2D12]">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#EA580C]">
-                  Documents Required
+              <div className="p-3.5 sm:p-4 rounded-xl bg-[#FFF7ED] dark:bg-[#431407]/30 border border-[#FED7AA] dark:border-[#7C2D12]">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#EA580C]">
+                  Docs Required
                 </div>
-                <div className="text-2xl font-extrabold text-[#C2410C] dark:text-[#FDBA74] mt-1">
+                <div className="text-xl sm:text-2xl font-extrabold text-[#C2410C] dark:text-[#FDBA74] mt-1">
                   {stats.docRequired}
                 </div>
               </div>
             </div>
 
             {/* Search & Status Filter Controls */}
-            <div className="mt-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
+            <div className="mt-6 sm:mt-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+              <div className="relative flex-1 max-w-md w-full">
                 <Search
                   size={18}
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
@@ -228,13 +230,13 @@ export default function MyLegalApplications() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by application ID (e.g. LC-109283) or service..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0F172A] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#B52B2B]/20"
+                  placeholder="Search by ID (e.g. LC-109283) or service..."
+                  className="w-full pl-10 pr-4 py-2 sm:py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0F172A] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#B52B2B]/20"
                 />
               </div>
 
               {/* Status Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full md:w-auto">
                 {["All", "Submitted", "Under Review", "In Progress", "Documents Required", "Completed", "Payment Pending"].map(
                   (st) => (
                     <button
@@ -256,7 +258,7 @@ export default function MyLegalApplications() {
         </div>
 
         {/* Applications List */}
-        <div className="flex-1 px-6 lg:px-10 py-8 max-w-7xl mx-auto w-full">
+        <div className="flex-1 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 max-w-7xl mx-auto w-full">
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((n) => (

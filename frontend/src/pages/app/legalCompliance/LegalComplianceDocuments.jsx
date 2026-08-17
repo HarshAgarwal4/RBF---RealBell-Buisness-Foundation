@@ -64,33 +64,35 @@ export default function LegalComplianceDocuments() {
     <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#E2E8F0] font-sans">
       <Sidebar />
 
-      <main className="flex-1 lg:pl-[300px] pt-16 lg:pt-0 min-h-screen flex flex-col">
+      <main className="flex-1 lg:pl-[300px] pt-16 lg:pt-0 min-h-screen flex flex-col w-full">
         {/* Top Header */}
-        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-6 lg:px-10 py-8">
+        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B52B2B] mb-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B52B2B] mb-1.5">
                   <FolderLock size={16} /> Digital Compliance Locker
                 </div>
-                <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
                   Legal Compliance Documents
                 </h1>
-                <p className="text-sm text-[#64748B] dark:text-[#94A3B8] mt-1">
+                <p className="text-xs sm:text-sm text-[#64748B] dark:text-[#94A3B8] mt-1">
                   Access and download all issued certificates, licenses, official filings, and submitted proofs across all your compliance services.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <button
+                  type="button"
                   onClick={() => navigate("/legal-compliances")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#B52B2B] hover:bg-[#9B1B2A] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-[#B52B2B] hover:bg-[#9B1B2A] text-white text-xs font-bold transition shadow-xs cursor-pointer"
                 >
                   <Plus size={16} /> Avail New Service
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate("/legal-compliances/my-applications")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#CBD5E1] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-bold text-[#334155] dark:text-[#E2E8F0] hover:bg-[#F1F5F9] transition shadow-xs cursor-pointer"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl border border-[#CBD5E1] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-bold text-[#334155] dark:text-[#E2E8F0] hover:bg-[#F1F5F9] transition shadow-xs cursor-pointer"
                 >
                   <Layers size={16} className="text-[#B52B2B]" /> My Applications
                 </button>
@@ -98,7 +100,7 @@ export default function LegalComplianceDocuments() {
             </div>
 
             {/* Search Bar */}
-            <div className="mt-8 relative max-w-md">
+            <div className="mt-6 sm:mt-8 relative max-w-md w-full">
               <Search
                 size={18}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
@@ -107,15 +109,15 @@ export default function LegalComplianceDocuments() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search documents by service name or application ID..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0F172A] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#B52B2B]/20"
+                placeholder="Search documents by service or ID..."
+                className="w-full pl-10 pr-4 py-2 sm:py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0F172A] text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#B52B2B]/20"
               />
             </div>
           </div>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 px-6 lg:px-10 py-8 max-w-7xl mx-auto w-full">
+        <div className="flex-1 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 max-w-7xl mx-auto w-full">
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((n) => (

@@ -379,29 +379,30 @@ export default function LegalServiceApply() {
 
       <main className="flex-1 lg:pl-[300px] pt-16 lg:pt-0 min-h-screen flex flex-col">
         {/* Top Sticky Header */}
-        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-6 lg:px-10 py-5 sticky top-0 z-30 shadow-2xs">
-          <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+        <div className="bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#1F2937] px-4 sm:px-6 lg:px-10 py-3.5 sm:py-5 sticky top-0 z-30 shadow-2xs">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <button
+                type="button"
                 onClick={() => navigate("/legal-compliances")}
-                className="h-9 w-9 rounded-xl border border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#1E293B] flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition cursor-pointer"
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#1E293B] flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition cursor-pointer shrink-0"
               >
                 <ArrowLeft size={16} />
               </button>
-              <div>
-                <div className="text-[11px] font-bold text-[#B52B2B] uppercase tracking-wider">
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-bold text-[#B52B2B] uppercase tracking-wider truncate">
                   {service.category || "Legal Compliance Application"}
                 </div>
-                <h1 className="text-lg lg:text-xl font-extrabold text-[#0F172A] dark:text-white line-clamp-1">
-                  Apply for {service.title}
+                <h1 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0F172A] dark:text-white truncate">
+                  {service.title}
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <div className="text-[10px] uppercase font-bold text-[#94A3B8]">Service Fee</div>
-                <div className="text-base font-extrabold text-[#0F172A] dark:text-white">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <div className="text-[9px] sm:text-[10px] uppercase font-bold text-[#94A3B8]">Service Fee</div>
+                <div className="text-xs sm:text-base font-extrabold text-[#0F172A] dark:text-white">
                   {isFree ? <span className="text-[#16A34A]">FREE</span> : `₹${Number(service.fee).toLocaleString("en-IN")}`}
                 </div>
               </div>
@@ -410,13 +411,13 @@ export default function LegalServiceApply() {
         </div>
 
         {/* Application Form Body */}
-        <div className="flex-1 px-6 lg:px-10 py-8 max-w-5xl mx-auto w-full">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="flex-1 px-4 sm:px-6 lg:px-10 py-6 sm:py-8 max-w-5xl mx-auto w-full">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Service Summary Card */}
-            <div className="rounded-2xl bg-gradient-to-br from-white to-[#FFF5F6] dark:from-[#111827] dark:to-[#181116] border border-[#F0D5D8] dark:border-[#3A1E24] p-6 shadow-2xs">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="rounded-2xl bg-gradient-to-br from-white to-[#FFF5F6] dark:from-[#111827] dark:to-[#181116] border border-[#F0D5D8] dark:border-[#3A1E24] p-4 sm:p-6 shadow-2xs">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                  <h2 className="text-lg font-bold text-[#0F172A] dark:text-white">
+                  <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
                     {service.title}
                   </h2>
                   <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1 max-w-2xl leading-relaxed">
@@ -424,11 +425,11 @@ export default function LegalServiceApply() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] text-xs font-semibold text-[#475569] dark:text-[#CBD5E1]">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] text-xs font-semibold text-[#475569] dark:text-[#CBD5E1]">
                     <Clock size={14} className="text-[#B52B2B]" /> {service.processing_time || "3-5 Business Days"}
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F6E9EB] text-xs font-bold text-[#B52B2B]">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F6E9EB] text-xs font-bold text-[#B52B2B]">
                     <ShieldCheck size={14} /> Official Filing
                   </div>
                 </div>

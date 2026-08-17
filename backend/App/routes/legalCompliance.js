@@ -2,7 +2,6 @@ import express from "express";
 import { isAdmin, isSuperAdmin } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
-  seedDefaultLegalComplianceServices,
   getAllServicesAdmin,
   getServiceByIdAdmin,
   createService,
@@ -85,5 +84,5 @@ legalComplianceRouter.post(
   uploadFinalDocuments
 );
 
-export { legalComplianceRouter, seedDefaultLegalComplianceServices };
+export { legalComplianceRouter };
 export default legalComplianceRouter;
