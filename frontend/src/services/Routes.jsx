@@ -45,6 +45,11 @@ import AdminSubscriptions from '../pages/admin/AdminSubscriptions.jsx';
 import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
 import AdminAuthSettings from '../pages/admin/AdminAuthSettings.jsx';
 import ForgotPassword from '../pages/ForgotPassword.jsx';
+import LegalServices from '../pages/app/legalCompliance/LegalServices.jsx';
+import LegalServiceApply from '../pages/app/legalCompliance/LegalServiceApply.jsx';
+import MyLegalApplications from '../pages/app/legalCompliance/MyLegalApplications.jsx';
+import LegalComplianceDocuments from '../pages/app/legalCompliance/LegalComplianceDocuments.jsx';
+import AdminLegalCompliance from '../pages/admin/AdminLegalCompliance.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -228,6 +233,28 @@ const Routes = createBrowserRouter([
     {
         path: '/admin/events/:id/attendees',
         element: <ProtectedRoute><IsAdminRoute><AdminEventAttendees /></IsAdminRoute></ProtectedRoute>
+    },
+    /* ── Legal Compliances ── */
+    {
+        path: '/legal-compliances',
+        element: <ProtectedRoute><LegalServices /></ProtectedRoute>
+    },
+    {
+        path: '/legal-compliances/services/:id/apply',
+        element: <ProtectedRoute><LegalServiceApply /></ProtectedRoute>
+    },
+    {
+        path: '/legal-compliances/my-applications',
+        element: <ProtectedRoute><MyLegalApplications /></ProtectedRoute>
+    },
+    {
+        path: '/legal-compliances/documents',
+        element: <ProtectedRoute><LegalComplianceDocuments /></ProtectedRoute>
+    },
+    /* ── Admin Legal Compliance ── */
+    {
+        path: '/admin/legal-compliance',
+        element: <ProtectedRoute><IsAdminRoute><AdminLegalCompliance /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '*',

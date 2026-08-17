@@ -20,6 +20,7 @@ import eventsRouter from './App/routes/events.js';
 import roleRouter from './App/routes/role.js';
 import planRouter from './App/routes/plan.js';
 import paymentRouter from './App/routes/payment.js';
+import legalComplianceRouter, { seedDefaultLegalComplianceServices } from './App/routes/legalCompliance.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { registerSocketServer } from './services/socket.js';
@@ -54,6 +55,8 @@ app.use('/admin', adminRouter)
 app.use('/resources', resourceRouter)
 app.use('/programs', programsRouter)
 app.use('/events', eventsRouter)
+app.use('/legal-compliance', legalComplianceRouter)
+app.use('/legal-compliances', legalComplianceRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {
@@ -88,6 +91,7 @@ mongoose.connect(process.env.DB_URL, {
     console.log("Connected to MongoDB Atlas");
     seedDefaultRoles();
     seedDefaultPlans();
+    seedDefaultLegalComplianceServices();
     server.listen(process.env.PORT, () => {
         console.log("Server is running on port", process.env.PORT);
     })

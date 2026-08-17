@@ -40,6 +40,9 @@ import {
   Award,
   GraduationCap,
   Globe,
+  Scale,
+  FolderLock,
+  Layers,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -137,6 +140,16 @@ export default function Sidebar() {
       { path: "/events", label: "Events", icon: Megaphone },
       { path: "/resources/news", label: "News", icon: Newspaper },
       { path: "/resources/videos", label: "Videos", icon: Video },
+      {
+        key: "legal_compliance",
+        label: "Legal Compliances",
+        icon: Scale,
+        children: [
+          { path: "/legal-compliances", label: "Available Services", icon: Scale },
+          { path: "/legal-compliances/my-applications", label: "My Applications", icon: Layers },
+          { path: "/legal-compliances/documents", label: "Legal Documents", icon: FolderLock },
+        ],
+      },
       { path: "/jobs", label: "Jobs", icon: Briefcase },
       { path: "/subscription", label: "Subscriptions", icon: CreditCard },
       { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
