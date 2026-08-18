@@ -269,7 +269,7 @@ function TypeCard({ active, label, desc, icon: Icon, onClick }) {
 
 export default function SignUpPage() {
   const navigate = useNavigate();
-  const { sendOtp, user } = useStore();
+  const { sendSignupOtp, user } = useStore();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState(null);
   const [investorType, setInvestorType] = useState(null);
@@ -365,11 +365,13 @@ export default function SignUpPage() {
 
     setSendingOtp(true);
     try {
-      await sendOtp(form.email.trim());
-      setOtp(Array(6).fill(""));
-      setOtpError("");
-      setResendTimer(30);
-      setStep(3);
+      const res = await sendSignupOtp(form.email.trim());
+      if (res && res.success) {
+        setOtp(Array(6).fill(""));
+        setOtpError("");
+        setResendTimer(30);
+        setStep(3);
+      }
     } catch {
       toast.error("Failed to send verification code");
     } finally {
@@ -463,8 +465,7 @@ export default function SignUpPage() {
     setOtpError("");
     setResendTimer(30);
     try {
-      await sendOtp(form.email.trim());
-      toast.success("New verification code sent!");
+      await sendSignupOtp(form.email.trim());
       otpRefs.current[0]?.focus();
     } catch {
       toast.error("Failed to resend code");

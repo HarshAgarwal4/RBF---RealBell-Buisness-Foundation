@@ -15,6 +15,7 @@ function isPublicRoute(req) {
   if (
     method === "POST" &&
     (path === "/signup" ||
+      path === "/signup/send-otp" ||
       path === "/login" ||
       path === "/sendotp" ||
       path === "/forgot-password/send-otp" ||

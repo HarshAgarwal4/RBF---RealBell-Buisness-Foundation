@@ -143,7 +143,8 @@ async function sendOtp(email) {
     email,
     "Your Verification OTP - RealBell Business Foundation",
     html
-);
+);      
+        console.log(email , otp)
         if (!r) return false
         else return true
     } catch (err) {

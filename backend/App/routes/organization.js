@@ -3,6 +3,7 @@ import {
   fetchUser,
   login,
   logout,
+  sendSignupOTP,
   sendOTPToEmail,
   forgotPasswordSendOTP,
   resetPasswordWithOTP,
@@ -16,6 +17,7 @@ const organizationRoutes = express.Router();
 
 organizationRoutes.get('/auth-settings', getPublicAuthSettings);
 organizationRoutes.post('/signup', signUp);
+organizationRoutes.post('/signup/send-otp', sendSignupOTP);
 organizationRoutes.post('/login', login);
 organizationRoutes.post('/sendotp', sendOTPToEmail);
 organizationRoutes.post('/forgot-password/send-otp', forgotPasswordSendOTP);

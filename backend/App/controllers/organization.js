@@ -224,6 +224,39 @@ async function login(req, res) {
     }
 }
 
+async function sendSignupOTP(req, res) {
+    let { email } = req.body;
+    if (!email) return res.send({ status: 7, msg: "Email is required" });
+    email = email.trim().toLowerCase();
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+        return res.send({ status: 7, msg: "Invalid email address format" });
+    }
+
+    try {
+        const alreadyExists = await OrganizationModel.findOne({ email });
+        if (alreadyExists) {
+            return res.send({
+                status: 3,
+                msg: "Email is already registered. Please log in instead.",
+            });
+        }
+
+        let r = await sendOtp(email);
+        if (!r) {
+            return res.send({
+                status: 8,
+                msg: "Error generating and sending OTP. Please try again.",
+            });
+        }
+        return res.send({ status: 1, msg: "Verification OTP sent to your email successfully" });
+    } catch (err) {
+        console.error("Signup send OTP error:", err);
+        return res.send({ status: 0, msg: "Internal server error" });
+    }
+}
+
 async function sendOTPToEmail(req, res) {
     let { email, password } = req.body;
     if (!email) return res.send({ status: 7, msg: "Email is required" });
@@ -963,6 +996,7 @@ async function respondConnectionRequest(req, res) {
 export {
     signUp,
     login,
+    sendSignupOTP,
     sendOTPToEmail,
     forgotPasswordSendOTP,
     resetPasswordWithOTP,

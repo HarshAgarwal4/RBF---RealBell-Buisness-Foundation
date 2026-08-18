@@ -132,27 +132,49 @@ export const useStore = create((set, get) => ({
         }
     },
 
+    sendSignupOtp: async (email) => {
+        try {
+            let r = await axios.post('/signup/send-otp', { email });
+            if (r.status === 200) {
+                const { status, msg } = r.data;
+                if (status === 1) {
+                    toast.success(msg || "Verification OTP sent to your email");
+                    return { success: true, data: r.data };
+                }
+                if (status === 3) {
+                    toast.error(msg || "Email already registered");
+                    return { success: false, data: r.data };
+                }
+                toast.error(msg || "Failed to send OTP");
+                return { success: false, data: r.data };
+            }
+            toast.error("Failed to send OTP");
+            return { success: false };
+        } catch (err) {
+            console.error("Signup OTP error:", err);
+            toast.error("Internal server error. Please try again.");
+            return { success: false };
+        }
+    },
+
     sendOtp: async (email) => {
         try {
             let r = await axios.post('/sendotp', { email });
             if (r.status === 200) {
-                if (r.data.status === 0) return;
-                if (r.data.status === 1) {
-                    toast.success("OTP sent successfully");
-                    return;
+                const { status, msg } = r.data;
+                if (status === 1) {
+                    toast.success(msg || "OTP sent successfully");
+                    return { success: true, data: r.data };
                 }
-                if (r.data.status === 7) {
-                    toast.error("Invalid fields");
-                    return;
-                }
-                if (r.data.status === 8) {
-                    toast.error("Error in generating OTP");
-                    return;
-                }
+                toast.error(msg || "Failed to send OTP");
+                return { success: false, data: r.data };
             }
+            toast.error("Failed to send OTP");
+            return { success: false };
         } catch (err) {
             console.error(err);
             toast.error("Internal server error");
+            return { success: false };
         }
     },
 
