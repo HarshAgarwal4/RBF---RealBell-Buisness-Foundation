@@ -1,36 +1,86 @@
-import userModel from "../App/models/organization.js"
-import { getUser } from "../services/Auth.js"
+import userModel from "../App/models/organization.js";
+import { getUser } from "../services/Auth.js";
 
-let allowedPaths = [
-  '/',
-  '/signup',
-  '/login',
-  '/sendotp',
-  '/roles',
-  '/auth-settings',
-  '/forgot-password/send-otp',
-  '/forgot-password/reset',
-]
+/**
+ * Helper to identify routes that unauthenticated guests can access
+ */
+function isPublicRoute(req) {
+  const path = req.path;
+  const method = req.method;
 
-async function isLoggedIn(req, res, next) {
-    if (allowedPaths.includes(req.path)) return next()
-    req.user = null;
-    let token = req.cookies?.UID
-    if (!token) return res.send({ status: 50, msg: "Np token found" })
-    let user = await getUser(token)
-    if (!user) return res.send({ status: 51, msg: "Invalid jwt signature" })
-    const id = user.id
-    let findUser
-    try {
-        findUser = await userModel.findById(id)
-        let t = findUser.sessions[0].token
-        if (t !== token) return res.send({ status: 53, msg: "Invalid credentils" })
-        req.user = findUser
-        next()
-    } catch (err) {
-        console.log(err)
-        return res.send({ status: 100, msg: "Unwanted error occured" })
-    }
+  // Root endpoint
+  if (path === "/" && method === "GET") return true;
+
+  // Unauthenticated authentication endpoints
+  if (
+    method === "POST" &&
+    (path === "/signup" ||
+      path === "/login" ||
+      path === "/sendotp" ||
+      path === "/forgot-password/send-otp" ||
+      path === "/forgot-password/reset")
+  ) {
+    return true;
+  }
+
+  // Public GET endpoints (for signup dropdowns, landing pages, etc.)
+  if (
+    method === "GET" &&
+    (path === "/roles" ||
+      path === "/auth-settings" ||
+      path === "/plans" ||
+      path.startsWith("/events/public") ||
+      path.startsWith("/programs/public") ||
+      path.startsWith("/resources/public") ||
+      path.startsWith("/jobs/public") ||
+      path.startsWith("/legal-compliance/services") ||
+      path.startsWith("/legal-compliances/services"))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
-export { isLoggedIn }
+/**
+ * Authentication middleware
+ * Validates JWT session cookie UID and attaches req.user
+ */
+async function isLoggedIn(req, res, next) {
+  req.user = null;
+  const token = req.cookies?.UID;
+
+  if (token) {
+    try {
+      const decoded = getUser(token);
+      if (decoded && decoded.id) {
+        const findUser = await userModel.findById(decoded.id);
+        if (findUser) {
+          const hasSession =
+            findUser.sessions &&
+            (findUser.sessions.some((s) => s.token === token) ||
+              findUser.sessions[0]?.token === token);
+          if (hasSession) {
+            req.user = findUser;
+            return next();
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Auth middleware error:", err);
+    }
+  }
+
+  // If unauthenticated, allow public routes to pass with req.user = null
+  if (isPublicRoute(req)) {
+    return next();
+  }
+
+  if (!token) {
+    return res.status(401).json({ status: 50, msg: "No token found" });
+  }
+
+  return res.status(401).json({ status: 53, msg: "Unauthorized: Invalid credentials or session expired" });
+}
+
+export { isLoggedIn };
