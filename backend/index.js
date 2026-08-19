@@ -21,6 +21,7 @@ import roleRouter from './App/routes/role.js';
 import planRouter from './App/routes/plan.js';
 import paymentRouter from './App/routes/payment.js';
 import legalComplianceRouter from './App/routes/legalCompliance.js';
+import liveSessionRouter from './App/routes/liveSession.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { registerSocketServer } from './services/socket.js';
@@ -47,6 +48,7 @@ app.use('/payment', paymentRouter)
 app.use('/connect', connectRoutes)
 app.use('/community', communityRoutes)
 app.use('/meetings' , meetingRouter)
+app.use('/live-sessions', liveSessionRouter)
 app.use('/milestones' , milestoneRouter)
 app.use('/jobs' , jobsRoutes)
 app.use('/tickets' , ticketRoutes)

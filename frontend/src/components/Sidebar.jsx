@@ -43,6 +43,7 @@ import {
   Scale,
   FolderLock,
   Layers,
+  Radio,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -125,12 +126,14 @@ export default function Sidebar() {
         children: connectChildren,
       },
       { path: "/community", label: "Community Wall", icon: Users },
+      { path: "/live-sessions", label: "Live Sessions & Queue", icon: Radio },
       {
         key: "actions",
         label: "My Actions",
         icon: Scissors,
         children: [
           { path: "/connections", label: "Connections" },
+          { path: "/live-sessions", label: "Live Sessions" },
           { path: "/meetings", label: "My Meetings" },
           { path: "/mentorship-hours", label: "Mentor Hours" },
           { path: "/milestones", label: "MileStones" },

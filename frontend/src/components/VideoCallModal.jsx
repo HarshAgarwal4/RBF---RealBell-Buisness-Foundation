@@ -48,6 +48,8 @@ export default function VideoCallModal() {
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.playsInline = true;
+      localVideoRef.current.play().catch(() => {});
     }
   }, [localStream, callStatus]);
 
@@ -55,6 +57,8 @@ export default function VideoCallModal() {
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.playsInline = true;
+      remoteVideoRef.current.play().catch(() => {});
     }
   }, [remoteStream, callStatus]);
 

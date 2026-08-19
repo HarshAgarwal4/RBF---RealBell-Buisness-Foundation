@@ -16,6 +16,9 @@ import {
     togglePinPost,
     getAnalytics,
     getRecentActivity,
+    getAllLiveSessionsAdmin,
+    getLiveSessionsGlobalStats,
+    forceEndLiveSessionAdmin,
 } from "../controllers/admin.js";
 import {
     getAdminAuthSettings,
@@ -31,6 +34,11 @@ adminRouter.use(isAdmin);
 adminRouter.get("/stats", getDashboardStats);
 adminRouter.get("/activity", getRecentActivity);
 adminRouter.get("/analytics", getAnalytics);
+
+/* ── Live Sessions & Queues ── */
+adminRouter.get("/live-sessions", getAllLiveSessionsAdmin);
+adminRouter.get("/live-sessions/stats", getLiveSessionsGlobalStats);
+adminRouter.post("/live-sessions/:id/force-end", forceEndLiveSessionAdmin);
 
 /* ── Auth Settings ── */
 adminRouter.get("/auth-settings", getAdminAuthSettings);

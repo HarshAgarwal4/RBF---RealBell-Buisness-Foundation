@@ -50,6 +50,11 @@ import LegalServiceApply from '../pages/app/legalCompliance/LegalServiceApply.js
 import MyLegalApplications from '../pages/app/legalCompliance/MyLegalApplications.jsx';
 import LegalComplianceDocuments from '../pages/app/legalCompliance/LegalComplianceDocuments.jsx';
 import AdminLegalCompliance from '../pages/admin/AdminLegalCompliance.jsx';
+import LiveSessions from '../pages/app/liveSessions/LiveSessions.jsx';
+import WaitingRoom from '../pages/app/liveSessions/WaitingRoom.jsx';
+import HostDashboard from '../pages/app/liveSessions/HostDashboard.jsx';
+import LiveCallRoom from '../pages/app/liveSessions/LiveCallRoom.jsx';
+import AdminLiveSessions from '../pages/admin/AdminLiveSessions.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -111,6 +116,22 @@ const Routes = createBrowserRouter([
     {
         path : '/meetings',
         element: <ProtectedRoute> <Meetings /> </ProtectedRoute>
+    },
+    {
+        path: '/live-sessions',
+        element: <ProtectedRoute><LiveSessions /></ProtectedRoute>
+    },
+    {
+        path: '/live-sessions/:id',
+        element: <ProtectedRoute><WaitingRoom /></ProtectedRoute>
+    },
+    {
+        path: '/live-sessions/:id/host',
+        element: <ProtectedRoute><HostDashboard /></ProtectedRoute>
+    },
+    {
+        path: '/live-sessions/:id/room',
+        element: <ProtectedRoute><LiveCallRoom /></ProtectedRoute>
     },
     {
         path: '/milestones',
@@ -255,6 +276,11 @@ const Routes = createBrowserRouter([
     {
         path: '/admin/legal-compliance',
         element: <ProtectedRoute><IsAdminRoute><AdminLegalCompliance /></IsAdminRoute></ProtectedRoute>
+    },
+    /* ── Admin Live Sessions ── */
+    {
+        path: '/admin/live-sessions',
+        element: <ProtectedRoute><IsAdminRoute><AdminLiveSessions /></IsAdminRoute></ProtectedRoute>
     },
     {
         path: '*',

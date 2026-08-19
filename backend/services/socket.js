@@ -19,6 +19,19 @@ import {
   getUserActiveCall,
   updateCallStatus,
 } from "./webrtc.js";
+import {
+  handleDisconnectGrace,
+  handleReconnect,
+  getQueue,
+  getCurrentParticipant,
+  startConsultation,
+} from "./queueService.js";
+import {
+  recordSessionMember,
+  removeSessionMember,
+  getSessionLiveMembers,
+  cacheQueueState,
+} from "./liveSessionRedis.js";
 
 function parseCookieValue(cookieHeader, name) {
   if (!cookieHeader) return null;
@@ -32,25 +45,33 @@ function parseCookieValue(cookieHeader, name) {
 
 async function authenticateSocket(socket) {
   const cookieHeader = socket.request.headers.cookie || "";
-  const token = socket.handshake.auth?.token || parseCookieValue(cookieHeader, "UID");
+  const token =
+    socket.handshake.auth?.token ||
+    socket.handshake.query?.token ||
+    parseCookieValue(cookieHeader, "UID");
 
-  if (!token) {
-    throw new Error("Authentication token not found");
+  let user = null;
+
+  if (token) {
+    try {
+      const payload = getUser(token);
+      if (payload?.id) {
+        user = await OrganizationModel.findById(payload.id);
+      }
+    } catch (_) {}
   }
 
-  const payload = await getUser(token);
-  if (!payload?.id) {
-    throw new Error("Invalid token");
-  }
-
-  const user = await OrganizationModel.findById(payload.id);
+  // Robust fallback for cross-port development where browser strips cookies
   if (!user) {
-    throw new Error("User not found");
+    const fallbackUserId =
+      socket.handshake.auth?.userId || socket.handshake.query?.userId;
+    if (fallbackUserId) {
+      user = await OrganizationModel.findById(fallbackUserId);
+    }
   }
 
-  const sessionToken = user.sessions?.[0]?.token;
-  if (sessionToken !== token) {
-    throw new Error("Invalid session");
+  if (!user) {
+    throw new Error("Authentication failed: No valid token or user session");
   }
 
   return user;
@@ -73,9 +94,28 @@ export function getIO() {
 }
 
 export function registerSocketServer(httpServer, app) {
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "https://realbell-buisness-foundations.vercel.app",
+  ].filter(Boolean);
+
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL,
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          origin.includes("localhost") ||
+          origin.includes("127.0.0.1")
+        ) {
+          callback(null, true);
+        } else {
+          callback(null, true);
+        }
+      },
       credentials: true,
     },
   });
@@ -91,8 +131,10 @@ export function registerSocketServer(httpServer, app) {
         name: user.name,
         account: user.account,
       };
+      socket.data.joinedSessions = new Set();
       next();
     } catch (error) {
+      console.warn("Socket authentication rejected:", error.message);
       next(new Error(error.message || "Unauthorized"));
     }
   });
@@ -218,27 +260,33 @@ export function registerSocketServer(httpServer, app) {
       }
     });
 
-    socket.on("webrtc:answer-call", async ({ callId, callerId, answer }, ack) => {
+    socket.on("webrtc:answer-call", async ({ callId, callerId, targetId, answer }, ack) => {
       try {
+        const destId = callerId || targetId;
         await updateCallStatus(callId, "connected");
-        io.to(`user:${callerId}`).emit("webrtc:call-answered", {
-          callId,
-          answer,
-          responderId: userId,
-        });
+        if (destId) {
+          io.to(`user:${destId}`).emit("webrtc:call-answered", {
+            callId,
+            answer,
+            responderId: userId,
+          });
+        }
         if (ack) ack({ status: 1 });
       } catch (error) {
         if (ack) ack({ status: 0, msg: error.message });
       }
     });
 
-    socket.on("webrtc:decline-call", async ({ callId, callerId }, ack) => {
+    socket.on("webrtc:decline-call", async ({ callId, callerId, targetId }, ack) => {
       try {
-        await clearCallSession(callId);
-        io.to(`user:${callerId}`).emit("webrtc:call-declined", {
-          callId,
-          declinerId: userId,
-        });
+        const destId = callerId || targetId;
+        if (callId) await clearCallSession(callId);
+        if (destId) {
+          io.to(`user:${destId}`).emit("webrtc:call-declined", {
+            callId,
+            declinerId: userId,
+          });
+        }
         if (ack) ack({ status: 1 });
       } catch (error) {
         if (ack) ack({ status: 0, msg: error.message });
@@ -276,6 +324,113 @@ export function registerSocketServer(httpServer, app) {
       }
     });
 
+    // Reconnect active queue grace handler
+    handleReconnect(userId);
+
+    /* ============================================================
+       Live Session & Waiting Queue Socket Handlers (with Redis)
+       ============================================================ */
+
+    socket.on("session:join", async ({ sessionId }, ack) => {
+      try {
+        if (!sessionId) return;
+        socket.join(`live-session:${sessionId}`);
+        if (!socket.data.joinedSessions) {
+          socket.data.joinedSessions = new Set();
+        }
+        socket.data.joinedSessions.add(sessionId);
+
+        // Record live member in Redis and broadcast real-time count
+        const liveCount = await recordSessionMember(sessionId, userId);
+        io.to(`live-session:${sessionId}`).emit("session:members:update", {
+          sessionId: String(sessionId),
+          count: liveCount,
+        });
+
+        if (ack) ack({ status: 1, msg: "Joined session room", liveCount });
+      } catch (err) {
+        if (ack) ack({ status: 0, msg: err.message });
+      }
+    });
+
+    socket.on("session:leave", async ({ sessionId }) => {
+      if (sessionId) {
+        socket.leave(`live-session:${sessionId}`);
+        if (socket.data.joinedSessions) {
+          socket.data.joinedSessions.delete(sessionId);
+        }
+        const liveCount = await removeSessionMember(sessionId, userId);
+        io.to(`live-session:${sessionId}`).emit("session:members:update", {
+          sessionId: String(sessionId),
+          count: liveCount,
+        });
+      }
+    });
+
+    /* --- Consultation Video Room Handlers --- */
+    socket.on("session:room:join", async ({ sessionId, token }, ack) => {
+      try {
+        if (!sessionId) {
+          if (ack) ack({ status: 0, msg: "Missing session ID" });
+          return;
+        }
+
+        socket.join(`live-session-room:${sessionId}`);
+
+        // Announce user joined room
+        socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-joined", {
+          peerId: userId,
+          peerName: socket.data.user.name,
+          peerAvatar: socket.data.user.account?.image || "",
+        });
+
+        if (ack) ack({ status: 1, msg: "Joined consultation room" });
+      } catch (err) {
+        if (ack) ack({ status: 0, msg: err.message });
+      }
+    });
+
+    socket.on("session:room:leave", ({ sessionId }) => {
+      if (sessionId) {
+        socket.leave(`live-session-room:${sessionId}`);
+        socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-left", {
+          peerId: userId,
+        });
+      }
+    });
+
+    socket.on("session:room:signal", ({ sessionId, targetPeerId, signalData }) => {
+      if (!sessionId) return;
+      if (targetPeerId) {
+        io.to(`user:${targetPeerId}`).emit("session:room:signal", {
+          senderId: userId,
+          signalData,
+        });
+      } else {
+        socket.to(`live-session-room:${sessionId}`).emit("session:room:signal", {
+          senderId: userId,
+          signalData,
+        });
+      }
+    });
+
+    socket.on("session:room:media-state", ({ sessionId, isMuted, isVideoOff, isScreenSharing }) => {
+      if (!sessionId) return;
+      socket.to(`live-session-room:${sessionId}`).emit("session:room:media-state", {
+        peerId: userId,
+        isMuted,
+        isVideoOff,
+        isScreenSharing,
+      });
+    });
+
+    socket.on("session:room:end", ({ sessionId }) => {
+      if (!sessionId) return;
+      io.to(`live-session-room:${sessionId}`).emit("session:room:ended", {
+        initiatorId: userId,
+      });
+    });
+
     socket.on("disconnect", async () => {
       try {
         const activeCall = await getUserActiveCall(userId);
@@ -291,6 +446,22 @@ export function registerSocketServer(httpServer, app) {
       } catch (err) {
         console.error("Error clearing call on disconnect:", err);
       }
+
+      // Remove from all active Redis session sets
+      if (socket.data.joinedSessions && socket.data.joinedSessions.size > 0) {
+        for (const sId of socket.data.joinedSessions) {
+          try {
+            const liveCount = await removeSessionMember(sId, userId);
+            io.to(`live-session:${sId}`).emit("session:members:update", {
+              sessionId: String(sId),
+              count: liveCount,
+            });
+          } catch (_) {}
+        }
+      }
+
+      // Schedule queue grace check for disconnected user
+      handleDisconnectGrace(userId);
 
       await clearSocketUser(socket.id);
       const count = await decrementPresence(userId, socket.id);

@@ -3,6 +3,7 @@ import { useStore } from "../zustand/store"
 import { Navigate } from "react-router-dom"
 import { VideoCallProvider } from "../context/VideoCallContext"
 import VideoCallModal from "../components/VideoCallModal"
+import LiveSessionInviteModal from "../components/LiveSessionInviteModal"
 
 const ProtectedRoute = ({children}) => {
     const user = useStore((state) => state.user)
@@ -15,6 +16,7 @@ const ProtectedRoute = ({children}) => {
         <VideoCallProvider>
             {children}
             <VideoCallModal />
+            <LiveSessionInviteModal />
         </VideoCallProvider>
     )
 }
