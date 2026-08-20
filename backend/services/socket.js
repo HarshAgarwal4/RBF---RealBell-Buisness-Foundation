@@ -375,16 +375,35 @@ export function registerSocketServer(httpServer, app) {
           return;
         }
 
-        socket.join(`live-session-room:${sessionId}`);
+        const roomName = `live-session-room:${sessionId}`;
 
-        // Announce user joined room
-        socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-joined", {
-          peerId: userId,
+        // Discover existing connected peers in this room
+        const existingSockets = await io.in(roomName).fetchSockets();
+        const existingPeers = [];
+        for (const s of existingSockets) {
+          if (s.data?.user?._id && String(s.data.user._id) !== String(userId)) {
+            existingPeers.push({
+              peerId: s.data.user._id,
+              peerName: s.data.user.name,
+              peerAvatar: s.data.user.account?.image || "",
+            });
+          }
+        }
+
+        socket.join(roomName);
+        if (!socket.data.joinedVideoRooms) {
+          socket.data.joinedVideoRooms = new Set();
+        }
+        socket.data.joinedVideoRooms.add(sessionId);
+
+        // Announce user joined room to existing peers
+        socket.to(roomName).emit("session:room:peer-joined", {
+          peerId: String(userId),
           peerName: socket.data.user.name,
           peerAvatar: socket.data.user.account?.image || "",
         });
 
-        if (ack) ack({ status: 1, msg: "Joined consultation room" });
+        if (ack) ack({ status: 1, msg: "Joined consultation room", existingPeers });
       } catch (err) {
         if (ack) ack({ status: 0, msg: err.message });
       }
@@ -393,30 +412,31 @@ export function registerSocketServer(httpServer, app) {
     socket.on("session:room:ready", ({ sessionId }) => {
       if (!sessionId) return;
       socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-ready", {
-        peerId: userId,
+        peerId: String(userId),
         peerName: socket.data.user.name,
+        peerAvatar: socket.data.user.account?.image || "",
       });
     });
 
     socket.on("session:room:leave", ({ sessionId }) => {
       if (sessionId) {
         socket.leave(`live-session-room:${sessionId}`);
+        if (socket.data.joinedVideoRooms) {
+          socket.data.joinedVideoRooms.delete(sessionId);
+        }
         socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-left", {
-          peerId: userId,
+          peerId: String(userId),
         });
       }
     });
 
     socket.on("session:room:signal", ({ sessionId, targetPeerId, signalData }) => {
-      if (!sessionId) return;
-      if (targetPeerId && String(targetPeerId) !== String(userId)) {
-        io.to(`user:${targetPeerId}`).emit("session:room:signal", {
-          senderId: userId,
-          signalData,
-        });
-      }
+      if (!sessionId || !signalData) return;
       socket.to(`live-session-room:${sessionId}`).emit("session:room:signal", {
-        senderId: userId,
+        targetPeerId: targetPeerId ? String(targetPeerId) : null,
+        senderId: String(userId),
+        senderName: socket.data?.user?.name || "Participant",
+        senderAvatar: socket.data?.user?.account?.image || "",
         signalData,
       });
     });
@@ -424,7 +444,7 @@ export function registerSocketServer(httpServer, app) {
     socket.on("session:room:media-state", ({ sessionId, isMuted, isVideoOff, isScreenSharing }) => {
       if (!sessionId) return;
       socket.to(`live-session-room:${sessionId}`).emit("session:room:media-state", {
-        peerId: userId,
+        peerId: String(userId),
         isMuted,
         isVideoOff,
         isScreenSharing,
@@ -464,6 +484,17 @@ export function registerSocketServer(httpServer, app) {
         }
       } catch (err) {
         console.error("Error clearing call on disconnect:", err);
+      }
+
+      // Notify video rooms on disconnect
+      if (socket.data.joinedVideoRooms && socket.data.joinedVideoRooms.size > 0) {
+        for (const vRoomId of socket.data.joinedVideoRooms) {
+          try {
+            socket.to(`live-session-room:${vRoomId}`).emit("session:room:peer-left", {
+              peerId: userId,
+            });
+          } catch (_) {}
+        }
       }
 
       // Remove from all active Redis session sets

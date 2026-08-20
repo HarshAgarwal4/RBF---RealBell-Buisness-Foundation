@@ -554,8 +554,50 @@ export default function WaitingRoom() {
                 </button>
               </form>
             </div>
+          ) : session.sessionType === "group" ? (
+            /* GROUP SESSION / TEAM CALL VIEW */
+            <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-xs border border-gray-100 text-center animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-rose-50 text-[#b03052] mx-auto flex items-center justify-center mb-4">
+                <Users size={30} />
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Join Team Video Call with {session.hostId?.name || "the Host"}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-gray-500 max-w-lg mx-auto">
+                {isLive
+                  ? "This group session is currently LIVE. Click below to enter the video call room and collaborate."
+                  : "This group session is scheduled. You will be able to join as soon as the host starts the meeting."}
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                {isLive ? (
+                  <button
+                    onClick={() => navigate(`/live-sessions/${sessionId}/room`)}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition shadow-lg hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Video size={18} />
+                    Join Group Call Now
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gray-200 text-gray-500 text-sm font-bold cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Clock size={18} />
+                    Waiting for Host to Start
+                  </button>
+                )}
+              </div>
+
+              {!isLive && (
+                <p className="mt-4 text-xs font-medium text-amber-600">
+                  ⚠️ The host has not started the session yet. Keep this page open; it will update automatically.
+                </p>
+              )}
+            </div>
           ) : !inQueue ? (
-            /* PRE-JOIN WAITING ROOM */
+            /* PRE-JOIN 1-TO-1 WAITING ROOM */
             <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-xs border border-gray-100 text-center">
               <div className="w-16 h-16 rounded-full bg-rose-50 text-[#b03052] mx-auto flex items-center justify-center mb-4">
                 <Video size={30} />

@@ -42,12 +42,13 @@ class InBuiltWebRTCProvider extends BaseVideoProvider {
     const isHost = sessionHostId === currentUserId;
 
     const entryUserId = queueEntry?.userId?._id ? String(queueEntry.userId._id) : (queueEntry?.userId ? String(queueEntry.userId) : "");
+    const isGroupSession = session.sessionType === "group";
     const isAdmittedOrInCall =
       queueEntry &&
       (queueEntry.status === "ADMITTED" || queueEntry.status === "IN_CALL") &&
       entryUserId === currentUserId;
 
-    if (!isHost && !isAdmittedOrInCall) {
+    if (!isHost && !isAdmittedOrInCall && !isGroupSession) {
       return {
         authorized: false,
         reason: "User is not authorized to enter this call session.",

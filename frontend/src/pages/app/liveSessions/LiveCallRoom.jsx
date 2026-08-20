@@ -29,6 +29,7 @@ import {
 import axios from "../../../services/axios";
 import { useStore } from "../../../zustand/store";
 import { toast } from "react-toastify";
+import GroupCallRoom from "./GroupCallRoom";
 
 const ICE_CONFIG = {
   iceServers: [
@@ -369,7 +370,7 @@ export default function LiveCallRoom() {
 
   /* ── 7. Socket Signaling Lifecycle ── */
   useEffect(() => {
-    if (!accessGrant || !user?._id || !sessionId) return;
+    if (!accessGrant || !user?._id || !sessionId || sessionData?.sessionType === "group") return;
 
     const socket = io(backendUrl, {
       auth: { userId: user?._id },
@@ -501,7 +502,7 @@ export default function LiveCallRoom() {
 
   /* ── 8. Self-Healing Negotiation Loop ── */
   useEffect(() => {
-    if (!accessGrant || !sessionId || peerConnected) return;
+    if (!accessGrant || !sessionId || peerConnected || sessionData?.sessionType === "group") return;
 
     const interval = setInterval(() => {
       if (!remoteStreamRef.current || remoteStreamRef.current.getTracks().length === 0) {
@@ -664,6 +665,16 @@ export default function LiveCallRoom() {
           <p className="text-sm font-semibold">Validating Call Access Grant...</p>
         </div>
       </div>
+    );
+  }
+
+  if (sessionData?.sessionType === "group") {
+    return (
+      <GroupCallRoom
+        initialSessionData={sessionData}
+        initialAccessGrant={accessGrant}
+        isHost={isHost}
+      />
     );
   }
 

@@ -485,102 +485,150 @@ export default function HostDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* LEFT: CURRENT CONSULTATION CARD */}
           <div className="col-span-12 lg:col-span-6 space-y-6">
-            <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xs border border-gray-100">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
-                  <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide">
-                    Live Consultation
-                  </h2>
-                </div>
-                <span className="text-xs font-mono font-bold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-                  {formatDuration(consultationSeconds)} / {formatDuration(maxDurationSec)}
-                </span>
-              </div>
-
-              {isNearDurationLimit && currentParticipant && (
-                <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2.5 text-amber-800 text-xs font-semibold animate-pulse">
-                  <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
-                  <span>Warning: Max consultation duration will be reached in under 2 minutes.</span>
-                </div>
-              )}
-
-              {currentParticipant ? (
-                <div className="space-y-6 animate-fade-in">
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                    <img
-                      src={
-                        currentParticipant?.account?.image ||
-                        currentParticipant?.profile?.logo ||
-                        `https://placehold.co/100x100/0F3D4A/FFFFFF?text=${encodeURIComponent(
-                          (currentParticipant?.name || "User").slice(0, 2).toUpperCase()
-                        )}`
-                      }
-                      alt="Current Participant"
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-xs"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-gray-900 truncate">
-                        {currentParticipant.name || "Participant"}
-                      </h3>
-                      <p className="text-xs text-gray-500 truncate">
-                        {currentParticipant.company_name || currentParticipant.email}
-                      </p>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-bold">
-                        In Consultation
-                      </span>
-                    </div>
+            {session?.sessionType === "group" ? (
+              /* GROUP SESSION / TEAM CALL HOST CARD */
+              <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xs border border-gray-100 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
+                    <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide">
+                      Team Video Call Room
+                    </h2>
                   </div>
-
-                  {/* Consultation Controls */}
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <button
-                      onClick={handleEnterCallRoom}
-                      className="col-span-2 py-3 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-bold hover:bg-emerald-700 transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Video size={16} /> Enter Video Call Room
-                    </button>
-
-                    <button
-                      onClick={handleEndConsultation}
-                      disabled={actionLoading}
-                      className="py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <PhoneOff size={14} /> End Consultation
-                    </button>
-
-                    <button
-                      onClick={handleNextParticipant}
-                      disabled={actionLoading || queue.length === 0}
-                      className="py-2.5 rounded-xl bg-[#0b1a3a] text-white text-xs font-bold hover:bg-[#132b5c] transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    >
-                      <FastForward size={14} /> Next Participant
-                    </button>
-                  </div>
+                  <span className="text-xs font-bold bg-rose-50 text-rose-700 px-3 py-1 rounded-full border border-rose-200">
+                    Group Session
+                  </span>
                 </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="w-14 h-14 rounded-full bg-gray-50 text-gray-400 mx-auto flex items-center justify-center mb-3">
-                    <Users size={24} />
+
+                <div className="py-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-rose-50 text-[#b03052] mx-auto flex items-center justify-center mb-3 shadow-xs">
+                    <Users size={32} />
                   </div>
-                  <h3 className="text-sm font-bold text-gray-700">No active consultation</h3>
-                  <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
-                    {queue.length > 0
-                      ? "Admit a waiting participant from the queue on the right to start consultation."
-                      : "The waiting queue is currently empty."}
+                  <h3 className="text-base font-bold text-gray-900">
+                    Multi-Participant Video Room
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                    {isLive
+                      ? `Team call is LIVE with ${liveMembersCount} participant(s) in session. Click below to enter the video conference.`
+                      : "Start the session from the top bar to open the team call for all participants."}
                   </p>
 
-                  {queue.length > 0 && (
+                  <div className="mt-6 flex flex-col gap-3 max-w-md mx-auto">
                     <button
-                      onClick={() => handleAdmit(queue[0]._id)}
-                      className="mt-5 px-6 py-2.5 rounded-xl bg-[#b03052] text-white text-xs font-bold hover:bg-[#96263f] transition shadow-xs cursor-pointer"
+                      onClick={handleEnterCallRoom}
+                      className="w-full py-3.5 rounded-2xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition shadow-lg hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      Admit #1 ({queue[0].userId?.name || "Participant"})
+                      <Video size={18} /> Enter Group Video Call
                     </button>
-                  )}
+
+                    <button
+                      onClick={() => setShowShareModal(true)}
+                      className="w-full py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Share2 size={14} className="text-[#b03052]" /> Invite Connections & Share
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              /* 1-TO-1 CONSULTATION HOST CARD */
+              <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xs border border-gray-100">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+                    <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide">
+                      Live Consultation
+                    </h2>
+                  </div>
+                  <span className="text-xs font-mono font-bold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+                    {formatDuration(consultationSeconds)} / {formatDuration(maxDurationSec)}
+                  </span>
+                </div>
+
+                {isNearDurationLimit && currentParticipant && (
+                  <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2.5 text-amber-800 text-xs font-semibold animate-pulse">
+                    <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
+                    <span>Warning: Max consultation duration will be reached in under 2 minutes.</span>
+                  </div>
+                )}
+
+                {currentParticipant ? (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                      <img
+                        src={
+                          currentParticipant?.account?.image ||
+                          currentParticipant?.profile?.logo ||
+                          `https://placehold.co/100x100/0F3D4A/FFFFFF?text=${encodeURIComponent(
+                            (currentParticipant?.name || "User").slice(0, 2).toUpperCase()
+                          )}`
+                        }
+                        alt="Current Participant"
+                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-xs"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-gray-900 truncate">
+                          {currentParticipant.name || "Participant"}
+                        </h3>
+                        <p className="text-xs text-gray-500 truncate">
+                          {currentParticipant.company_name || currentParticipant.email}
+                        </p>
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-bold">
+                          In Consultation
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Consultation Controls */}
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        onClick={handleEnterCallRoom}
+                        className="col-span-2 py-3 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-bold hover:bg-emerald-700 transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Video size={16} /> Enter Video Call Room
+                      </button>
+
+                      <button
+                        onClick={handleEndConsultation}
+                        disabled={actionLoading}
+                        className="py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <PhoneOff size={14} /> End Consultation
+                      </button>
+
+                      <button
+                        onClick={handleNextParticipant}
+                        disabled={actionLoading || queue.length === 0}
+                        className="py-2.5 rounded-xl bg-[#0b1a3a] text-white text-xs font-bold hover:bg-[#132b5c] transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <FastForward size={14} /> Next Participant
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="w-14 h-14 rounded-full bg-gray-50 text-gray-400 mx-auto flex items-center justify-center mb-3">
+                      <Users size={24} />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-700">No active consultation</h3>
+                    <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                      {queue.length > 0
+                        ? "Admit a waiting participant from the queue on the right to start consultation."
+                        : "The waiting queue is currently empty."}
+                    </p>
+
+                    {queue.length > 0 && (
+                      <button
+                        onClick={() => handleAdmit(queue[0]._id)}
+                        className="mt-5 px-6 py-2.5 rounded-xl bg-[#b03052] text-white text-xs font-bold hover:bg-[#96263f] transition shadow-xs cursor-pointer"
+                      >
+                        Admit #1 ({queue[0].userId?.name || "Participant"})
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quick Session Stats */}
             <div className="bg-white rounded-3xl p-5 shadow-xs border border-gray-100">

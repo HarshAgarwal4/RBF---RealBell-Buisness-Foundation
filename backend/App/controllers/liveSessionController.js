@@ -655,26 +655,30 @@ export async function getCallAccessGrant(req, res) {
     let queueEntry = null;
 
     if (!isHost) {
-      queueEntry = await QueueEntryModel.findOne({
-        sessionId: id,
-        userId: req.user._id,
-        status: { $in: ["ADMITTED", "IN_CALL"] },
-      }).populate("userId", "name email company_name account profile");
+      if (session.sessionType === "group") {
+        // For group sessions, all authorized attendees can enter the group call room
+      } else {
+        queueEntry = await QueueEntryModel.findOne({
+          sessionId: id,
+          userId: req.user._id,
+          status: { $in: ["ADMITTED", "IN_CALL"] },
+        }).populate("userId", "name email company_name account profile");
 
-      if (!queueEntry) {
-        return res.status(403).json({
-          status: 0,
-          msg: "Access denied. You have not been admitted by the host to enter this call.",
-        });
-      }
+        if (!queueEntry) {
+          return res.status(403).json({
+            status: 0,
+            msg: "Access denied. You have not been admitted by the host to enter this call.",
+          });
+        }
 
-      // Mark consultation started if not already
-      if (queueEntry.status === "ADMITTED") {
-        await startConsultation(id, req.user._id);
+        // Mark consultation started if not already
+        if (queueEntry.status === "ADMITTED") {
+          await startConsultation(id, req.user._id);
+        }
       }
     }
 
-    // Find active in-call participant for host view
+    // Find active in-call participant for host view (1-to-1)
     const activeParticipantEntry = await QueueEntryModel.findOne({
       sessionId: id,
       status: { $in: ["IN_CALL", "ADMITTED"] },
@@ -694,6 +698,7 @@ export async function getCallAccessGrant(req, res) {
         hostId: session.hostId,
         videoRoomId: session.videoRoomId,
         videoProvider: session.videoProvider,
+        sessionType: session.sessionType || "one-to-one",
         maxConsultationDuration: session.maxConsultationDuration,
       },
     });
