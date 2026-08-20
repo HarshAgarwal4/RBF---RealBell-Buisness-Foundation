@@ -390,6 +390,14 @@ export function registerSocketServer(httpServer, app) {
       }
     });
 
+    socket.on("session:room:ready", ({ sessionId }) => {
+      if (!sessionId) return;
+      socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-ready", {
+        peerId: userId,
+        peerName: socket.data.user.name,
+      });
+    });
+
     socket.on("session:room:leave", ({ sessionId }) => {
       if (sessionId) {
         socket.leave(`live-session-room:${sessionId}`);
@@ -401,17 +409,16 @@ export function registerSocketServer(httpServer, app) {
 
     socket.on("session:room:signal", ({ sessionId, targetPeerId, signalData }) => {
       if (!sessionId) return;
-      if (targetPeerId) {
+      if (targetPeerId && String(targetPeerId) !== String(userId)) {
         io.to(`user:${targetPeerId}`).emit("session:room:signal", {
           senderId: userId,
           signalData,
         });
-      } else {
-        socket.to(`live-session-room:${sessionId}`).emit("session:room:signal", {
-          senderId: userId,
-          signalData,
-        });
       }
+      socket.to(`live-session-room:${sessionId}`).emit("session:room:signal", {
+        senderId: userId,
+        signalData,
+      });
     });
 
     socket.on("session:room:media-state", ({ sessionId, isMuted, isVideoOff, isScreenSharing }) => {
@@ -421,6 +428,18 @@ export function registerSocketServer(httpServer, app) {
         isMuted,
         isVideoOff,
         isScreenSharing,
+      });
+    });
+
+    socket.on("session:room:chat", ({ sessionId, message }) => {
+      if (!sessionId || !message) return;
+      io.to(`live-session-room:${sessionId}`).emit("session:room:chat", {
+        id: Date.now().toString(),
+        senderId: userId,
+        senderName: socket.data.user.name,
+        senderAvatar: socket.data.user.account?.image || "",
+        text: message,
+        createdAt: new Date().toISOString(),
       });
     });
 

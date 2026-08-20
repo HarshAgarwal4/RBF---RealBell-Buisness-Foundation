@@ -647,11 +647,11 @@ export async function toggleQueuePauseController(req, res) {
 export async function getCallAccessGrant(req, res) {
   try {
     const { id } = req.params;
-    const session = await LiveSessionModel.findById(id);
+    const session = await LiveSessionModel.findById(id).populate("hostId", "name email company_name account profile");
 
     if (!session) return res.status(404).json({ status: 0, msg: "Session not found" });
 
-    const isHost = String(session.hostId) === String(req.user._id);
+    const isHost = String(session.hostId?._id || session.hostId) === String(req.user._id);
     let queueEntry = null;
 
     if (!isHost) {
@@ -659,7 +659,7 @@ export async function getCallAccessGrant(req, res) {
         sessionId: id,
         userId: req.user._id,
         status: { $in: ["ADMITTED", "IN_CALL"] },
-      });
+      }).populate("userId", "name email company_name account profile");
 
       if (!queueEntry) {
         return res.status(403).json({
@@ -674,6 +674,12 @@ export async function getCallAccessGrant(req, res) {
       }
     }
 
+    // Find active in-call participant for host view
+    const activeParticipantEntry = await QueueEntryModel.findOne({
+      sessionId: id,
+      status: { $in: ["IN_CALL", "ADMITTED"] },
+    }).populate("userId", "name email company_name account profile");
+
     const provider = getVideoProvider(session.videoProvider);
     const grant = await provider.generateAccessGrant(session, req.user, queueEntry);
 
@@ -681,9 +687,11 @@ export async function getCallAccessGrant(req, res) {
       status: 1,
       grant,
       isHost,
+      peerInfo: isHost ? activeParticipantEntry?.userId : session.hostId,
       session: {
         _id: session._id,
         title: session.title,
+        hostId: session.hostId,
         videoRoomId: session.videoRoomId,
         videoProvider: session.videoProvider,
         maxConsultationDuration: session.maxConsultationDuration,
