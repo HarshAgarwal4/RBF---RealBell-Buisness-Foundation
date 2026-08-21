@@ -53,7 +53,6 @@ export const VideoCallProvider = ({ children }) => {
     isScreenSharing: false,
   });
   const [callDuration, setCallDuration] = useState(0);
-  const [sessionInvite, setSessionInvite] = useState(null);
 
   const [localStreamState, setLocalStreamState] = useState(null);
   const [remoteStreamState, setRemoteStreamState] = useState(null);
@@ -163,11 +162,6 @@ export const VideoCallProvider = ({ children }) => {
       transports: ["websocket", "polling"],
     });
     socketRef.current = socket;
-
-    socket.on("liveSession:invite", (inviteData) => {
-      setSessionInvite(inviteData);
-      playRingtone();
-    });
 
     socket.on("webrtc:incoming-call", ({ callId, callerId, callerName, callerAvatar, offer, callType }) => {
       // If busy, reject automatically
@@ -587,8 +581,6 @@ export const VideoCallProvider = ({ children }) => {
         socket: socketRef.current,
         callStatus,
         callDetails,
-        sessionInvite,
-        dismissSessionInvite: () => setSessionInvite(null),
         localStream: localStreamState,
         remoteStream: remoteStreamState,
         isMuted,

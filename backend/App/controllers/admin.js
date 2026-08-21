@@ -5,8 +5,6 @@ import TicketModel from "../models/ticket.js";
 import CommunityPostModel from "../models/community.js";
 import MeetingModel from "../models/meeting.js";
 import MilestoneModel from "../models/milestone.js";
-import LiveSessionModel from "../models/liveSession.js";
-import QueueEntryModel from "../models/queueEntry.js";
 
 /* ======================= Dashboard Stats ======================= */
 
@@ -590,148 +588,6 @@ async function getRecentActivity(req, res) {
     }
 }
 
-/* ======================= Live Sessions & Queue Admin ======================= */
-
-async function getAllLiveSessionsAdmin(req, res) {
-    try {
-        const { status = "", page = 1, limit = 20 } = req.query;
-        const filter = {};
-        if (status) filter.status = status;
-
-        const skip = (parseInt(page) - 1) * parseInt(limit);
-
-        const [sessions, total] = await Promise.all([
-            LiveSessionModel.find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(parseInt(limit))
-                .populate("hostId", "name company_name email account profile")
-                .populate("currentParticipantId", "name company_name account"),
-            LiveSessionModel.countDocuments(filter),
-        ]);
-
-        const sessionIds = sessions.map((s) => s._id);
-        const waitingCounts = await QueueEntryModel.aggregate([
-            { $match: { sessionId: { $in: sessionIds }, status: "WAITING" } },
-            { $group: { _id: "$sessionId", count: { $sum: 1 } } },
-        ]);
-
-        const countMap = new Map();
-        waitingCounts.forEach((c) => countMap.set(String(c._id), c.count));
-
-        const enriched = sessions.map((s) => ({
-            ...s.toObject(),
-            waitingCount: countMap.get(String(s._id)) || 0,
-        }));
-
-        return res.json({
-            status: 1,
-            sessions: enriched,
-            total,
-            page: parseInt(page),
-            pages: Math.ceil(total / parseInt(limit)),
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: 0, msg: "Internal server error" });
-    }
-}
-
-async function getLiveSessionsGlobalStats(req, res) {
-    try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-
-        const [
-            activeSessionsCount,
-            totalSessionsCount,
-            waitingUsersCount,
-            inCallUsersCount,
-            completedTodayCount,
-            completedAll,
-        ] = await Promise.all([
-            LiveSessionModel.countDocuments({ status: "LIVE" }),
-            LiveSessionModel.countDocuments(),
-            QueueEntryModel.countDocuments({ status: "WAITING" }),
-            QueueEntryModel.countDocuments({ status: "IN_CALL" }),
-            QueueEntryModel.countDocuments({
-                status: "COMPLETED",
-                consultationEndedAt: { $gte: todayStart },
-            }),
-            QueueEntryModel.find({ status: "COMPLETED" }).select("joinedAt admittedAt consultationStartedAt consultationEndedAt"),
-        ]);
-
-        let totalWaitSec = 0;
-        let totalConsultationSec = 0;
-
-        completedAll.forEach((e) => {
-            if (e.joinedAt && e.admittedAt) {
-                totalWaitSec += Math.max(0, (new Date(e.admittedAt).getTime() - new Date(e.joinedAt).getTime()) / 1000);
-            }
-            if (e.consultationStartedAt && e.consultationEndedAt) {
-                totalConsultationSec += Math.max(0, (new Date(e.consultationEndedAt).getTime() - new Date(e.consultationStartedAt).getTime()) / 1000);
-            }
-        });
-
-        const avgWaitMinutes =
-            completedAll.length > 0
-                ? Math.round((totalWaitSec / completedAll.length / 60) * 10) / 10
-                : 0;
-
-        const avgConsultationMinutes =
-            completedAll.length > 0
-                ? Math.round((totalConsultationSec / completedAll.length / 60) * 10) / 10
-                : 0;
-
-        return res.json({
-            status: 1,
-            stats: {
-                activeSessions: activeSessionsCount,
-                totalSessions: totalSessionsCount,
-                usersWaiting: waitingUsersCount,
-                usersInCalls: inCallUsersCount,
-                completedToday: completedTodayCount,
-                totalCompletedAllTime: completedAll.length,
-                avgWaitMinutes,
-                avgConsultationMinutes,
-            },
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: 0, msg: "Internal server error" });
-    }
-}
-
-async function forceEndLiveSessionAdmin(req, res) {
-    try {
-        const { id } = req.params;
-        const session = await LiveSessionModel.findById(id);
-        if (!session) return res.status(404).json({ status: 0, msg: "Session not found" });
-
-        session.status = "ENDED";
-        session.endedAt = new Date();
-        session.currentParticipantId = null;
-        session.currentQueueEntryId = null;
-        await session.save();
-
-        await QueueEntryModel.updateMany(
-            { sessionId: id, status: { $in: ["WAITING", "ADMITTED"] } },
-            {
-                $set: {
-                    status: "CANCELLED",
-                    cancellationTime: new Date(),
-                    cancellationReason: "Force-ended by administrator",
-                },
-            }
-        );
-
-        return res.json({ status: 1, msg: "Session force-ended by admin", session });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: 0, msg: "Internal server error" });
-    }
-}
-
 export {
     getDashboardStats,
     getAllUsers,
@@ -748,7 +604,4 @@ export {
     togglePinPost,
     getAnalytics,
     getRecentActivity,
-    getAllLiveSessionsAdmin,
-    getLiveSessionsGlobalStats,
-    forceEndLiveSessionAdmin,
 };

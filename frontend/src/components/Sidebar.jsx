@@ -126,14 +126,14 @@ export default function Sidebar() {
         children: connectChildren,
       },
       { path: "/community", label: "Community Wall", icon: Users },
-      { path: "/live-sessions", label: "Live Sessions & Queue", icon: Radio },
+      { path: "/live_sessions", label: "Live Sessions & Queue", icon: Radio },
       {
         key: "actions",
         label: "My Actions",
         icon: Scissors,
         children: [
           { path: "/connections", label: "Connections" },
-          { path: "/live-sessions", label: "Live Sessions" },
+          { path: "/live_sessions", label: "Live Sessions" },
           { path: "/meetings", label: "My Meetings" },
           { path: "/mentorship-hours", label: "Mentor Hours" },
           { path: "/milestones", label: "MileStones" },
@@ -263,7 +263,9 @@ export default function Sidebar() {
             <div style={{ paddingLeft: 16, marginTop: 2, display: "flex", flexDirection: "column", gap: 2 }}>
               {item.children.map((child) => {
                 const ChildIcon = child.icon;
-                const childActive = location.pathname === child.path;
+                const childActive =
+                  location.pathname === child.path ||
+                  (child.path === "/live_sessions" && location.pathname === "/live-sessions");
                 return (
                   <button
                     key={child.path}
@@ -299,7 +301,9 @@ export default function Sidebar() {
     }
 
     // Plain (non-expandable) item
-    const active = location.pathname === item.path;
+    const active =
+      location.pathname === item.path ||
+      (item.path === "/live_sessions" && location.pathname === "/live-sessions");
     return (
       <button
         key={item.path}

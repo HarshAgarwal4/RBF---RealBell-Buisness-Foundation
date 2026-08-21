@@ -19,18 +19,18 @@ import {
   getUserActiveCall,
   updateCallStatus,
 } from "./webrtc.js";
+import LiveSessionModel from "../App/models/liveSession.js";
 import {
-  handleDisconnectGrace,
-  handleReconnect,
-  getQueue,
-  getCurrentParticipant,
-  startConsultation,
-} from "./queueService.js";
-import {
-  recordSessionMember,
-  removeSessionMember,
-  getSessionLiveMembers,
-  cacheQueueState,
+  addGroupParticipant,
+  removeGroupParticipant,
+  getGroupParticipants,
+  addGroupLobbyParticipant,
+  removeGroupLobbyParticipant,
+  getGroupLobbyParticipants,
+  admitGroupLobbyParticipant,
+  setSessionActiveConsultation,
+  clearSessionActiveConsultation,
+  incrementSessionStats,
 } from "./liveSessionRedis.js";
 
 function parseCookieValue(cookieHeader, name) {
@@ -131,7 +131,6 @@ export function registerSocketServer(httpServer, app) {
         name: user.name,
         account: user.account,
       };
-      socket.data.joinedSessions = new Set();
       next();
     } catch (error) {
       console.warn("Socket authentication rejected:", error.message);
@@ -310,6 +309,91 @@ export function registerSocketServer(httpServer, app) {
       });
     });
 
+    async function autoRemoveUserFromLiveConsultation(userA, userB) {
+      if (!userA) return;
+      try {
+        const idA = String(userA);
+        const idB = userB ? String(userB) : null;
+
+        // Find session where one of the users was the active consultation participant
+        const query = idB
+          ? {
+              status: "live",
+              $or: [
+                { "activeConsultation.user": idA, host: idB },
+                { "activeConsultation.user": idB, host: idA },
+              ],
+            }
+          : {
+              status: "live",
+              "activeConsultation.user": idA,
+            };
+
+        const sessions = await LiveSessionModel.find(query);
+
+        for (const session of sessions) {
+          const activeUser = session.activeConsultation?.user;
+          if (!activeUser) continue;
+
+          const qItem = session.queue.find(
+            (q) => String(q.user?._id || q.user) === String(activeUser)
+          );
+          if (qItem) {
+            qItem.status = "completed";
+          }
+          session.stats.completedCount = (session.stats.completedCount || 0) + 1;
+          await incrementSessionStats(session._id, "completed");
+
+          session.activeConsultation = { user: null, startedAt: null };
+          await clearSessionActiveConsultation(session._id);
+
+          let nextAdmitted = null;
+          if (session.autoAdmit) {
+            const nextInLine = session.queue.find((q) => q.status === "waiting");
+            if (nextInLine) {
+              nextInLine.status = "in_consultation";
+              session.activeConsultation = {
+                user: nextInLine.user,
+                startedAt: new Date(),
+              };
+              session.stats.totalAdmittedCount = (session.stats.totalAdmittedCount || 0) + 1;
+              nextAdmitted = nextInLine.user;
+              await setSessionActiveConsultation(session._id, {
+                userId: nextInLine.user,
+                startedAt: new Date().toISOString(),
+              });
+              await incrementSessionStats(session._id, "totalAdmitted");
+            }
+          }
+
+          await session.save();
+
+          const updated = await LiveSessionModel.findById(session._id)
+            .populate("host", "name company_name company_type account email")
+            .populate("activeConsultation.user", "name company_name company_type account email")
+            .populate("queue.user", "name company_name company_type account email");
+
+          io.to(`user:${activeUser}`).emit("live-session:consultation-ended", { sessionId: session._id });
+          if (nextAdmitted) {
+            io.to(`user:${nextAdmitted}`).emit("live-session:admitted", {
+              sessionId: session._id,
+              host: updated.host,
+              session: updated,
+            });
+          }
+          io.to(`live_session:${session._id}`).emit("live-session:state:updated", {
+            session: updated,
+          });
+          io.to(`live_session:${session._id}`).emit("live-session:queue:updated", {
+            queue: updated.queue,
+            stats: updated.stats,
+          });
+        }
+      } catch (err) {
+        console.error("Error auto-removing user from consultation on call end:", err);
+      }
+    }
+
     socket.on("webrtc:end-call", async ({ targetId, callId }) => {
       if (callId) {
         await clearCallSession(callId);
@@ -322,151 +406,529 @@ export function registerSocketServer(httpServer, app) {
           callId,
         });
       }
+
+      // Automatically remove ONLY the participant of this call
+      await autoRemoveUserFromLiveConsultation(userId, targetId);
     });
 
-    // Reconnect active queue grace handler
-    handleReconnect(userId);
-
     /* ============================================================
-       Live Session & Waiting Queue Socket Handlers (with Redis)
+       Live Sessions & Group Call Handlers
        ============================================================ */
 
-    socket.on("session:join", async ({ sessionId }, ack) => {
-      try {
-        if (!sessionId) return;
-        socket.join(`live-session:${sessionId}`);
-        if (!socket.data.joinedSessions) {
-          socket.data.joinedSessions = new Set();
-        }
-        socket.data.joinedSessions.add(sessionId);
+    socket.on("live-session:join-room", async ({ sessionId }) => {
+      if (!sessionId) return;
+      socket.join(`live_session:${sessionId}`);
+    });
 
-        // Record live member in Redis and broadcast real-time count
-        const liveCount = await recordSessionMember(sessionId, userId);
-        io.to(`live-session:${sessionId}`).emit("session:members:update", {
-          sessionId: String(sessionId),
-          count: liveCount,
+    socket.on("live-session:leave-room", async ({ sessionId }) => {
+      if (!sessionId) return;
+      socket.leave(`live_session:${sessionId}`);
+    });
+
+    // 1-on-1: Real-time Host Admit Participant
+    socket.on("live-session:admit", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session) return;
+        if (session.host.toString() !== String(userId)) return;
+
+        const qItem = session.queue.find((q) => q.user.toString() === String(participantId));
+        if (qItem) {
+          qItem.status = "in_consultation";
+        }
+
+        session.activeConsultation = {
+          user: participantId,
+          startedAt: new Date(),
+        };
+        session.stats.totalAdmittedCount = (session.stats.totalAdmittedCount || 0) + 1;
+
+        await session.save();
+        await setSessionActiveConsultation(sessionId, {
+          userId: participantId,
+          startedAt: new Date().toISOString(),
+        });
+        await incrementSessionStats(sessionId, "totalAdmitted");
+
+        const updated = await LiveSessionModel.findById(sessionId)
+          .populate("host", "name company_name company_type account")
+          .populate("activeConsultation.user", "name company_name company_type account")
+          .populate("queue.user", "name company_name company_type account");
+
+        // Notify participant directly via socket
+        io.to(`user:${participantId}`).emit("live-session:admitted", {
+          sessionId,
+          host: updated.host,
+          session: updated,
         });
 
-        if (ack) ack({ status: 1, msg: "Joined session room", liveCount });
+        // Broadcast to entire live session room (updating host console & all participants instantly)
+        io.to(`live_session:${sessionId}`).emit("live-session:state:updated", {
+          session: updated,
+        });
+        io.to(`live_session:${sessionId}`).emit("live-session:queue:updated", {
+          queue: updated.queue,
+          stats: updated.stats,
+        });
+
+        if (ack) ack({ status: 1, session: updated });
       } catch (err) {
+        console.error("Socket error admitting participant:", err);
         if (ack) ack({ status: 0, msg: err.message });
       }
     });
 
-    socket.on("session:leave", async ({ sessionId }) => {
-      if (sessionId) {
-        socket.leave(`live-session:${sessionId}`);
-        if (socket.data.joinedSessions) {
-          socket.data.joinedSessions.delete(sessionId);
+    // 1-on-1: Real-time End Consultation
+    socket.on("live-session:end-consultation", async ({ sessionId }, ack) => {
+      try {
+        if (!sessionId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session) return;
+        if (session.host.toString() !== String(userId)) return;
+
+        const activeUser = session.activeConsultation?.user;
+        if (activeUser) {
+          const qItem = session.queue.find((q) => q.user.toString() === activeUser.toString());
+          if (qItem) {
+            qItem.status = "completed";
+          }
+          session.stats.completedCount = (session.stats.completedCount || 0) + 1;
+          await incrementSessionStats(sessionId, "completed");
         }
-        const liveCount = await removeSessionMember(sessionId, userId);
-        io.to(`live-session:${sessionId}`).emit("session:members:update", {
-          sessionId: String(sessionId),
-          count: liveCount,
+
+        session.activeConsultation = { user: null, startedAt: null };
+        await clearSessionActiveConsultation(sessionId);
+
+        let nextAdmitted = null;
+        if (session.autoAdmit) {
+          const nextInLine = session.queue.find((q) => q.status === "waiting");
+          if (nextInLine) {
+            nextInLine.status = "in_consultation";
+            session.activeConsultation = {
+              user: nextInLine.user,
+              startedAt: new Date(),
+            };
+            session.stats.totalAdmittedCount = (session.stats.totalAdmittedCount || 0) + 1;
+            nextAdmitted = nextInLine.user;
+            await setSessionActiveConsultation(sessionId, {
+              userId: nextInLine.user,
+              startedAt: new Date().toISOString(),
+            });
+            await incrementSessionStats(sessionId, "totalAdmitted");
+          }
+        }
+
+        await session.save();
+
+        const updated = await LiveSessionModel.findById(sessionId)
+          .populate("host", "name company_name company_type account")
+          .populate("activeConsultation.user", "name company_name company_type account")
+          .populate("queue.user", "name company_name company_type account");
+
+        if (activeUser) {
+          io.to(`user:${activeUser}`).emit("live-session:consultation-ended", { sessionId });
+        }
+        if (nextAdmitted) {
+          io.to(`user:${nextAdmitted}`).emit("live-session:admitted", {
+            sessionId,
+            host: updated.host,
+            session: updated,
+          });
+        }
+
+        io.to(`live_session:${sessionId}`).emit("live-session:state:updated", {
+          session: updated,
         });
+        io.to(`live_session:${sessionId}`).emit("live-session:queue:updated", {
+          queue: updated.queue,
+          stats: updated.stats,
+        });
+
+        if (ack) ack({ status: 1, session: updated });
+      } catch (err) {
+        console.error("Socket error ending consultation:", err);
+        if (ack) ack({ status: 0, msg: err.message });
       }
     });
 
-    /* --- Consultation Video Room Handlers --- */
-    socket.on("session:room:join", async ({ sessionId, token }, ack) => {
+    // Group Call: Join room & Lobby check
+    socket.on("live-session:group:join", async ({ sessionId, userInfo }, ack) => {
       try {
-        if (!sessionId) {
-          if (ack) ack({ status: 0, msg: "Missing session ID" });
+        if (!sessionId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session) {
+          if (ack) ack({ status: 0, msg: "Session not found" });
           return;
         }
 
-        const roomName = `live-session-room:${sessionId}`;
+        const isHost = String(session.host) === String(userId);
 
-        // Discover existing connected peers in this room
-        const existingSockets = await io.in(roomName).fetchSockets();
-        const existingPeers = [];
-        for (const s of existingSockets) {
-          if (s.data?.user?._id && String(s.data.user._id) !== String(userId)) {
-            existingPeers.push({
-              peerId: s.data.user._id,
-              peerName: s.data.user.name,
-              peerAvatar: s.data.user.account?.image || "",
+        const participantInfo = {
+          _id: String(userId),
+          socketId: socket.id,
+          name: socket.data.user?.name || userInfo?.name || "Participant",
+          avatar: socket.data.user?.account?.image || userInfo?.avatar || "",
+          company: socket.data.user?.account?.designation || userInfo?.company || "",
+          isMuted: userInfo?.isMuted || false,
+          isVideoOff: userInfo?.isVideoOff || false,
+          isScreenSharing: false,
+          handRaised: false,
+          isHost,
+          joinedAt: new Date().toISOString(),
+        };
+
+        if (isHost) {
+          socket.join(`live_session:group:${sessionId}`);
+          socket.join(`live_session:group:host:${sessionId}`);
+
+          await addGroupParticipant(sessionId, participantInfo);
+          const currentMembers = (await getGroupParticipants(sessionId)) || [];
+          const currentLobby = (await getGroupLobbyParticipants(sessionId)) || [];
+
+          socket.to(`live_session:group:${sessionId}`).emit("live-session:group:user-joined", {
+            participant: participantInfo,
+          });
+
+          if (ack) {
+            ack({
+              status: 1,
+              isHost: true,
+              isAdmitted: true,
+              self: participantInfo,
+              peers: currentMembers.filter((m) => String(m._id) !== String(userId)),
+              lobby: currentLobby,
+            });
+          }
+          return;
+        }
+
+        // Check if participant is already admitted in active session members (e.g. page refresh)
+        const currentMembers = (await getGroupParticipants(sessionId)) || [];
+        const alreadyAdmitted = currentMembers.find((m) => String(m._id) === String(userId));
+
+        if (alreadyAdmitted) {
+          socket.join(`live_session:group:${sessionId}`);
+          await addGroupParticipant(sessionId, participantInfo);
+
+          socket.to(`live_session:group:${sessionId}`).emit("live-session:group:user-joined", {
+            participant: participantInfo,
+          });
+
+          if (ack) {
+            ack({
+              status: 1,
+              isHost: false,
+              isAdmitted: true,
+              self: participantInfo,
+              peers: currentMembers.filter((m) => String(m._id) !== String(userId)),
+            });
+          }
+          return;
+        }
+
+        // Non-host user: placed in Waiting Lobby for Host Approval
+        socket.join(`live_session:group:lobby:${sessionId}`);
+        const updatedLobby = await addGroupLobbyParticipant(sessionId, participantInfo);
+
+        // Notify host immediately about new lobby participant
+        io.to(`live_session:group:host:${sessionId}`).emit("live-session:group:lobby-updated", {
+          lobby: updatedLobby,
+        });
+
+        if (ack) {
+          ack({
+            status: 1,
+            isHost: false,
+            isAdmitted: false,
+            self: participantInfo,
+            msg: "Waiting for host approval to enter meeting",
+          });
+        }
+      } catch (err) {
+        console.error("Error in group join:", err);
+        if (ack) ack({ status: 0, msg: err.message });
+      }
+    });
+
+    // Group Call: Host Admits Participant
+    socket.on("live-session:group:admit", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) {
+          if (ack) ack({ status: 0, msg: "Unauthorized" });
+          return;
+        }
+
+        const candidate = await admitGroupLobbyParticipant(sessionId, participantId);
+        if (!candidate) {
+          if (ack) ack({ status: 0, msg: "Participant not found in lobby" });
+          return;
+        }
+
+        const currentMembers = (await getGroupParticipants(sessionId)) || [];
+        const currentLobby = (await getGroupLobbyParticipants(sessionId)) || [];
+
+        // Notify the admitted participant
+        io.to(`user:${participantId}`).emit("live-session:group:admitted", {
+          sessionId,
+          self: candidate,
+          peers: currentMembers.filter((m) => String(m._id) !== String(participantId)),
+        });
+
+        // Broadcast to all active meeting members
+        io.to(`live_session:group:${sessionId}`).emit("live-session:group:user-joined", {
+          participant: candidate,
+        });
+
+        // Update host lobby list
+        io.to(`live_session:group:host:${sessionId}`).emit("live-session:group:lobby-updated", {
+          lobby: currentLobby,
+        });
+
+        if (ack) ack({ status: 1, admitted: candidate, peers: currentMembers, lobby: currentLobby });
+      } catch (err) {
+        console.error("Error admitting group participant:", err);
+        if (ack) ack({ status: 0, msg: err.message });
+      }
+    });
+
+    // Group Call: Host Admits ALL Pending Lobby Participants
+    socket.on("live-session:group:admit-all", async ({ sessionId }, ack) => {
+      try {
+        if (!sessionId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) return;
+
+        const lobby = (await getGroupLobbyParticipants(sessionId)) || [];
+        for (const candidate of lobby) {
+          await admitGroupLobbyParticipant(sessionId, candidate._id);
+        }
+
+        const currentMembers = (await getGroupParticipants(sessionId)) || [];
+
+        for (const candidate of lobby) {
+          io.to(`user:${candidate._id}`).emit("live-session:group:admitted", {
+            sessionId,
+            self: candidate,
+            peers: currentMembers.filter((m) => String(m._id) !== String(candidate._id)),
+          });
+          io.to(`live_session:group:${sessionId}`).emit("live-session:group:user-joined", {
+            participant: candidate,
+          });
+        }
+
+        io.to(`live_session:group:host:${sessionId}`).emit("live-session:group:lobby-updated", {
+          lobby: [],
+        });
+
+        if (ack) ack({ status: 1, admittedCount: lobby.length });
+      } catch (err) {
+        console.error("Error admitting all participants:", err);
+      }
+    });
+
+    // Group Call: Host Denies / Removes Lobby Participant
+    socket.on("live-session:group:deny", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) return;
+
+        const updatedLobby = await removeGroupLobbyParticipant(sessionId, participantId);
+        io.to(`user:${participantId}`).emit("live-session:group:denied", { sessionId });
+        io.to(`live_session:group:host:${sessionId}`).emit("live-session:group:lobby-updated", {
+          lobby: updatedLobby,
+        });
+
+        if (ack) ack({ status: 1 });
+      } catch (err) {
+        console.error("Error denying participant:", err);
+      }
+    });
+
+    // Group Call: Host Kicks Active Participant
+    socket.on("live-session:group:kick", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) {
+          if (ack) ack({ status: 0, msg: "Unauthorized" });
+          return;
+        }
+
+        await removeGroupParticipant(sessionId, participantId);
+
+        // Notify the kicked user to leave immediately
+        io.to(`user:${participantId}`).emit("live-session:group:kicked", {
+          sessionId,
+          reason: "You were removed from the meeting by the host.",
+        });
+
+        // Broadcast user-left to the meeting room
+        io.to(`live_session:group:${sessionId}`).emit("live-session:group:user-left", {
+          userId: String(participantId),
+        });
+
+        if (ack) ack({ status: 1 });
+      } catch (err) {
+        console.error("Error kicking participant:", err);
+        if (ack) ack({ status: 0, msg: err.message });
+      }
+    });
+
+    // Group Call: Host Remotely Mutes Participant
+    socket.on("live-session:group:host-mute", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) return;
+
+        io.to(`user:${participantId}`).emit("live-session:group:remote-mute", {
+          sessionId,
+          byHost: true,
+        });
+
+        io.to(`live_session:group:${sessionId}`).emit("live-session:group:peer-media-state", {
+          userId: String(participantId),
+          isMuted: true,
+        });
+
+        if (ack) ack({ status: 1 });
+      } catch (err) {
+        console.error("Error host-muting participant:", err);
+      }
+    });
+
+    // Group Call: Host Remotely Stops Participant Video
+    socket.on("live-session:group:host-stop-video", async ({ sessionId, participantId }, ack) => {
+      try {
+        if (!sessionId || !participantId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) return;
+
+        io.to(`user:${participantId}`).emit("live-session:group:remote-stop-video", {
+          sessionId,
+          byHost: true,
+        });
+
+        io.to(`live_session:group:${sessionId}`).emit("live-session:group:peer-media-state", {
+          userId: String(participantId),
+          isVideoOff: true,
+        });
+
+        if (ack) ack({ status: 1 });
+      } catch (err) {
+        console.error("Error host-stopping participant video:", err);
+      }
+    });
+
+    // Group Call: Host Mute All Participants
+    socket.on("live-session:group:host-mute-all", async ({ sessionId }, ack) => {
+      try {
+        if (!sessionId) return;
+        const session = await LiveSessionModel.findById(sessionId);
+        if (!session || String(session.host) !== String(userId)) return;
+
+        const members = (await getGroupParticipants(sessionId)) || [];
+        for (const member of members) {
+          if (String(member._id) !== String(userId)) {
+            io.to(`user:${member._id}`).emit("live-session:group:remote-mute", {
+              sessionId,
+              byHost: true,
+            });
+            io.to(`live_session:group:${sessionId}`).emit("live-session:group:peer-media-state", {
+              userId: String(member._id),
+              isMuted: true,
             });
           }
         }
 
-        socket.join(roomName);
-        if (!socket.data.joinedVideoRooms) {
-          socket.data.joinedVideoRooms = new Set();
-        }
-        socket.data.joinedVideoRooms.add(sessionId);
-
-        // Announce user joined room to existing peers
-        socket.to(roomName).emit("session:room:peer-joined", {
-          peerId: String(userId),
-          peerName: socket.data.user.name,
-          peerAvatar: socket.data.user.account?.image || "",
-        });
-
-        if (ack) ack({ status: 1, msg: "Joined consultation room", existingPeers });
+        if (ack) ack({ status: 1 });
       } catch (err) {
-        if (ack) ack({ status: 0, msg: err.message });
+        console.error("Error muting all participants:", err);
       }
     });
 
-    socket.on("session:room:ready", ({ sessionId }) => {
-      if (!sessionId) return;
-      socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-ready", {
-        peerId: String(userId),
-        peerName: socket.data.user.name,
-        peerAvatar: socket.data.user.account?.image || "",
-      });
+    // Group Call: Leave room
+    socket.on("live-session:group:leave", async ({ sessionId }) => {
+      try {
+        if (!sessionId) return;
+        socket.leave(`live_session:group:${sessionId}`);
+        socket.leave(`live_session:group:host:${sessionId}`);
+        socket.leave(`live_session:group:lobby:${sessionId}`);
+        await removeGroupParticipant(sessionId, userId);
+        await removeGroupLobbyParticipant(sessionId, userId);
+
+        io.to(`live_session:group:${sessionId}`).emit("live-session:group:user-left", {
+          userId: String(userId),
+          socketId: socket.id,
+        });
+
+        const updatedLobby = (await getGroupLobbyParticipants(sessionId)) || [];
+        io.to(`live_session:group:host:${sessionId}`).emit("live-session:group:lobby-updated", {
+          lobby: updatedLobby,
+        });
+      } catch (err) {
+        console.error("Error in group leave:", err);
+      }
     });
 
-    socket.on("session:room:leave", ({ sessionId }) => {
-      if (sessionId) {
-        socket.leave(`live-session-room:${sessionId}`);
-        if (socket.data.joinedVideoRooms) {
-          socket.data.joinedVideoRooms.delete(sessionId);
-        }
-        socket.to(`live-session-room:${sessionId}`).emit("session:room:peer-left", {
-          peerId: String(userId),
+    // Group Call: WebRTC Signaling Mesh (offer, answer, candidate)
+    socket.on("live-session:group:signal", ({ sessionId, to, signal, toSocketId }) => {
+      if (toSocketId) {
+        io.to(toSocketId).emit("live-session:group:signal", {
+          from: String(userId),
+          fromSocketId: socket.id,
+          fromName: socket.data.user?.name,
+          fromAvatar: socket.data.user?.account?.image,
+          signal,
+        });
+      } else if (to) {
+        io.to(`user:${to}`).emit("live-session:group:signal", {
+          from: String(userId),
+          fromSocketId: socket.id,
+          fromName: socket.data.user?.name,
+          fromAvatar: socket.data.user?.account?.image,
+          signal,
         });
       }
     });
 
-    socket.on("session:room:signal", ({ sessionId, targetPeerId, signalData }) => {
-      if (!sessionId || !signalData) return;
-      socket.to(`live-session-room:${sessionId}`).emit("session:room:signal", {
-        targetPeerId: targetPeerId ? String(targetPeerId) : null,
+    // Group Call: In-Meeting Chat
+    socket.on("live-session:group:chat", ({ sessionId, text }) => {
+      if (!sessionId || !text?.trim()) return;
+      const chatMsg = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         senderId: String(userId),
-        senderName: socket.data?.user?.name || "Participant",
-        senderAvatar: socket.data?.user?.account?.image || "",
-        signalData,
+        senderName: socket.data.user?.name || "Participant",
+        senderAvatar: socket.data.user?.account?.image || "",
+        text: text.trim(),
+        timestamp: new Date().toISOString(),
+      };
+
+      io.to(`live_session:group:${sessionId}`).emit("live-session:group:chat-message", chatMsg);
+    });
+
+    // Group Call: Hand Raise
+    socket.on("live-session:group:raise-hand", ({ sessionId, raised }) => {
+      if (!sessionId) return;
+      io.to(`live_session:group:${sessionId}`).emit("live-session:group:hand-raised", {
+        userId: String(userId),
+        raised: Boolean(raised),
       });
     });
 
-    socket.on("session:room:media-state", ({ sessionId, isMuted, isVideoOff, isScreenSharing }) => {
+    // Group Call: Media state update
+    socket.on("live-session:group:media-state", ({ sessionId, isMuted, isVideoOff, isScreenSharing }) => {
       if (!sessionId) return;
-      socket.to(`live-session-room:${sessionId}`).emit("session:room:media-state", {
-        peerId: String(userId),
+      socket.to(`live_session:group:${sessionId}`).emit("live-session:group:peer-media-state", {
+        userId: String(userId),
+        socketId: socket.id,
         isMuted,
         isVideoOff,
         isScreenSharing,
-      });
-    });
-
-    socket.on("session:room:chat", ({ sessionId, message }) => {
-      if (!sessionId || !message) return;
-      io.to(`live-session-room:${sessionId}`).emit("session:room:chat", {
-        id: Date.now().toString(),
-        senderId: userId,
-        senderName: socket.data.user.name,
-        senderAvatar: socket.data.user.account?.image || "",
-        text: message,
-        createdAt: new Date().toISOString(),
-      });
-    });
-
-    socket.on("session:room:end", ({ sessionId }) => {
-      if (!sessionId) return;
-      io.to(`live-session-room:${sessionId}`).emit("session:room:ended", {
-        initiatorId: userId,
       });
     });
 
@@ -481,37 +943,11 @@ export function registerSocketServer(httpServer, app) {
             reason: "disconnected",
           });
           await clearCallSession(activeCall.callId);
+          await autoRemoveUserFromLiveConsultation(userId, peerId);
         }
       } catch (err) {
         console.error("Error clearing call on disconnect:", err);
       }
-
-      // Notify video rooms on disconnect
-      if (socket.data.joinedVideoRooms && socket.data.joinedVideoRooms.size > 0) {
-        for (const vRoomId of socket.data.joinedVideoRooms) {
-          try {
-            socket.to(`live-session-room:${vRoomId}`).emit("session:room:peer-left", {
-              peerId: userId,
-            });
-          } catch (_) {}
-        }
-      }
-
-      // Remove from all active Redis session sets
-      if (socket.data.joinedSessions && socket.data.joinedSessions.size > 0) {
-        for (const sId of socket.data.joinedSessions) {
-          try {
-            const liveCount = await removeSessionMember(sId, userId);
-            io.to(`live-session:${sId}`).emit("session:members:update", {
-              sessionId: String(sId),
-              count: liveCount,
-            });
-          } catch (_) {}
-        }
-      }
-
-      // Schedule queue grace check for disconnected user
-      handleDisconnectGrace(userId);
 
       await clearSocketUser(socket.id);
       const count = await decrementPresence(userId, socket.id);

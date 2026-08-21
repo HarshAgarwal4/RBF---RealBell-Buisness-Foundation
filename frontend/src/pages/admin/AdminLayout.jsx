@@ -16,7 +16,6 @@ const navItems = [
     { to: '/admin/resources', label: 'Resources', icon: '📚' },
     { to: '/admin/programs', label: 'Programs', icon: '🏆' },
     { to: '/admin/events', label: 'Events', icon: '📅' },
-    { to: '/admin/live-sessions', label: 'Live Sessions & Queue', icon: '📹' },
     { to: '/admin/legal-compliance', label: 'Legal Compliance', icon: '⚖️' },
     { to: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
     { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨' },

@@ -1,130 +1,159 @@
 import {
-  addToRedisSet,
-  removeFromRedisSet,
-  getRedisSet,
   setInRedis,
   getFromRedis,
   deleteFromRedis,
-  expireRedis,
+  incrementRedis,
 } from "./Redis.js";
 
-const SESSION_KEYS = {
-  members: (sessionId) => `live-session:${sessionId}:members`,
-  state: (sessionId) => `live-session:${sessionId}:state`,
-  queue: (sessionId) => `live-session:${sessionId}:queue`,
-};
+const SESSION_TTL = 86400; // 24 hours
 
-/**
- * Record a user joining a live session room in Redis
- * @param {string} sessionId
- * @param {string} userId
- * @returns {Promise<number>} Total live members count
- */
-export async function recordSessionMember(sessionId, userId) {
-  if (!sessionId || !userId) return 0;
-  try {
-    const key = SESSION_KEYS.members(sessionId);
-    await addToRedisSet(key, String(userId));
-    await expireRedis(key, 86400); // 24 hours TTL
-    const members = await getRedisSet(key);
-    return Array.isArray(members) ? members.length : 1;
-  } catch (err) {
-    console.error("Redis recordSessionMember error:", err);
-    return 1;
-  }
-}
-
-/**
- * Remove a user from the live session room in Redis
- * @param {string} sessionId
- * @param {string} userId
- * @returns {Promise<number>} Updated live members count
- */
-export async function removeSessionMember(sessionId, userId) {
-  if (!sessionId || !userId) return 0;
-  try {
-    const key = SESSION_KEYS.members(sessionId);
-    await removeFromRedisSet(key, String(userId));
-    const members = await getRedisSet(key);
-    return Array.isArray(members) ? members.length : 0;
-  } catch (err) {
-    console.error("Redis removeSessionMember error:", err);
-    return 0;
-  }
-}
-
-/**
- * Get all active live members in a session from Redis
- * @param {string} sessionId
- * @returns {Promise<string[]>}
- */
-export async function getSessionLiveMembers(sessionId) {
-  if (!sessionId) return [];
-  try {
-    const members = await getRedisSet(SESSION_KEYS.members(sessionId));
-    return Array.isArray(members) ? members : [];
-  } catch (err) {
-    console.error("Redis getSessionLiveMembers error:", err);
-    return [];
-  }
-}
-
-/**
- * Cache current queue snapshot in Redis for high-speed retrieval
- * @param {string} sessionId
- * @param {Array} queueEntries
- */
-export async function cacheQueueState(sessionId, queueEntries) {
+export async function setSessionActiveConsultation(sessionId, data) {
   if (!sessionId) return;
-  try {
-    await setInRedis(SESSION_KEYS.queue(sessionId), queueEntries, 3600); // 1 hour TTL
-  } catch (err) {
-    console.error("Redis cacheQueueState error:", err);
+  const key = `live_session:${sessionId}:active_consultation`;
+  if (!data) {
+    await deleteFromRedis(key);
+  } else {
+    await setInRedis(key, JSON.stringify(data), SESSION_TTL);
   }
 }
 
-/**
- * Get cached queue snapshot from Redis
- * @param {string} sessionId
- * @returns {Promise<Array|null>}
- */
-export async function getCachedQueue(sessionId) {
+export async function getSessionActiveConsultation(sessionId) {
   if (!sessionId) return null;
+  const raw = await getFromRedis(`live_session:${sessionId}:active_consultation`);
+  if (!raw) return null;
   try {
-    return await getFromRedis(SESSION_KEYS.queue(sessionId));
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
   } catch (err) {
-    console.error("Redis getCachedQueue error:", err);
     return null;
   }
 }
 
-/**
- * Cache session status in Redis
- * @param {string} sessionId
- * @param {object} state
- */
-export async function cacheSessionState(sessionId, state) {
+export async function clearSessionActiveConsultation(sessionId) {
   if (!sessionId) return;
+  await deleteFromRedis(`live_session:${sessionId}:active_consultation`);
+}
+
+export async function setQueuePausedState(sessionId, isPaused) {
+  if (!sessionId) return;
+  await setInRedis(`live_session:${sessionId}:paused`, isPaused ? "1" : "0", SESSION_TTL);
+}
+
+export async function getQueuePausedState(sessionId) {
+  if (!sessionId) return false;
+  const val = await getFromRedis(`live_session:${sessionId}:paused`);
+  return val === "1";
+}
+
+export async function incrementSessionStats(sessionId, key) {
+  if (!sessionId || !key) return;
+  const redisKey = `live_session:${sessionId}:stats:${key}`;
+  return await incrementRedis(redisKey, 1);
+}
+
+export async function getSessionStats(sessionId) {
+  if (!sessionId) return { completed: 0, totalAdmitted: 0 };
+  const [completed, totalAdmitted] = await Promise.all([
+    getFromRedis(`live_session:${sessionId}:stats:completed`),
+    getFromRedis(`live_session:${sessionId}:stats:totalAdmitted`),
+  ]);
+
+  return {
+    completed: Number(completed) || 0,
+    totalAdmitted: Number(totalAdmitted) || 0,
+  };
+}
+
+export async function addGroupParticipant(sessionId, participant) {
+  if (!sessionId || !participant) return;
+  const key = `live_session:${sessionId}:group_members`;
+  const existing = (await getGroupParticipants(sessionId)) || [];
+  const filtered = existing.filter((p) => String(p._id) !== String(participant._id));
+  filtered.push(participant);
+  await setInRedis(key, JSON.stringify(filtered), SESSION_TTL);
+  return filtered;
+}
+
+export async function removeGroupParticipant(sessionId, userId) {
+  if (!sessionId || !userId) return;
+  const key = `live_session:${sessionId}:group_members`;
+  const existing = (await getGroupParticipants(sessionId)) || [];
+  const filtered = existing.filter((p) => String(p._id) !== String(userId));
+  await setInRedis(key, JSON.stringify(filtered), SESSION_TTL);
+  return filtered;
+}
+
+export async function getGroupParticipants(sessionId) {
+  if (!sessionId) return [];
+  const raw = await getFromRedis(`live_session:${sessionId}:group_members`);
+  if (!raw) return [];
   try {
-    await setInRedis(SESSION_KEYS.state(sessionId), state, 3600);
-  } catch (err) {
-    console.error("Redis cacheSessionState error:", err);
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch (_) {
+    return [];
   }
 }
 
-/**
- * Clean up all Redis keys for a concluded session
- * @param {string} sessionId
- */
-export async function clearSessionRedis(sessionId) {
-  if (!sessionId) return;
+export async function addGroupLobbyParticipant(sessionId, participant) {
+  if (!sessionId || !participant) return [];
+  const key = `live_session:${sessionId}:group_lobby`;
+  const existing = (await getGroupLobbyParticipants(sessionId)) || [];
+  const filtered = existing.filter((p) => String(p._id) !== String(participant._id));
+  filtered.push(participant);
+  await setInRedis(key, JSON.stringify(filtered), SESSION_TTL);
+  return filtered;
+}
+
+export async function removeGroupLobbyParticipant(sessionId, userId) {
+  if (!sessionId || !userId) return [];
+  const key = `live_session:${sessionId}:group_lobby`;
+  const existing = (await getGroupLobbyParticipants(sessionId)) || [];
+  const filtered = existing.filter((p) => String(p._id) !== String(userId));
+  await setInRedis(key, JSON.stringify(filtered), SESSION_TTL);
+  return filtered;
+}
+
+export async function getGroupLobbyParticipants(sessionId) {
+  if (!sessionId) return [];
+  const raw = await getFromRedis(`live_session:${sessionId}:group_lobby`);
+  if (!raw) return [];
   try {
-    await Promise.all([
-      deleteFromRedis(SESSION_KEYS.members(sessionId)),
-      deleteFromRedis(SESSION_KEYS.state(sessionId)),
-      deleteFromRedis(SESSION_KEYS.queue(sessionId)),
-    ]);
-  } catch (err) {
-    console.error("Redis clearSessionRedis error:", err);
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch (_) {
+    return [];
+  }
+}
+
+export async function admitGroupLobbyParticipant(sessionId, userId) {
+  if (!sessionId || !userId) return null;
+  const lobby = (await getGroupLobbyParticipants(sessionId)) || [];
+  const candidate = lobby.find((p) => String(p._id) === String(userId));
+  if (!candidate) return null;
+
+  await removeGroupLobbyParticipant(sessionId, userId);
+  await addGroupParticipant(sessionId, candidate);
+  return candidate;
+}
+
+export async function setUserSessionPresence(userId, email, sessionId, socketId) {
+  if (!userId || !sessionId) return;
+  const userKey = `user_presence:${userId}`;
+  const data = { userId: String(userId), email, sessionId: String(sessionId), socketId, updatedAt: new Date().toISOString() };
+  await setInRedis(userKey, JSON.stringify(data), SESSION_TTL);
+  if (email) {
+    await setInRedis(`email_presence:${email.toLowerCase()}`, JSON.stringify(data), SESSION_TTL);
+  }
+}
+
+export async function getUserSessionPresence(userIdOrEmail) {
+  if (!userIdOrEmail) return null;
+  const key = userIdOrEmail.includes("@")
+    ? `email_presence:${userIdOrEmail.toLowerCase()}`
+    : `user_presence:${userIdOrEmail}`;
+  const raw = await getFromRedis(key);
+  if (!raw) return null;
+  try {
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch (_) {
+    return null;
   }
 }

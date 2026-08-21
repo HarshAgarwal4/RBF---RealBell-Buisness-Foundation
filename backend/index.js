@@ -48,7 +48,6 @@ app.use('/payment', paymentRouter)
 app.use('/connect', connectRoutes)
 app.use('/community', communityRoutes)
 app.use('/meetings' , meetingRouter)
-app.use('/live-sessions', liveSessionRouter)
 app.use('/milestones' , milestoneRouter)
 app.use('/jobs' , jobsRoutes)
 app.use('/tickets' , ticketRoutes)
@@ -59,6 +58,8 @@ app.use('/programs', programsRouter)
 app.use('/events', eventsRouter)
 app.use('/legal-compliance', legalComplianceRouter)
 app.use('/legal-compliances', legalComplianceRouter)
+app.use('/live-sessions', liveSessionRouter)
+app.use('/live_sessions', liveSessionRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {
