@@ -122,6 +122,8 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
       { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
     ],
   };
 
@@ -145,13 +147,24 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
             try {
               pc.addTrack(track, stream);
             } catch (_) {}
+          } else {
+            const sender = senders.find((s) => s.track && s.track.kind === track.kind);
+            if (sender && sender.track !== track) {
+              sender.replaceTrack(track).catch(() => {});
+            }
           }
         });
       });
       return stream;
     } catch (err) {
-      console.warn("Could not access media devices:", err);
-      return null;
+      console.warn("Could not access full media devices (trying audio-only):", err);
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        localStreamRef.current = audioStream;
+        return audioStream;
+      } catch (_) {
+        return null;
+      }
     }
   }, []);
 
@@ -172,8 +185,12 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
         if (activeVideoStream) {
           activeVideoStream.getTracks().forEach((track) => {
             const senders = existingPc.getSenders();
-            const hasSender = senders.some((s) => s.track && s.track.kind === track.kind);
-            if (!hasSender) {
+            const existingSender = senders.find((s) => s.track && s.track.kind === track.kind);
+            if (existingSender) {
+              if (existingSender.track !== track) {
+                existingSender.replaceTrack(track).catch(() => {});
+              }
+            } else {
               try {
                 existingPc.addTrack(track, activeVideoStream);
               } catch (_) {}
@@ -190,14 +207,28 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
     const pc = new RTCPeerConnection(ICE_CONFIG);
     peerConnectionsRef.current.set(targetId, pc);
 
+    // Add transceivers to guarantee bidirectional audio & video negotiation
+    try {
+      if (pc.getTransceivers().length === 0) {
+        pc.addTransceiver("audio", { direction: "sendrecv" });
+        pc.addTransceiver("video", { direction: "sendrecv" });
+      }
+    } catch (_) {}
+
     // 1. Add all local tracks (Audio & Video / Screen share)
     const activeVideoStream = screenStreamRef.current || localStreamRef.current;
     if (activeVideoStream) {
       activeVideoStream.getTracks().forEach((track) => {
-        try {
-          pc.addTrack(track, activeVideoStream);
-        } catch (e) {
-          console.warn("Could not add track to PC:", e);
+        const senders = pc.getSenders();
+        const existingSender = senders.find((s) => s.track && s.track.kind === track.kind);
+        if (existingSender) {
+          existingSender.replaceTrack(track).catch(() => {});
+        } else {
+          try {
+            pc.addTrack(track, activeVideoStream);
+          } catch (e) {
+            console.warn("Could not add track to PC:", e);
+          }
         }
       });
     }
@@ -2014,14 +2045,19 @@ function GroupPeerTile({
   onKick,
 }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current) return;
-
     if (stream) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(() => {});
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      if (audioRef.current) {
+        audioRef.current.srcObject = stream;
+        audioRef.current.play().catch(() => {});
+      }
 
       const updateTrackStatus = () => {
         const vTracks = stream.getVideoTracks();
@@ -2032,7 +2068,8 @@ function GroupPeerTile({
       stream.onaddtrack = updateTrackStatus;
       stream.onremovetrack = updateTrackStatus;
     } else {
-      videoRef.current.srcObject = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      if (audioRef.current) audioRef.current.srcObject = null;
       setHasVideoTrack(false);
     }
   }, [stream]);
@@ -2041,10 +2078,15 @@ function GroupPeerTile({
 
   return (
     <div className="relative w-full h-full min-h-[180px] max-h-[70vh] aspect-video bg-[#161D2B] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-xl group flex items-center justify-center">
+      {/* Remote Audio Track Player (unmuted) */}
+      <audio ref={audioRef} autoPlay playsInline />
+
+      {/* Remote Video Track Player (Muted to guarantee unblocked autoplay by all browsers) */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        muted
         className={`w-full h-full ${peer.isScreenSharing ? "object-contain bg-black" : "object-cover -scale-x-100"} ${hasVideo ? "block" : "hidden"}`}
       />
 
@@ -2113,14 +2155,19 @@ function GroupPeerTile({
 
 function GroupPeerThumbnail({ peer, stream }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current) return;
-
     if (stream) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(() => {});
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      if (audioRef.current) {
+        audioRef.current.srcObject = stream;
+        audioRef.current.play().catch(() => {});
+      }
 
       const updateTrackStatus = () => {
         const vTracks = stream.getVideoTracks();
@@ -2131,7 +2178,8 @@ function GroupPeerThumbnail({ peer, stream }) {
       stream.onaddtrack = updateTrackStatus;
       stream.onremovetrack = updateTrackStatus;
     } else {
-      videoRef.current.srcObject = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      if (audioRef.current) audioRef.current.srcObject = null;
       setHasVideoTrack(false);
     }
   }, [stream]);
@@ -2140,10 +2188,12 @@ function GroupPeerThumbnail({ peer, stream }) {
 
   return (
     <div className="h-full aspect-video bg-[#1E293B] rounded-2xl border border-white/10 relative overflow-hidden shrink-0 flex items-center justify-center shadow-md cursor-pointer hover:border-[#8E1B2E]">
+      <audio ref={audioRef} autoPlay playsInline />
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        muted
         className={`w-full h-full ${peer.isScreenSharing ? "object-contain bg-black" : "object-cover -scale-x-100"} ${hasVideo ? "block" : "hidden"}`}
       />
       {!hasVideo && (
