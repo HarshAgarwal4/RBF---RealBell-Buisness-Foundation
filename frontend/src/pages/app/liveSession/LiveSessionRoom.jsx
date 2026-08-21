@@ -36,6 +36,10 @@ export default function LiveSessionRoom() {
       s.emit("live-session:join-room", { sessionId: id });
     });
 
+    s.on("disconnect", () => {
+      // keep socket object for reconnect
+    });
+
     s.on("live-session:ended", () => {
       navigate("/live_sessions");
     });
@@ -43,6 +47,7 @@ export default function LiveSessionRoom() {
     return () => {
       s.emit("live-session:leave-room", { sessionId: id });
       s.disconnect();
+      setSocket(null);
     };
   }, [id, user?._id, navigate]);
 
@@ -87,7 +92,7 @@ export default function LiveSessionRoom() {
     );
   }
 
-  // 1-to-1 Queue Experience
+  // 1-to-1 Queue Experience (Host Console / Waiting Room)
   if (isHost) {
     return (
       <LiveSessionHostConsole

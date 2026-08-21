@@ -26,6 +26,7 @@ import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
+import LiveSessionModel from './App/models/liveSession.js';
 
 const app = express();
 const server = createServer(app);
@@ -94,6 +95,9 @@ mongoose.connect(process.env.DB_URL, {
     console.log("Connected to MongoDB Atlas");
     seedDefaultRoles();
     seedDefaultPlans();
+    LiveSessionModel.syncIndexes().catch((err) => {
+        console.warn("LiveSessionModel syncIndexes warning:", err.message);
+    });
     server.listen(process.env.PORT, () => {
         console.log("Server is running on port", process.env.PORT);
     })
