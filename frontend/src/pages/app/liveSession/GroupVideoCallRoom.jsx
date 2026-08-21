@@ -207,42 +207,41 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
     const pc = new RTCPeerConnection(ICE_CONFIG);
     peerConnectionsRef.current.set(targetId, pc);
 
-    // Add transceivers to guarantee bidirectional audio & video negotiation
-    try {
-      if (pc.getTransceivers().length === 0) {
-        pc.addTransceiver("audio", { direction: "sendrecv" });
-        pc.addTransceiver("video", { direction: "sendrecv" });
-      }
-    } catch (_) {}
-
     // 1. Add all local tracks (Audio & Video / Screen share)
     const activeVideoStream = screenStreamRef.current || localStreamRef.current;
+    const addedKinds = new Set();
     if (activeVideoStream) {
       activeVideoStream.getTracks().forEach((track) => {
-        const senders = pc.getSenders();
-        const existingSender = senders.find((s) => s.track && s.track.kind === track.kind);
-        if (existingSender) {
-          existingSender.replaceTrack(track).catch(() => {});
-        } else {
-          try {
-            pc.addTrack(track, activeVideoStream);
-          } catch (e) {
-            console.warn("Could not add track to PC:", e);
-          }
+        try {
+          pc.addTrack(track, activeVideoStream);
+          addedKinds.add(track.kind);
+        } catch (e) {
+          console.warn("Could not add track to PC:", e);
         }
       });
     }
-    // Also ensure audio from localStream is attached if screen sharing
+
+    // Ensure audio from localStream is attached if screen sharing
     if (screenStreamRef.current && localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        const hasAudio = pc.getSenders().some((s) => s.track && s.track.kind === "audio");
-        if (!hasAudio) {
-          try {
-            pc.addTrack(audioTrack, localStreamRef.current);
-          } catch (_) {}
-        }
+      if (audioTrack && !addedKinds.has("audio")) {
+        try {
+          pc.addTrack(audioTrack, localStreamRef.current);
+          addedKinds.add("audio");
+        } catch (_) {}
       }
+    }
+
+    // Add transceivers for any missing media kinds so negotiation is always bidirectional
+    if (!addedKinds.has("audio")) {
+      try {
+        pc.addTransceiver("audio", { direction: "sendrecv" });
+      } catch (_) {}
+    }
+    if (!addedKinds.has("video")) {
+      try {
+        pc.addTransceiver("video", { direction: "sendrecv" });
+      } catch (_) {}
     }
 
     // 2. ICE Candidate exchange
