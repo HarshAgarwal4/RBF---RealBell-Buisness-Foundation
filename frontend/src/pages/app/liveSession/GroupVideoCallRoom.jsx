@@ -55,6 +55,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
   const [isAdmitted, setIsAdmitted] = useState(isHost); // Host admitted immediately
   const [hasRequestedJoin, setHasRequestedJoin] = useState(isHost); // Non-host starts with button to join
   const [requestingJoin, setRequestingJoin] = useState(false);
+  const [enteredPasscode, setEnteredPasscode] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "speaker" | "sidebar"
   const [pinnedPeerId, setPinnedPeerId] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -745,12 +746,16 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
       toast.error("Connecting to server, please wait a moment...");
       return;
     }
+    if (!isHost && session?.requirePasscode && !enteredPasscode.trim()) {
+      toast.error("Please enter the meeting passcode");
+      return;
+    }
     setRequestingJoin(true);
-    setHasRequestedJoin(true);
     socket.emit(
       "live-session:group:join",
       {
         sessionId: session._id,
+        passcode: enteredPasscode.trim(),
         userInfo: {
           name: user?.name || "Participant",
           avatar: user?.account?.image || "",
@@ -762,6 +767,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
       (res) => {
         setRequestingJoin(false);
         if (res?.status === 1) {
+          setHasRequestedJoin(true);
           if (res.isHost || res.isAdmitted) {
             setIsAdmitted(true);
             if (res.peers) setPeers(res.peers);
@@ -771,7 +777,8 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
             toast.info("Request sent! Waiting for host to admit you...");
           }
         } else {
-          toast.error(res?.msg || "Could not join waiting room");
+          setHasRequestedJoin(false);
+          toast.error(res?.msg || "Could not join meeting");
         }
       }
     );
@@ -1182,6 +1189,29 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
             </div>
           </div>
 
+          {/* Meeting Passcode Input if Required */}
+          {session?.requirePasscode && !isHost && !hasRequestedJoin && (
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
+                <Lock size={14} />
+                Meeting Passcode Required
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                This meeting is password-protected. Enter the passcode to join.
+              </p>
+              <input
+                type="password"
+                value={enteredPasscode}
+                onChange={(e) => setEnteredPasscode(e.target.value)}
+                placeholder="Enter meeting passcode..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#1E293B] border border-amber-500/30 text-white placeholder-slate-500 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleRequestJoin();
+                }}
+              />
+            </div>
+          )}
+
           {/* Action button: Pre-join vs In Waiting Room */}
           {!hasRequestedJoin ? (
             <div className="space-y-2 pt-1">
@@ -1192,7 +1222,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
                 className="w-full py-3.5 rounded-xl bg-[#8E1B2E] hover:bg-[#721524] disabled:opacity-50 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#8E1B2E]/30 transition active:scale-98 cursor-pointer"
               >
                 <Video size={18} />
-                <span>{requestingJoin ? "Entering..." : "Enter Meeting"}</span>
+                <span>{requestingJoin ? "Verifying..." : "Enter Meeting"}</span>
               </button>
 
               <button

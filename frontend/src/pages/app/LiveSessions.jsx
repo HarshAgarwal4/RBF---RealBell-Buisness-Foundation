@@ -49,6 +49,7 @@ export default function LiveSessions() {
     maxDurationLimitMins: 15,
     sessionFormat: "1-to-1 Queue",
     visibility: "public",
+    visibleToConnections: false,
     requirePasscode: false,
     passcode: "",
     autoAdmit: true,
@@ -116,6 +117,7 @@ export default function LiveSessions() {
           maxDurationLimitMins: 15,
           sessionFormat: "1-to-1 Queue",
           visibility: "public",
+          visibleToConnections: false,
           requirePasscode: false,
           passcode: "",
           autoAdmit: true,
@@ -160,10 +162,10 @@ export default function LiveSessions() {
   // Share session link
   const handleShareSession = (session, e) => {
     e?.stopPropagation();
-    const url = `${window.location.origin}/live_sessions?session=${session._id}`;
+    const url = `${window.location.origin}/live_sessions/${session._id}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
-      toast.success("Session link copied to clipboard!");
+      toast.success("Direct session link copied to clipboard!");
     } else {
       toast.info(`Session Link: ${url}`);
     }
@@ -341,10 +343,19 @@ export default function LiveSessions() {
                     {/* Top Row: LIVE Badge & Action Icons */}
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[#E11D48] bg-[#FFE4E6] dark:bg-rose-950/40 dark:text-rose-400 tracking-wide uppercase">
-                          <span className="w-2 h-2 rounded-full bg-[#E11D48] animate-pulse" />
-                          LIVE
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[#E11D48] bg-[#FFE4E6] dark:bg-rose-950/40 dark:text-rose-400 tracking-wide uppercase">
+                            <span className="w-2 h-2 rounded-full bg-[#E11D48] animate-pulse" />
+                            LIVE
+                          </span>
+
+                          {session.visibility === "private" && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                              <EyeOff size={11} />
+                              {session.visibleToConnections ? "Connections Only" : "Direct Link"}
+                            </span>
+                          )}
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <button
@@ -667,6 +678,87 @@ export default function LiveSessions() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Private Visibility Details: Show to Connections Option */}
+                  {formData.visibility === "private" && (
+                    <div className="mt-3.5 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/60 space-y-3 animate-slide-in">
+                      <div className="flex items-center gap-2">
+                        <Users size={16} className="text-[#8E1B2E]" />
+                        <label className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
+                          Show meeting to your connections?
+                        </label>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-[#64748B] dark:text-slate-400">
+                        Choose whether your accepted connections can see this private meeting in their Live Sessions feed or if it is strictly accessible via direct link sharing only.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        {/* Option Yes */}
+                        <div
+                          onClick={() => handleInputChange("visibleToConnections", true)}
+                          className={`p-3 rounded-xl border-2 transition cursor-pointer flex items-start gap-2.5 ${
+                            formData.visibleToConnections
+                              ? "border-[#8E1B2E] bg-rose-50/40 dark:bg-rose-950/30 shadow-xs"
+                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="pt-0.5">
+                            <div
+                              className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                formData.visibleToConnections
+                                  ? "border-[#8E1B2E] bg-white"
+                                  : "border-slate-400"
+                              }`}
+                            >
+                              {formData.visibleToConnections && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#8E1B2E]" />
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-[#0F172A] dark:text-white">
+                              Yes, show to connections
+                            </div>
+                            <p className="text-[10px] text-[#64748B] dark:text-slate-400 mt-0.5">
+                              Visible in feed to your accepted connections
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Option No */}
+                        <div
+                          onClick={() => handleInputChange("visibleToConnections", false)}
+                          className={`p-3 rounded-xl border-2 transition cursor-pointer flex items-start gap-2.5 ${
+                            !formData.visibleToConnections
+                              ? "border-[#8E1B2E] bg-rose-50/40 dark:bg-rose-950/30 shadow-xs"
+                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="pt-0.5">
+                            <div
+                              className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                !formData.visibleToConnections
+                                  ? "border-[#8E1B2E] bg-white"
+                                  : "border-slate-400"
+                              }`}
+                            >
+                              {!formData.visibleToConnections && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#8E1B2E]" />
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-[#0F172A] dark:text-white">
+                              No, direct link only
+                            </div>
+                            <p className="text-[10px] text-[#64748B] dark:text-slate-400 mt-0.5">
+                              Hidden from all feeds; link sharing is required
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Require Meeting Passcode Box */}

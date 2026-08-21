@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendMail(to, subject, text) {
     const mailOptions = {
-        from: `"RealBell Buisness Foundation" <${process.env.myGMAIL}>`,
+        from: `"RealBell Business Foundation" <${process.env.myGMAIL}>`,
         to: to,
         subject: subject,
         html: text,

@@ -147,7 +147,7 @@ export default function AdminUsers() {
     };
 
     return (
-        <AdminLayout title="Users">
+        <AdminLayout title="Ecosystem Users">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
             {/* Toast */}
@@ -168,8 +168,8 @@ export default function AdminUsers() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>User Management</h1>
-                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>{pagination.total} total users registered</p>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Ecosystem User Directory</h1>
+                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>{pagination.total} registered ecosystem stakeholders</p>
                 </div>
             </div>
 
@@ -179,12 +179,12 @@ export default function AdminUsers() {
                     id="admin-users-search"
                     type="text"
                     className="admin-search-input"
-                    placeholder="🔍  Search by name, company, email..."
+                    placeholder="🔍  Search by name, organization, email..."
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
                 />
                 <select id="admin-users-filter-type" className="admin-select-input" value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}>
-                    <option value="">All Types</option>
+                    <option value="">All Stakeholder Types</option>
                     <option value="startup">Startup</option>
                     <option value="investor">Investor</option>
                     <option value="mentor">Mentor</option>
@@ -210,7 +210,7 @@ export default function AdminUsers() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                {['User', 'Company', 'Type', 'Role', 'Joined', 'Actions'].map(h => <th key={h}>{h}</th>)}
+                                {['Member', 'Organization', 'Stakeholder Type', 'Role', 'Joined Date', 'Actions'].map(h => <th key={h}>{h}</th>)}
                             </tr>
                         </thead>
                         <tbody>
@@ -249,7 +249,7 @@ export default function AdminUsers() {
                                                     className="admin-btn admin-btn-secondary"
                                                     style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', opacity: isSelf ? 0.4 : 1, cursor: isSelf ? 'not-allowed' : 'pointer' }}
                                                 >
-                                                    Role
+                                                    Assign Role
                                                 </button>
                                                 {currentUser?.role === 'super_admin' && (
                                                     <button

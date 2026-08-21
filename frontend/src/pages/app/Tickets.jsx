@@ -184,7 +184,7 @@ export default function Tickets() {
       <div className="ml-0 lg:ml-75 pt-20 lg:pt-8 min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans antialiased text-gray-800 max-w-[1400px]">
         <header className="flex items-center justify-between pb-6 mb-6 border-b border-gray-200/80">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tickets</h1>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Support Tickets</h1>
             <p className="text-xs text-gray-500 mt-1">{ticketCountText}</p>
           </div>
 
@@ -208,9 +208,9 @@ export default function Tickets() {
               <div className="w-20 h-20 rounded-full border-2 border-gray-200 flex items-center justify-center text-gray-400 mb-4 bg-gray-50">
                 <AlertCircle className="w-10 h-10 stroke-[1.5]" />
               </div>
-              <h3 className="text-base font-semibold text-gray-800 mb-1">No tickets found</h3>
+              <h3 className="text-base font-semibold text-gray-800 mb-1">No Support Tickets Found</h3>
               <p className="text-xs text-gray-500 max-w-sm mb-5">
-                Raise a ticket if you need help with your account, payments, technical issues, or feature requests.
+                Raise a ticket if you need assistance with your ecosystem account, cohorts, legal resources, or technical support.
               </p>
               <button
                 onClick={() => setShowModal(true)}
@@ -222,7 +222,7 @@ export default function Tickets() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                <h2 className="text-sm font-bold text-gray-900">Raised tickets ({tickets.length})</h2>
+                <h2 className="text-sm font-bold text-gray-900">Submitted Tickets ({tickets.length})</h2>
                 <span className="text-xs text-gray-500">Your requests</span>
               </div>
 

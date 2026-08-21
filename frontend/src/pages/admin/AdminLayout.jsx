@@ -5,19 +5,19 @@ import { useAdminTheme, AdminThemeProvider } from './AdminThemeContext';
 import './adminTheme.css';
 
 const navItems = [
-    { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
-    { to: '/admin/users', label: 'Users', icon: '👥' },
-    { to: '/admin/auth-settings', label: 'Auth Methods', icon: '🔐' },
-    { to: '/admin/roles', label: 'Roles & Designer', icon: '⚙️' },
-    { to: '/admin/jobs', label: 'Jobs', icon: '💼' },
-    { to: '/admin/tickets', label: 'Tickets', icon: '🎫' },
-    { to: '/admin/community', label: 'Community', icon: '🌐' },
-    { to: '/admin/analytics', label: 'Analytics', icon: '📈' },
-    { to: '/admin/resources', label: 'Resources', icon: '📚' },
-    { to: '/admin/programs', label: 'Programs', icon: '🏆' },
-    { to: '/admin/events', label: 'Events', icon: '📅' },
+    { to: '/admin', label: 'Admin Dashboard', icon: '📊', end: true },
+    { to: '/admin/users', label: 'Ecosystem Users', icon: '👥' },
+    { to: '/admin/auth-settings', label: 'Authentication Methods', icon: '🔐' },
+    { to: '/admin/roles', label: 'Roles & Permissions', icon: '⚙️' },
+    { to: '/admin/jobs', label: 'Job Opportunities', icon: '💼' },
+    { to: '/admin/tickets', label: 'Support Tickets', icon: '🎫' },
+    { to: '/admin/community', label: 'Community Wall', icon: '🌐' },
+    { to: '/admin/analytics', label: 'Platform Analytics', icon: '📈' },
+    { to: '/admin/resources', label: 'Resource Library', icon: '📚' },
+    { to: '/admin/programs', label: 'Incubation Programs', icon: '🏆' },
+    { to: '/admin/events', label: 'Events & Workshops', icon: '📅' },
     { to: '/admin/legal-compliance', label: 'Legal Compliance', icon: '⚖️' },
-    { to: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
+    { to: '/admin/subscriptions', label: 'Subscription Plans', icon: '💳' },
     { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨' },
 ];
 
@@ -275,8 +275,8 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                 {/* Logo & Mobile Close */}
                 <div style={styles.logo}>
                     <div>
-                        <div style={styles.logoTitle}>⚡ RBF Admin</div>
-                        <div style={styles.logoBadge}>Control Console</div>
+                        <div style={styles.logoTitle}>⚡ RealBell Admin</div>
+                        <div style={styles.logoBadge}>Ecosystem Console</div>
                     </div>
                     <button 
                         className="mobile-close-btn"

@@ -306,11 +306,11 @@ export default function Job() {
                 <header className="flex items-center justify-between pb-6 mb-6 border-b border-gray-200/80">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                            {currentView === "list" ? "Jobs" : "Create Job"}
+                            {currentView === "list" ? "Job Opportunities" : "Post Opportunity"}
                         </h1>
                         {currentView === "create" && (
                             <p className="text-xs text-gray-500 mt-1">
-                                Post a new career opportunity for potential candidates
+                                Post a new career opportunity for potential candidates across the RealBell ecosystem
                             </p>
                         )}
                     </div>
@@ -318,17 +318,17 @@ export default function Job() {
                     {currentView === "list" ? (
                         <button
                             onClick={() => setCurrentView("create")}
-                            className="flex items-center space-x-2 bg-[#8B1D2C] hover:bg-[#721724] text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer"
+                            className="flex items-center space-x-2 bg-[#8B1D2C] hover:bg-[#721724] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
-                            <span>POST JOB</span>
+                            <span>Post Opportunity</span>
                         </button>
                     ) : (
                         <button
                             onClick={() => setCurrentView("list")}
                             className="flex items-center space-x-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
                         >
-                            <span>&larr; Back to Jobs</span>
+                            <span>&larr; Back to Opportunities</span>
                         </button>
                     )}
                 </header>
@@ -360,7 +360,7 @@ export default function Job() {
                                 {loading ? (
                                     <div className="flex-1 flex items-center justify-center py-20 text-gray-400 text-xs">
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B1D2C] mr-3"></div>
-                                        <span>Loading jobs...</span>
+                                        <span>Loading opportunities...</span>
                                     </div>
                                 ) : jobs.length === 0 ? (
                                     /* Empty State Matching Screenshot 1 */
@@ -368,12 +368,12 @@ export default function Job() {
                                         <div className="w-20 h-20 rounded-full border-4 border-gray-300 flex items-center justify-center text-gray-400 mb-4 bg-gray-50">
                                             <AlertCircle className="w-10 h-10 stroke-[1.5]" />
                                         </div>
-                                        <h3 className="text-base font-bold text-gray-800 mb-4">No jobs posted</h3>
+                                        <h3 className="text-base font-bold text-gray-800 mb-4">No opportunities posted</h3>
                                         <button
                                             onClick={() => setCurrentView("create")}
-                                            className="bg-[#8B1D2C] hover:bg-[#721724] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                                            className="bg-[#8B1D2C] hover:bg-[#721724] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
                                         >
-                                            + POST JOB
+                                            + Post Opportunity
                                         </button>
                                     </div>
                                 ) : (

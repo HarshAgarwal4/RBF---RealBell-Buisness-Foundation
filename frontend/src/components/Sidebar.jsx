@@ -128,24 +128,8 @@ export default function Sidebar() {
       { path: "/community", label: "Community Wall", icon: Users },
       { path: "/live_sessions", label: "Live Sessions & Queue", icon: Radio },
       {
-        key: "actions",
-        label: "My Actions",
-        icon: Scissors,
-        children: [
-          { path: "/connections", label: "Connections" },
-          { path: "/live_sessions", label: "Live Sessions" },
-          { path: "/meetings", label: "My Meetings" },
-          { path: "/mentorship-hours", label: "Mentor Hours" },
-          { path: "/milestones", label: "MileStones" },
-        ],
-      },
-      { path: "/programs", label: "Programs", icon: HandCoins },
-      { path: "/events", label: "Events", icon: Megaphone },
-      { path: "/resources/news", label: "News", icon: Newspaper },
-      { path: "/resources/videos", label: "Videos", icon: Video },
-      {
         key: "legal_compliance",
-        label: "Legal Compliances",
+        label: "Legal Compliance",
         icon: Scale,
         children: [
           { path: "/legal-compliances", label: "Available Services", icon: Scale },
@@ -153,20 +137,36 @@ export default function Sidebar() {
           { path: "/legal-compliances/documents", label: "Legal Documents", icon: FolderLock },
         ],
       },
-      { path: "/jobs", label: "Jobs", icon: Briefcase },
-      { path: "/subscription", label: "Subscriptions", icon: CreditCard },
+      {
+        key: "actions",
+        label: "My Workspace",
+        icon: Scissors,
+        children: [
+          { path: "/connections", label: "My Connections" },
+          { path: "/live_sessions", label: "Live Consultations" },
+          { path: "/meetings", label: "Scheduled Meetings" },
+          { path: "/mentorship-hours", label: "Mentorship Hours" },
+          { path: "/milestones", label: "Milestone Tracking" },
+        ],
+      },
+      { path: "/programs", label: "Programs", icon: HandCoins },
+      { path: "/events", label: "Events & Workshops", icon: Megaphone },
+      { path: "/resources/news", label: "Industry News", icon: Newspaper },
+      { path: "/resources/videos", label: "Knowledge Videos", icon: Video },
+      { path: "/jobs", label: "Job Opportunities", icon: Briefcase },
+      { path: "/subscription", label: "Membership Plans", icon: CreditCard },
       { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
       {
         key: "resources",
-        label: "Resources",
+        label: "Resource Library",
         icon: BookOpen,
         children: [
-          { path: "/resources/contracts", label: "Contracts & Legal Templates", icon: FileArchive },
-          { path: "/resources/glossary",  label: "Glossary",                   icon: BookMarked },
-          { path: "/resources/reports",   label: "Reports",                    icon: BarChart2  },
+          { path: "/resources/contracts", label: "Legal & Contract Templates", icon: FileArchive },
+          { path: "/resources/glossary",  label: "Startup Glossary",            icon: BookMarked },
+          { path: "/resources/reports",   label: "Research & Market Reports",   icon: BarChart2  },
         ],
       },
-      { path: "/tickets", label: "Tickets", icon: Ticket },
+      { path: "/tickets", label: "Support Tickets", icon: Ticket },
       { path: "/account", label: "Account Settings", icon: UserCircle2 },
     ];
   }, [connectChildren]);
@@ -560,13 +560,11 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav
-        className="flex-1 overflow-y-auto px-3 py-2 scrollbar-none"
+        className="flex-1 overflow-y-auto px-3 py-2 sidebar-desktop-scroll"
         style={{
           overflowY: "auto",
           maxHeight: "100%",
           WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
         }}
       >
         {(user?.role === "admin" || user?.role === "super_admin") && (

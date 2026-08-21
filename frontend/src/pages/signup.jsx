@@ -631,7 +631,7 @@ export default function SignUpPage() {
                       <input
                         type="text"
                         autoFocus
-                        placeholder="e.g. Acme Tech Innovations"
+                        placeholder="e.g. NexaTech Innovations"
                         value={form.companyName}
                         onChange={(e) => updateForm("companyName", e.target.value)}
                         className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
@@ -672,7 +672,7 @@ export default function SignUpPage() {
                         </label>
                         <input
                           type="email"
-                          placeholder="rahul@acme.com"
+                          placeholder="rahul.sharma@nexatech.in"
                           value={form.email}
                           onChange={(e) => updateForm("email", e.target.value)}
                           className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${

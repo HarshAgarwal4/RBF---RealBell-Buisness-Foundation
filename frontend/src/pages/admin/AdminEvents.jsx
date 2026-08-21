@@ -715,13 +715,13 @@ export default function AdminEvents() {
   };
 
   return (
-    <AdminLayout title="Events Management">
+    <AdminLayout title="Events & Workshops">
       <div>
         {/* Header bar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #e2e8f0)", margin: 0 }}>Events</h1>
-            <p style={{ fontSize: "0.8rem", color: "var(--admin-text-subtle, #64748b)", margin: "2px 0 0" }}>Create and manage events, tickets, and attendees</p>
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #e2e8f0)", margin: 0 }}>Events & Workshops</h1>
+            <p style={{ fontSize: "0.8rem", color: "var(--admin-text-subtle, #64748b)", margin: "2px 0 0" }}>Curate and manage ecosystem events, workshops, tickets, and attendees</p>
           </div>
 
           <button onClick={() => { setModalEvent(null); setShowModal(true); }} className="admin-btn admin-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }}>

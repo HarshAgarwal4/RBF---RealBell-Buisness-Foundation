@@ -33,6 +33,12 @@ const chipStyle = {
   borderRadius: 6,
 };
 
+function formatNewsDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function ProgressRing({ percent }) {
   const r = 38;
   const c = 2 * Math.PI * r;
@@ -125,6 +131,8 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [myConnections, setMyConnections] = useState([]);
+  const [latestNews, setLatestNews] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(false);
 
   const completionPercent = calculateProfileCompletion(user);
 
@@ -191,6 +199,20 @@ export default function Dashboard() {
         }
       } catch (e) {
         console.error("Dashboard events load error:", e);
+      }
+
+      try {
+        // Fetch latest dynamic news
+        setLoadingNews(true);
+        const newsRes = await axios.get("/resources", { params: { type: "news", limit: 3 } });
+        if (newsRes.data?.status === 1 || Array.isArray(newsRes.data?.resources)) {
+          const list = newsRes.data.resources || [];
+          setLatestNews(list.slice(0, 3));
+        }
+      } catch (e) {
+        console.error("Dashboard news load error:", e);
+      } finally {
+        setLoadingNews(false);
       }
     }
 
@@ -288,7 +310,7 @@ export default function Dashboard() {
               cursor: "pointer",
             }}
           >
-            <Pencil size={13} /> Edit profile
+            <Pencil size={13} /> Edit Profile
           </button>
         </div>
       </div>
@@ -401,7 +423,7 @@ export default function Dashboard() {
                 }}
               >
                 {posting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                {posting ? "Posting..." : "POST"}
+                {posting ? "Publishing..." : "Publish Post"}
               </button>
             </div>
           </div>
@@ -411,10 +433,10 @@ export default function Dashboard() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Explore & Connect</div>
               <div style={{ display: "flex", gap: 20 }}>
-                {["Investor", "Mentors", "Startups"].map((t) => (
+                {["Investors", "Mentors", "Startups"].map((t) => (
                   <button
                     key={t}
-                    onClick={() => setTab(t)}
+                    onClick={() => setTab(t === "Investors" ? "Investor" : t)}
                     style={{
                       background: "none",
                       border: "none",
@@ -422,8 +444,8 @@ export default function Dashboard() {
                       paddingBottom: 6,
                       fontWeight: 700,
                       fontSize: 13.5,
-                      color: tab === t ? COLORS.primary : COLORS.muted,
-                      borderBottom: tab === t ? `2px solid ${COLORS.primary}` : "2px solid transparent",
+                      color: (tab === t || (t === "Investors" && tab === "Investor")) ? COLORS.primary : COLORS.muted,
+                      borderBottom: (tab === t || (t === "Investors" && tab === "Investor")) ? `2px solid ${COLORS.primary}` : "2px solid transparent",
                     }}
                   >
                     {t}
@@ -494,7 +516,7 @@ export default function Dashboard() {
                   cursor: "pointer",
                 }}
               >
-                View all
+                View All
               </button>
             </div>
 
@@ -538,10 +560,10 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Resources Section */}
+          {/* Latest Ecosystem News Section */}
           <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Resources & Insights</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Latest Ecosystem News</div>
               <button
                 onClick={() => navigate("/resources/news")}
                 style={{
@@ -555,28 +577,147 @@ export default function Dashboard() {
                   cursor: "pointer",
                 }}
               >
-                Browse News →
+                Browse All News →
               </button>
             </div>
 
-            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            {loadingNews ? (
+              <div style={{ padding: "28px 0", textAlign: "center", color: COLORS.muted, fontSize: 13 }}>
+                <Loader2 size={20} className="animate-spin inline-block mr-2" />
+                Loading latest news...
+              </div>
+            ) : latestNews.length === 0 ? (
               <div
                 onClick={() => navigate("/resources/news")}
-                style={{ display: "flex", gap: 14, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 12, cursor: "pointer" }}
+                style={{
+                  marginTop: 16,
+                  display: "flex",
+                  gap: 14,
+                  border: `1px solid ${COLORS.border}`,
+                  borderRadius: 12,
+                  padding: 14,
+                  cursor: "pointer",
+                  background: "#FAFAFC",
+                  alignItems: "center",
+                }}
               >
-                <div style={{ width: 80, height: 62, borderRadius: 8, background: COLORS.primaryDark, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 10, background: "#F5EDEE", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                   📰
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 13.5, color: COLORS.ink }}>
-                    Latest Startup Ecosystem News & Insights
+                    Explore RealBell News & Market Intelligence
                   </div>
-                  <div style={{ fontSize: 12.5, color: COLORS.muted, marginTop: 4 }}>
-                    Catch up on real-time news updates, market trends, and funding ecosystem reports.
+                  <div style={{ fontSize: 12.5, color: COLORS.muted, marginTop: 2 }}>
+                    Read curated updates across funding, AI, tech, clean energy, and startup policies.
                   </div>
                 </div>
+                <ArrowRight size={16} color={COLORS.primary} />
               </div>
-            </div>
+            ) : (
+              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                {latestNews.map((item) => (
+                  <div
+                    key={item._id}
+                    onClick={() => {
+                      if (item.sourceUrl) {
+                        window.open(item.sourceUrl, "_blank", "noopener,noreferrer");
+                      } else {
+                        navigate("/resources/news");
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      gap: 14,
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: 12,
+                      padding: 12,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      background: "#fff",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = COLORS.primary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = COLORS.border)}
+                  >
+                    <div
+                      style={{
+                        width: 76,
+                        height: 64,
+                        borderRadius: 8,
+                        background: "#F5EDEE",
+                        flexShrink: 0,
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: 24 }}>📰</span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 13.5,
+                          color: COLORS.ink,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {item.title}
+                      </div>
+                      {item.description && (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: COLORS.muted,
+                            marginTop: 3,
+                            overflow: "hidden",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            lineHeight: "1.35",
+                          }}
+                        >
+                          {item.description}
+                        </div>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+                        {item.newsCategory && (
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              background: "#F5EDEE",
+                              color: COLORS.primary,
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                            }}
+                          >
+                            {item.newsCategory}
+                          </span>
+                        )}
+                        {item.sourceName && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.ink }}>
+                            {item.sourceName}
+                          </span>
+                        )}
+                        {item.publishedAt && (
+                          <span style={{ fontSize: 11, color: COLORS.muted, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                            <Calendar size={11} /> {formatNewsDate(item.publishedAt)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -633,7 +774,7 @@ export default function Dashboard() {
                 cursor: "pointer",
               }}
             >
-              View Connections
+              View All Connections
             </button>
           </div>
 
@@ -657,7 +798,7 @@ export default function Dashboard() {
                   <div key={m._id} style={{ border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 10 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.ink }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.muted, marginTop: 2 }}>
-                      {m.date ? new Date(m.date).toLocaleDateString() : ""} {m.time ? `· ${m.time}` : ""}
+                       {m.date ? new Date(m.date).toLocaleDateString() : ""} {m.time ? `· ${m.time}` : ""}
                     </div>
                   </div>
                 ))}
@@ -673,7 +814,7 @@ export default function Dashboard() {
                 onClick={() => navigate("/events")}
                 style={{ background: "none", border: "none", color: COLORS.primary, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
               >
-                View all
+                View All
               </button>
             </div>
 

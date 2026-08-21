@@ -262,10 +262,10 @@ export default function Programs() {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
-              Programs
+              Incubation Programs
             </h1>
             <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 3 }}>
-              Explore opportunities curated for you
+              Explore accelerator cohorts and funding tracks curated by RealBell Business Foundation
             </div>
           </div>
           <button

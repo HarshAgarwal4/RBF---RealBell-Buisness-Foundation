@@ -127,12 +127,12 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
 
   return (
     <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
-      <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.ink, marginBottom: 4 }}>Your Personal Information</div>
+      <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.ink, marginBottom: 4 }}>Personal Information</div>
       <div style={{ height: 1, background: COLORS.border, margin: "14px -26px 22px" }} />
 
       {/* Profile Image Section */}
       <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 24, marginBottom: 30 }}>
-        <div style={{ fontSize: 14.5, fontWeight: 600, color: COLORS.ink, paddingTop: 10 }}>Your Photo</div>
+        <div style={{ fontSize: 14.5, fontWeight: 600, color: COLORS.ink, paddingTop: 10 }}>Profile Photo</div>
         <div>
           <div style={{ position: "relative", width: 120, height: 120 }}>
             <div
@@ -147,7 +147,7 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
                 justifyContent: "center",
                 cursor: "pointer",
                 overflow: "hidden",
-                border: "1px solid #eee"
+                border: "1px solid #eee",
               }}
             >
               {preview || formData.account.image ? (
@@ -171,7 +171,7 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               <Pencil size={16} color="#666" />
@@ -191,7 +191,7 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
         <button onClick={onSave} style={{ background: COLORS.primary, color: "#fff", border: "none", borderRadius: 8, padding: "12px 28px", fontWeight: 700, cursor: "pointer" }} disabled={saving}>
-          {saving ? "Saving..." : "SAVE CHANGES"}
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
@@ -205,14 +205,14 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
       ...formData,
       account: {
         ...formData.account,
-        availability: { ...availability, [key]: value }
-      }
+        availability: { ...availability, [key]: value },
+      },
     });
   };
   const handleDayChange = (dayKey, field, value) => {
     const fullDayName = DAY_MAP[dayKey];
     let newList = [...availability.weekly_schedule];
-    const index = newList.findIndex(d => d.day === fullDayName);
+    const index = newList.findIndex((d) => d.day === fullDayName);
     const updatedDay = index > -1 ? { ...newList[index], [field]: value } : { day: fullDayName, not_available: false, from: "09:00", to: "18:00", [field]: value };
 
     if (index > -1) newList[index] = updatedDay;
@@ -236,16 +236,16 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
             <div>Day</div><div>Not Available</div><div>From</div><div>To</div>
           </div>
           {Object.keys(DAY_MAP).map((d) => {
-            const dayData = availability.weekly_schedule.find(sd => sd.day === DAY_MAP[d]) || { not_available: false, from: "09:00", to: "18:00" };
+            const dayData = availability.weekly_schedule.find((sd) => sd.day === DAY_MAP[d]) || { not_available: false, from: "09:00", to: "18:00" };
             return (
               <div key={d} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "12px 18px", borderTop: `1px solid ${COLORS.border}`, alignItems: "center" }}>
                 <div style={{ fontWeight: 600 }}>{d}</div>
                 <input type="checkbox" checked={dayData.not_available} onChange={(e) => handleDayChange(d, "not_available", e.target.checked)} />
                 <select disabled={dayData.not_available} value={dayData.from} onChange={(e) => handleDayChange(d, "from", e.target.value)} style={{ padding: 6 }}>
-                  {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
                 <select disabled={dayData.not_available} value={dayData.to} onChange={(e) => handleDayChange(d, "to", e.target.value)} style={{ padding: 6 }}>
-                  {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
             );
@@ -268,7 +268,7 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button onClick={onSave} style={{ background: COLORS.primary, color: "#fff", border: "none", borderRadius: 8, padding: "12px 24px", fontWeight: 700, cursor: "pointer" }} disabled={saving}>
-          {saving ? "Saving..." : "SAVE CHANGES"}
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
@@ -295,15 +295,12 @@ function EmailNotifications({ saving, formData, setFormData, onSave }) {
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 30 }}>
         <button onClick={onSave} style={{ background: COLORS.primary, color: "#fff", border: "none", borderRadius: 8, padding: "12px 24px", fontWeight: 700, cursor: "pointer" }} disabled={saving}>
-          {saving ? "Saving..." : "SAVE SETTINGS"}
+          {saving ? "Saving..." : "Save Settings"}
         </button>
       </div>
-    </div >
+    </div>
   );
 }
-
-// ... AvailabilityHours and EmailNotifications stay mostly the same ...
-// (Ensure they also receive the 'saving' prop and 'onSave' calls handleSubmit)
 
 export function AccountPage() {
   const { user } = useStore();
@@ -314,10 +311,10 @@ export function AccountPage() {
     name: "",
     email: "",
     phone: "",
-    imageFile: null, // Temporary storage for the new file
+    imageFile: null,
     account: {
       designation: "",
-      image: "", // Current URL from DB
+      image: "",
       promotion_email: false,
       availability: {
         type: "Anytime",
@@ -325,9 +322,9 @@ export function AccountPage() {
         specific_dates: [],
         unavailable_from: null,
         unavailable_to: null,
-        reason: ""
-      }
-    }
+        reason: "",
+      },
+    },
   });
 
   useEffect(() => {
@@ -341,34 +338,24 @@ export function AccountPage() {
           designation: user.account?.designation || "",
           image: user.account?.image || "",
           promotion_email: user.account?.promotion_email || false,
-          availability: user.account?.availability || { type: "Anytime", weekly_schedule: [] }
-        }
+          availability: user.account?.availability || { type: "Anytime", weekly_schedule: [] },
+        },
       });
     }
   }, [user]);
 
   const handleSubmit = async () => {
     setSaving(true);
-
-    // Create FormData for Multi-part upload
     const data = new FormData();
-
-    // Append top level Organization fields
     data.append("name", formData.name);
-
-    // If a new image was selected, append it
     if (formData.imageFile) {
       data.append("image", formData.imageFile);
     }
-
-    // Append the account object as a JSON string
     data.append("account", JSON.stringify(formData.account));
 
-    console.log(formData)
-
     try {
-      const res = await axios.post('/update-account', data, {
-        headers: { "Content-Type": "multipart/form-data" }
+      const res = await axios.post("/update-account", data, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (res.data.status === 1) {
@@ -391,7 +378,7 @@ export function AccountPage() {
         <div className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-5">Account Settings</div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-2 flex items-center gap-1.5 sm:gap-2 mb-5 overflow-x-auto scrollbar-none">
-          {["Personal Information", "Availability Hours", "Email Notifications"].map(t => (
+          {["Personal Information", "Availability Hours", "Email Notifications"].map((t) => (
             <TabButton key={t} label={t} active={tab === t} onClick={() => setTab(t)} />
           ))}
         </div>
@@ -421,3 +408,5 @@ export function AccountPage() {
     </div>
   );
 }
+
+export default AccountPage;

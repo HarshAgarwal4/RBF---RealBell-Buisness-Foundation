@@ -316,7 +316,7 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <AdminLayout title="Subscriptions">
+    <AdminLayout title="Subscription Plans">
       {toast && (
         <div style={{ position: "fixed", top: "70px", right: "1.5rem", zIndex: 9999, padding: "0.6rem 1.1rem", borderRadius: "8px", fontFamily: "Inter,sans-serif", fontSize: "0.8rem", fontWeight: "500", background: toast.type === "error" ? "rgba(239,68,68,0.15)" : "rgba(52,211,153,0.15)", color: toast.type === "error" ? "#ef4444" : "#10b981", border: `1px solid ${toast.type === "error" ? "rgba(239,68,68,0.3)" : "rgba(52,211,153,0.3)"}`, boxShadow: "var(--admin-box-shadow)" }}>
           {toast.type === "error" ? "✕ " : "✓ "}{toast.msg}

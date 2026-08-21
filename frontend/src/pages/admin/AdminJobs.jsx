@@ -74,7 +74,7 @@ export default function AdminJobs() {
     };
 
     return (
-        <AdminLayout title="Jobs">
+        <AdminLayout title="Job Opportunities">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
             {toast && (
                 <div style={{ position: 'fixed', top: '70px', right: '1.5rem', zIndex: 9999, padding: '0.6rem 1.1rem', borderRadius: '8px', fontFamily: 'Inter,sans-serif', fontSize: '0.8rem', fontWeight: '500', background: toast.type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(52,211,153,0.15)', color: toast.type === 'error' ? '#f87171' : '#34d399', border: `1px solid ${toast.type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(52,211,153,0.3)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
@@ -84,15 +84,15 @@ export default function AdminJobs() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Jobs Management</h1>
-                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>{pagination.total} total job listings</p>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Job Opportunities Management</h1>
+                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>{pagination.total} total ecosystem job postings</p>
                 </div>
             </div>
 
             <div className="admin-filter-bar">
-                <input id="admin-jobs-search" className="admin-search-input" type="text" placeholder="🔍  Search by title or industry..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+                <input id="admin-jobs-search" className="admin-search-input" type="text" placeholder="🔍  Search by job title or industry..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
                 <select id="admin-jobs-filter-status" className="admin-select-input" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}>
-                    <option value="">All Status</option>
+                    <option value="">All Statuses</option>
                     <option value="active">Active</option>
                     <option value="closed">Closed</option>
                     <option value="draft">Draft</option>
@@ -110,7 +110,7 @@ export default function AdminJobs() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                {['Job Title', 'Organization', 'Type', 'Applications', 'Status', 'Expires', 'Actions'].map(h => (
+                                {['Job Title', 'Organization', 'Workplace Type', 'Applications', 'Listing Status', 'Expiry Date', 'Actions'].map(h => (
                                     <th key={h}>{h}</th>
                                 ))}
                             </tr>

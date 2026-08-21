@@ -783,14 +783,14 @@ export default function AdminPrograms() {
   };
 
   return (
-    <AdminLayout title="Programs">
+    <AdminLayout title="Incubation Programs">
       <div>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #f1f5f9)", margin: 0 }}>Programs</h1>
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--admin-text-primary, #f1f5f9)", margin: 0 }}>Incubation Programs</h1>
             <div style={{ fontSize: "0.8rem", color: "var(--admin-text-subtle, #64748b)", marginTop: 2 }}>
-              {programs.length} program{programs.length !== 1 ? "s" : ""}
+              {programs.length} incubation cohort{programs.length !== 1 ? "s" : ""}
             </div>
           </div>
 
@@ -813,7 +813,7 @@ export default function AdminPrograms() {
         ) : programs.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: "var(--admin-text-subtle, #64748b)" }}>
             <Award size={36} color="#334155" />
-            <div style={{ fontWeight: 600, fontSize: 15, marginTop: 8 }}>No programs found</div>
+            <div style={{ fontWeight: 600, fontSize: 15, marginTop: 8 }}>No Incubation Programs Found</div>
             <button onClick={openCreate} className="admin-btn admin-btn-primary" style={{ marginTop: 12, fontSize: 13 }}>
               Create Program
             </button>

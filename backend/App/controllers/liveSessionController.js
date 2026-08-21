@@ -1,4 +1,5 @@
 import LiveSessionModel from "../models/liveSession.js";
+import OrganizationModel from "../models/organization.js";
 import mongoose from "mongoose";
 import {
   setSessionActiveConsultation,
@@ -26,9 +27,20 @@ export async function getLiveSessions(req, res) {
       query.host = userId;
     } else {
       if (userId) {
+        // Fetch user's accepted connections
+        const userOrg = await OrganizationModel.findById(userId).select("connections");
+        const acceptedConnectionIds = (userOrg?.connections || [])
+          .filter((c) => c.status === "accepted")
+          .map((c) => c.with);
+
         query.$or = [
           { visibility: "public" },
-          { host: userId }
+          { host: userId },
+          {
+            visibility: "private",
+            visibleToConnections: true,
+            host: { $in: acceptedConnectionIds },
+          },
         ];
       } else {
         query.visibility = "public";
@@ -129,6 +141,7 @@ export async function createLiveSession(req, res) {
       maxDurationLimitMins = 15,
       sessionFormat = "1-to-1 Queue",
       visibility = "public",
+      visibleToConnections = false,
       requirePasscode = false,
       passcode = "",
       autoAdmit = true,
@@ -159,6 +172,7 @@ export async function createLiveSession(req, res) {
       maxDurationLimitMins: Number(maxDurationLimitMins) || 15,
       sessionFormat: validFormat,
       visibility: visibility === "private" ? "private" : "public",
+      visibleToConnections: visibility === "private" ? Boolean(visibleToConnections) : false,
       requirePasscode: Boolean(requirePasscode),
       passcode: requirePasscode ? passcode.trim() : "",
       autoAdmit: Boolean(autoAdmit),

@@ -70,6 +70,10 @@ const LiveSessionSchema = new mongoose.Schema(
       enum: ["public", "private"],
       default: "public",
     },
+    visibleToConnections: {
+      type: Boolean,
+      default: false,
+    },
     requirePasscode: {
       type: Boolean,
       default: false,

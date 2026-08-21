@@ -240,7 +240,7 @@ export default function AdminDashboard() {
                             background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-card-border, rgba(255,255,255,0.07))',
                             borderRadius: '14px', padding: '1.25rem',
                         }}>
-                            <SectionTitle>👥 User Breakdown</SectionTitle>
+                            <SectionTitle>👥 User Stakeholder Distribution</SectionTitle>
                             <MiniBar label="Startups" value={s?.users?.startups || 0} max={s?.users?.total || 1} color="#34d399" />
                             <MiniBar label="Investors" value={s?.users?.investors || 0} max={s?.users?.total || 1} color="#60a5fa" />
                             <MiniBar label="Mentors" value={s?.users?.mentors || 0} max={s?.users?.total || 1} color="#f59e0b" />
@@ -252,7 +252,7 @@ export default function AdminDashboard() {
                             background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-card-border, rgba(255,255,255,0.07))',
                             borderRadius: '14px', padding: '1.25rem',
                         }}>
-                            <SectionTitle>🎫 Ticket Status</SectionTitle>
+                            <SectionTitle>🎫 Support Ticket Status</SectionTitle>
                             {[
                                 { label: 'Open', value: s?.tickets?.open, color: '#f87171' },
                                 { label: 'In Progress', value: s?.tickets?.in_progress, color: '#fbbf24' },
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
                             background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-card-border, rgba(255,255,255,0.07))',
                             borderRadius: '14px', padding: '1.25rem',
                         }}>
-                            <SectionTitle>⚡ Recent Activity</SectionTitle>
+                            <SectionTitle>⚡ Recent Ecosystem Activity</SectionTitle>
                             <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
                                 {activity.length === 0
                                     ? <p style={{ color: 'var(--admin-text-subtle, #334155)', fontSize: '0.78rem', textAlign: 'center', padding: '1.5rem 0' }}>No activity recorded</p>
@@ -281,8 +281,8 @@ export default function AdminDashboard() {
                     {/* Recently Joined Users */}
                     <div className="admin-table-container">
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <SectionTitle>🆕 Recently Joined Users</SectionTitle>
-                            <a href="/admin/users" style={{ fontSize: '0.75rem', color: '#6366f1', textDecoration: 'none', fontWeight: '600' }}>View all →</a>
+                            <SectionTitle>🆕 Recently Registered Members</SectionTitle>
+                            <a href="/admin/users" style={{ fontSize: '0.75rem', color: '#6366f1', textDecoration: 'none', fontWeight: '600' }}>View All →</a>
                         </div>
                         <table className="admin-table">
                             <thead>

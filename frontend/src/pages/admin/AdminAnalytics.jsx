@@ -113,19 +113,33 @@ export default function AdminAnalytics() {
     const totalSignupsInRange = signupChartData.reduce((s, d) => s + d.Signups, 0);
 
     return (
-        <AdminLayout title="Analytics">
+        <AdminLayout title="Platform Analytics">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Platform Analytics</h1>
-                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>Detailed insights into platform usage and growth</p>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary, #f1f5f9)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Platform & Ecosystem Analytics</h1>
+                    <p style={{ color: 'var(--admin-text-subtle, #475569)', fontSize: '0.8rem' }}>Ecosystem growth metrics and engagement insights</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.45rem' }}>
-                    {['7', '30', '90'].map(r => (
-                        <button key={r} id={`admin-analytics-range-${r}`} onClick={() => setRange(r)}
-                            style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: `1px solid ${range === r ? 'rgba(99,102,241,0.4)' : 'var(--admin-border-subtle, rgba(255,255,255,0.07))'}`, background: range === r ? 'rgba(99,102,241,0.15)' : 'var(--admin-card-bg, rgba(255,255,255,0.03))', color: range === r ? '#818cf8' : 'var(--admin-text-muted, #64748b)', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                {/* Range Selector */}
+                <div style={{ display: 'flex', gap: '4px', background: 'var(--admin-card-bg, rgba(255,255,255,0.04))', padding: '3px', borderRadius: '8px', border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))' }}>
+                    {[7, 30, 90].map(r => (
+                        <button
+                            key={r}
+                            id={`admin-analytics-range-${r}`}
+                            onClick={() => setRange(r)}
+                            className="admin-btn"
+                            style={{
+                                padding: '0.28rem 0.65rem',
+                                borderRadius: '6px',
+                                fontSize: '0.72rem',
+                                fontWeight: '600',
+                                border: 'none',
+                                background: range === r ? 'var(--admin-primary, #6366f1)' : 'transparent',
+                                color: range === r ? '#fff' : 'var(--admin-text-subtle, #64748b)',
+                            }}
+                        >
                             {r}d
                         </button>
                     ))}
@@ -142,10 +156,10 @@ export default function AdminAnalytics() {
                 <>
                     {/* Quick Stats */}
                     <div className="admin-grid-stats">
-                        <StatCard icon="👥" label="Total Users" value={totalUsers} color="#6366f1" />
+                        <StatCard icon="👥" label="Total Ecosystem Users" value={totalUsers} color="#6366f1" />
                         <StatCard icon="📅" label={`New (${range}d)`} value={totalSignupsInRange} color="#34d399" />
-                        <StatCard icon="🎫" label="Total Tickets" value={data?.ticketsByStatus?.reduce((s, d) => s + d.count, 0) || 0} color="#f59e0b" />
-                        <StatCard icon="💼" label="Total Jobs" value={data?.jobsByStatus?.reduce((s, d) => s + d.count, 0) || 0} color="#60a5fa" />
+                        <StatCard icon="🎫" label="Total Support Tickets" value={data?.ticketsByStatus?.reduce((s, d) => s + d.count, 0) || 0} color="#f59e0b" />
+                        <StatCard icon="💼" label="Total Job Postings" value={data?.jobsByStatus?.reduce((s, d) => s + d.count, 0) || 0} color="#60a5fa" />
                     </div>
 
                     {/* Charts Grid */}

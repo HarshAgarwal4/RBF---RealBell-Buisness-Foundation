@@ -216,8 +216,8 @@ export default function Meetings() {
                 {/* HEADER */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">Meetings</h1>
-                        <p className="mt-0.5 text-xs sm:text-sm text-gray-500">Manage and schedule meetings.</p>
+                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">Scheduled Meetings</h1>
+                        <p className="mt-0.5 text-xs sm:text-sm text-gray-500">Manage 1-on-1 advisory sessions, investor pitches, and scheduled meetings.</p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">

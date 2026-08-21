@@ -135,3 +135,65 @@ html.dark .bg-white\/80 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ================= BEAUTIFUL SIDEBAR SCROLLBAR (DESKTOP ONLY) ================= */
+
+/* Mobile (< 1024px): Clean touch scrolling without visible scrollbar */
+@media (max-width: 1023px) {
+  .sidebar-desktop-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .sidebar-desktop-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Desktop (>= 1024px): Sleek, refined modern scrollbar */
+@media (min-width: 1024px) {
+  .sidebar-desktop-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  html.dark .sidebar-desktop-scroll {
+    scrollbar-color: #334155 transparent;
+  }
+
+  .sidebar-desktop-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .sidebar-desktop-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+    margin: 8px 0;
+  }
+
+  .sidebar-desktop-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+
+  .sidebar-desktop-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .sidebar-desktop-scroll::-webkit-scrollbar-thumb:active {
+    background: #8E1B2E;
+  }
+
+  /* Dark theme styling */
+  html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+
+  html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb:active {
+    background: #8E1B2E;
+  }
+}

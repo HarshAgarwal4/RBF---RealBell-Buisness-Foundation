@@ -5,11 +5,11 @@ import { toast } from "react-toastify";
 import { Trash2, Plus, Edit2, X, FileText, BookMarked, BarChart2, Newspaper, Video, Upload } from "lucide-react";
 
 const RESOURCE_TABS = [
-  { key: "contract", label: "Contracts & Legal Templates", icon: FileText, color: "#B91C1C" },
-  { key: "glossary", label: "Glossary", icon: BookMarked, color: "#7C3AED" },
-  { key: "report", label: "Reports", icon: BarChart2, color: "#0891B2" },
-  { key: "news", label: "News", icon: Newspaper, color: "#D97706" },
-  { key: "video", label: "Videos", icon: Video, color: "#059669" },
+  { key: "contract", label: "Legal & Contract Templates", icon: FileText, color: "#B91C1C" },
+  { key: "glossary", label: "Startup Glossary", icon: BookMarked, color: "#7C3AED" },
+  { key: "report", label: "Research & Market Reports", icon: BarChart2, color: "#0891B2" },
+  { key: "news", label: "Industry News", icon: Newspaper, color: "#D97706" },
+  { key: "video", label: "Knowledge Videos", icon: Video, color: "#059669" },
 ];
 
 const CONTRACT_CATS = ["Business Partnership", "Employment Related", "Fund Raising", "NDA", "Web Policies"];
@@ -318,7 +318,7 @@ export default function AdminResources() {
   const active = RESOURCE_TABS.find((t) => t.key === activeTab);
 
   return (
-    <AdminLayout title="Resources">
+    <AdminLayout title="Resource Library">
       <div style={{ overflowX: "auto", marginBottom: 20, borderBottom: "1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))" }}>
         <div style={{ display: "flex", gap: 0, minWidth: "max-content" }}>
           {RESOURCE_TABS.map((tab) => {

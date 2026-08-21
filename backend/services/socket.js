@@ -559,7 +559,7 @@ export function registerSocketServer(httpServer, app) {
     // ─────────────────────────────────────────────────────────────
 
     // Group Call: Join room & Lobby check
-    socket.on("live-session:group:join", async ({ sessionId, userInfo }, ack) => {
+    socket.on("live-session:group:join", async ({ sessionId, userInfo, passcode }, ack) => {
       try {
         if (!sessionId) return;
         const session = await LiveSessionModel.findById(sessionId);
@@ -570,6 +570,16 @@ export function registerSocketServer(httpServer, app) {
 
         const hostId = String(session.host?._id || session.host);
         const isHost = hostId === String(userId);
+
+        // Validate passcode for non-host participants if passcode is required
+        if (!isHost && session.requirePasscode) {
+          const providedPasscode = (passcode || userInfo?.passcode || "").toString().trim();
+          const expectedPasscode = (session.passcode || "").toString().trim();
+          if (!providedPasscode || providedPasscode !== expectedPasscode) {
+            if (ack) ack({ status: 0, msg: "Incorrect meeting passcode. Please try again." });
+            return;
+          }
+        }
 
         const participantInfo = {
           _id: String(userId),

@@ -165,7 +165,7 @@ export default function Events() {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
-              Events
+              Events & Workshops
             </h1>
           </div>
 
@@ -174,7 +174,7 @@ export default function Events() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search events…"
+              placeholder="Search workshops, demo days..."
               style={{
                 border: "none",
                 outline: "none",
@@ -216,21 +216,21 @@ export default function Events() {
                 <div className="flex items-center gap-1 bg-[#EBECEF] rounded-xl p-1 self-start sm:self-auto">
                   <button
                     onClick={prevMonth}
-                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider hover:bg-white/50 transition cursor-pointer"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] hover:bg-white/50 transition cursor-pointer"
                   >
-                    PREV
+                    Previous
                   </button>
                   <button
                     onClick={goToday}
-                    className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider bg-white shadow-xs transition cursor-pointer"
+                    className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] bg-white shadow-xs transition cursor-pointer"
                   >
-                    TODAY
+                    Today
                   </button>
                   <button
                     onClick={nextMonth}
-                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] uppercase tracking-wider hover:bg-white/50 transition cursor-pointer"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] hover:bg-white/50 transition cursor-pointer"
                   >
-                    NEXT
+                    Next
                   </button>
                 </div>
               </div>

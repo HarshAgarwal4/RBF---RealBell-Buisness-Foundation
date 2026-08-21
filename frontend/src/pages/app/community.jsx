@@ -687,7 +687,7 @@ export default function CommunityWall() {
                 Community Wall
               </p>
               <h1 className="mt-1 text-xl sm:text-2xl font-extrabold tracking-tight text-[#132034]">
-                Feed, polls, and conversations
+                Feed, Polls & Discussions
               </h1>
             </div>
 
@@ -698,7 +698,7 @@ export default function CommunityWall() {
               className="inline-flex h-10 sm:h-11 items-center justify-center gap-2 rounded-xl bg-[#0F3D4A] px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-[#0b313b] cursor-pointer self-start sm:self-auto shrink-0"
             >
               <Plus size={16} />
-              {showComposer ? "Close form" : "Create post"}
+              {showComposer ? "Close Form" : "Create Post"}
             </button>
           </div>
         </div>
@@ -709,26 +709,26 @@ export default function CommunityWall() {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8A95AB]">
-                    Feed
+                    Ecosystem Feed
                   </p>
-                  <h2 className="mt-1 text-lg sm:text-xl font-bold text-[#152033]">All community posts</h2>
+                  <h2 className="mt-1 text-lg sm:text-xl font-bold text-[#152033]">All Community Posts</h2>
                   <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#6E7B92]">
-                    Browse every update, poll, and conversation from the community in one place.
+                    Browse every update, poll, and discussion from founders, investors, and mentors across the RealBell ecosystem.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto flex-nowrap">
                   <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-                    All
+                    All Posts
                   </FilterChip>
                   <FilterChip active={filter === "mine"} onClick={() => setFilter("mine")}>
-                    Mine
+                    My Posts
                   </FilterChip>
                   <FilterChip active={filter === "polls"} onClick={() => setFilter("polls")}>
                     Polls
                   </FilterChip>
                   <FilterChip active={filter === "active"} onClick={() => setFilter("active")}>
-                    Active
+                    Trending
                   </FilterChip>
                 </div>
               </div>

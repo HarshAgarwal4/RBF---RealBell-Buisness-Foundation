@@ -195,7 +195,7 @@ export default function Milestones() {
                     {/* HEADER */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">
-                            {view === "list" ? "Milestones" : "Create a new milestone"}
+                            {view === "list" ? "Milestones" : "Create Milestone"}
                         </h1>
 
                         {view === "list" && (
@@ -226,7 +226,7 @@ export default function Milestones() {
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search a milestone..."
+                                        placeholder="Search milestones..."
                                         className="w-full rounded-xl border bg-white py-2.5 pl-10 pr-3.5 text-xs sm:text-sm outline-none focus:border-black"
                                     />
                                 </div>
