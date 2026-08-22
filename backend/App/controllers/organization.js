@@ -17,10 +17,12 @@ function normalizeCompanyType(type = "") {
         investors: "investor",
         mentor: "mentor",
         mentors: "mentor",
-        "incubator/accelerator": "incubator/accelerator",
-        incubator: "incubator/accelerator",
-        accelerator: "incubator/accelerator",
-        "incubators/accelerators": "incubator/accelerator",
+        "incubator/accelerator": "incubator",
+        incubator: "incubator",
+        incubators: "incubator",
+        accelerator: "accelerator",
+        accelerators: "accelerator",
+        "incubators/accelerators": "incubator",
     };
 
     return map[value] || value;
@@ -89,31 +91,25 @@ async function signUp(req, res) {
             hashedPassword = await hashPassword(password);
         }
 
+        // Strictly enforce default permitted role for public registrations
         const organization = new OrganizationModel({
-
             company_type,
-
             investing_as:
                 company_type === "investor"
                     ? investing_as
                     : undefined,
-
             company_name,
-
             name,
-
             email,
-
             phone,
-
             password: hashedPassword,
-
             agree,
-
+            role: "normal",
+            customRole: null,
+            team: null,
+            accountStatus: "active",
             account: {},
-
             sessions: []
-
         });
 
         const token = await setUser(organization._id);
@@ -159,9 +155,19 @@ async function login(req, res) {
 
         const configuredLoginMethod = await getEffectiveLoginMethod();
 
-        let findUser = await OrganizationModel.findOne({ email });
+        let findUser = await OrganizationModel.findOne({ email })
+            .populate("customRole", "name slug permissions status")
+            .populate("team", "name slug description department permissions status");
+
         if (!findUser) {
             return res.send({ status: 9, msg: "No registered account found with this email" });
+        }
+
+        if (findUser.accountStatus === "disabled") {
+            return res.send({
+                status: 13,
+                msg: "Your account has been deactivated. Please contact the administrator.",
+            });
         }
 
         // Handle method routing strictly as per backend setting
@@ -172,14 +178,14 @@ async function login(req, res) {
                 return res.send({ status: 2, msg: "Invalid or expired OTP code" });
             }
         } else if (configuredLoginMethod === "password") {
-            if (!password) return res.send({ status: 7, msg: "Password is required" });
+            if (!password || !String(password).trim()) return res.send({ status: 7, msg: "Password is required" });
             if (!findUser.password) {
                 return res.send({
                     status: 12,
                     msg: "Password not yet set for this account. Please contact admin."
                 });
             }
-            const passwordMatched = await verifyPassword(password, findUser.password);
+            const passwordMatched = await verifyPassword(String(password).trim(), findUser.password);
             if (!passwordMatched) {
                 return res.send({ status: 2, msg: "Incorrect password" });
             }
@@ -207,6 +213,12 @@ async function login(req, res) {
         });
 
         await findUser.save();
+
+        const permissions =
+            findUser.role === "super_admin"
+                ? ["*"]
+                : findUser.team?.permissions || findUser.customRole?.permissions || [];
+
         return res.send({
             status: 1,
             msg: "Login successful",
@@ -216,6 +228,11 @@ async function login(req, res) {
                 email: findUser.email,
                 role: findUser.role,
                 company_type: findUser.company_type,
+                team: findUser.team,
+                customRole: findUser.customRole,
+                accountStatus: findUser.accountStatus,
+                mustChangePassword: findUser.mustChangePassword,
+                permissions,
             },
         });
     } catch (err) {
@@ -278,7 +295,7 @@ async function sendOTPToEmail(req, res) {
 
         // If backend setting is 'both', verify password before sending OTP
         if (configuredLoginMethod === "both") {
-            if (!password) {
+            if (!password || !String(password).trim()) {
                 return res.send({ status: 7, msg: "Password is required" });
             }
             if (!findUser.password) {
@@ -287,7 +304,7 @@ async function sendOTPToEmail(req, res) {
                     msg: "Password not set for this account. Please contact administrator.",
                 });
             }
-            const passwordMatched = await verifyPassword(password, findUser.password);
+            const passwordMatched = await verifyPassword(String(password).trim(), findUser.password);
             if (!passwordMatched) {
                 return res.send({ status: 2, msg: "Incorrect password" });
             }
@@ -360,11 +377,29 @@ async function resetPasswordWithOTP(req, res) {
 
 async function fetchUser(req, res) {
     try {
-        if (req.user) return res.send({ status: 1, user: req.user })
-    }
-    catch (err) {
-        console.log(err)
-        return res.send({ status: 0, msg: "No user found" })
+        if (!req.user) {
+            return res.send({ status: 0, msg: "No active user session" });
+        }
+
+        if (req.user.accountStatus === "disabled") {
+            res.clearCookie("UID");
+            return res.status(403).send({ status: 0, msg: "Account has been deactivated" });
+        }
+
+        const permissions =
+            req.user.role === "super_admin"
+                ? ["*"]
+                : req.user.team?.permissions || req.user.customRole?.permissions || [];
+
+        const userObj = req.user.toObject ? req.user.toObject() : { ...req.user };
+        delete userObj.password;
+        delete userObj.sessions;
+        userObj.permissions = permissions;
+
+        return res.send({ status: 1, user: userObj });
+    } catch (err) {
+        console.log(err);
+        return res.send({ status: 0, msg: "Error fetching user" });
     }
 }
 
@@ -993,6 +1028,53 @@ async function respondConnectionRequest(req, res) {
     }
 }
 
+/**
+ * Switch active organization type profile (e.g. startup, investor, mentor, incubator, accelerator)
+ */
+async function switchOrganizationType(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ status: 0, msg: "Unauthorized: Please log in" });
+        }
+
+        const isAllowed = req.user.role === "super_admin" || req.user.role === "admin" || Boolean(req.user.team);
+        if (!isAllowed) {
+            return res.status(403).json({
+                status: 0,
+                msg: "Access Forbidden: Only admin and super admin can switch organization types",
+            });
+        }
+
+        const { company_type } = req.body;
+        if (!company_type || typeof company_type !== "string") {
+            return res.status(400).json({ status: 7, msg: "Please specify a valid organization type" });
+        }
+
+        const normalizedType = company_type.trim().toLowerCase();
+        req.user.company_type = normalizedType;
+        await req.user.save();
+
+        const permissions =
+            req.user.role === "super_admin"
+                ? ["*"]
+                : req.user.team?.permissions || req.user.customRole?.permissions || [];
+
+        const userObj = req.user.toObject ? req.user.toObject() : { ...req.user };
+        delete userObj.password;
+        delete userObj.sessions;
+        userObj.permissions = permissions;
+
+        return res.json({
+            status: 1,
+            msg: `Switched profile to ${normalizedType}`,
+            user: userObj,
+        });
+    } catch (err) {
+        console.error("switchOrganizationType error:", err);
+        return res.status(500).json({ status: 0, msg: "Failed to switch organization type" });
+    }
+}
+
 export {
     signUp,
     login,
@@ -1004,6 +1086,7 @@ export {
     logout,
     updateAccount,
     updateProfile,
+    switchOrganizationType,
     fetchOrganizationsByType,
     fetchOrganizationById,
     fetchMyConnections,

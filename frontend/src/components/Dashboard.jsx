@@ -102,7 +102,22 @@ function calculateProfileCompletion(user) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useStore();
+  const { user, roles, switchOrganizationType } = useStore();
+  const canSwitchRole = user?.role === "admin" || user?.role === "super_admin" || Boolean(user?.team);
+
+  // Available organization types from fetched roles
+  const orgTypeOptions = Array.isArray(roles) && roles.length > 0
+    ? roles.map((r) => ({
+        key: (r.key || r.label).toLowerCase(),
+        label: r.label || r.key,
+      }))
+    : [
+        { key: "startup", label: "Startup" },
+        { key: "investor", label: "Investor" },
+        { key: "mentor", label: "Mentor" },
+        { key: "incubator", label: "Incubator" },
+        { key: "accelerator", label: "Accelerator" },
+      ];
 
   const [tab, setTab] = useState("Investor");
   const [resourceTab, setResourceTab] = useState("News");
@@ -292,7 +307,56 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 self-stretch sm:self-auto justify-between sm:justify-end">
+        <div className="flex flex-wrap items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-end">
+          {/* Organization Type Switcher (Only visible to Admin, Super Admin, and Team Members) */}
+          {canSwitchRole && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "#fff",
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 10,
+                padding: "5px 10px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              }}
+            >
+              <div style={{ lineHeight: 1.1 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.muted, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                  Ecosystem Role
+                </div>
+                <span style={{ fontSize: 10, color: COLORS.primary, fontWeight: 700, textTransform: "capitalize" }}>
+                  {user?.team?.name ? `${user.team.name} Team` : (user?.role === "super_admin" ? "Super Admin" : "Admin")}
+                </span>
+              </div>
+
+              <select
+                value={user?.company_type || "startup"}
+                onChange={(e) => switchOrganizationType(e.target.value)}
+                style={{
+                  padding: "5px 10px",
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.border}`,
+                  background: COLORS.hoverBg,
+                  color: COLORS.ink,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  outline: "none",
+                  textTransform: "capitalize",
+                }}
+                title="Switch your active ecosystem view (Startups, Investors, Mentors, Incubators, Accelerators)"
+              >
+                {orgTypeOptions.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <ProgressRing percent={completionPercent} />
           <button
             onClick={() => navigate("/profile/edit")}

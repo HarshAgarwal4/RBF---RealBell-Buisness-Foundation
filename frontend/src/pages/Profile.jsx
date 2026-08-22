@@ -7,7 +7,7 @@ import IncubatorProfile from './Profile/Incubator/profile'
 import InvestorProfile from './Profile/Investor/profile'
 import DynamicProfileView from './Profile/DynamicProfileView'
 
-const BUILTIN_ROLES = ['startup', 'mentor', 'incubator/accelerator', 'investor'];
+const BUILTIN_ROLES = ['startup', 'mentor', 'incubator', 'accelerator', 'incubator/accelerator', 'investor'];
 
 const ProfilePage = () => {
     const { user } = useStore()
@@ -32,7 +32,7 @@ const ProfilePage = () => {
             <Sidebar />
             {role === 'startup' && <StartupProfile />}
             {role === 'mentor' && <MentorProfile />}
-            {role === 'incubator/accelerator' && <IncubatorProfile />}
+            {(role === 'incubator' || role === 'accelerator' || role === 'incubator/accelerator') && <IncubatorProfile />}
             {role === 'investor' && <InvestorProfile />}
 
             {/* Dynamic Custom Role Profile View */}

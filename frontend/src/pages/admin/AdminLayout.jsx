@@ -2,23 +2,28 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../zustand/store';
 import { useAdminTheme, AdminThemeProvider } from './AdminThemeContext';
+import { hasPermission, isSuperAdmin, getRoleBadgeInfo } from '../../utils/rbac';
 import './adminTheme.css';
 
 const navItems = [
-    { to: '/admin', label: 'Admin Dashboard', icon: '📊', end: true },
-    { to: '/admin/users', label: 'Ecosystem Users', icon: '👥' },
-    { to: '/admin/auth-settings', label: 'Authentication Methods', icon: '🔐' },
-    { to: '/admin/roles', label: 'Roles & Permissions', icon: '⚙️' },
-    { to: '/admin/jobs', label: 'Job Opportunities', icon: '💼' },
-    { to: '/admin/tickets', label: 'Support Tickets', icon: '🎫' },
-    { to: '/admin/community', label: 'Community Wall', icon: '🌐' },
-    { to: '/admin/analytics', label: 'Platform Analytics', icon: '📈' },
-    { to: '/admin/resources', label: 'Resource Library', icon: '📚' },
-    { to: '/admin/programs', label: 'Incubation Programs', icon: '🏆' },
-    { to: '/admin/events', label: 'Events & Workshops', icon: '📅' },
-    { to: '/admin/legal-compliance', label: 'Legal Compliance', icon: '⚖️' },
-    { to: '/admin/subscriptions', label: 'Subscription Plans', icon: '💳' },
-    { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨' },
+    { to: '/admin', label: 'Admin Dashboard', icon: '📊', end: true, permission: 'dashboard.view' },
+    { to: '/admin/teams', label: 'Teams & Access', icon: '🏢', permission: 'teams.view' },
+    { to: '/admin/users', label: 'Ecosystem Users', icon: '👥', permission: 'users.view' },
+    { to: '/admin/auth-settings', label: 'Auth Methods', icon: '🔐', permission: 'auth_settings.view' },
+    { to: '/admin/roles', label: 'Ecosystem Profiles', icon: '⚙️', permission: 'teams.view' },
+    { to: '/admin/jobs', label: 'Job Opportunities', icon: '💼', permission: 'jobs.view' },
+    { to: '/admin/tickets', label: 'Support Tickets', icon: '🎫', permission: 'tickets.view' },
+    { to: '/admin/notifications', label: 'Notifications Hub', icon: '🔔', permission: 'notifications.view' },
+    { to: '/admin/mail', label: 'Mail Dispatcher', icon: '📧', permission: 'mail.view' },
+    { to: '/admin/community', label: 'Community Wall', icon: '🌐', permission: 'community.view' },
+    { to: '/admin/analytics', label: 'Platform Analytics', icon: '📈', permission: 'analytics.view' },
+    { to: '/admin/resources', label: 'Resource Library', icon: '📚', permission: 'resources.view' },
+    { to: '/admin/programs', label: 'Incubation Programs', icon: '🏆', permission: 'programs.view' },
+    { to: '/admin/events', label: 'Events & Workshops', icon: '📅', permission: 'events.view' },
+    { to: '/admin/legal-compliance', label: 'Legal Compliance', icon: '⚖️', permission: 'legal_compliance.view' },
+    { to: '/admin/subscriptions', label: 'Subscription Plans', icon: '💳', permission: 'subscriptions.view' },
+    { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨', permission: 'theme.manage' },
+    { to: '/admin/audit-logs', label: 'Security & Audit', icon: '📜', permission: 'audit_logs.view' },
 ];
 
 const styles = {
@@ -182,7 +187,7 @@ const styles = {
         fontSize: '0.8rem',
         fontWeight: '600',
         color: 'var(--admin-text-primary, #f1f5f9)',
-        maxWidth: '140px',
+        maxWidth: '220px',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -215,8 +220,7 @@ const styles = {
         borderRadius: '99px',
         fontSize: '0.6rem',
         fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: '0.03em',
+        letterSpacing: '0.02em',
     },
     hamburgerBtn: {
         background: 'transparent',
@@ -230,11 +234,6 @@ const styles = {
         justifyContent: 'center',
     }
 };
-
-function getRoleBadgeStyle(role) {
-    if (role === 'super_admin') return { background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' };
-    return { background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' };
-}
 
 function AdminLayoutContent({ children, title = 'Admin Panel' }) {
     const user = useStore((s) => s.user);
@@ -252,6 +251,13 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
     }, [location.pathname]);
 
     const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD';
+    const roleBadge = getRoleBadgeInfo(user);
+
+    // Dynamically filter navigation items based on user's authorized permissions
+    // Support Tickets / Ticket Center is accessible to all admin/team members for their common team & personal tickets
+    const visibleNavItems = isSuperAdmin(user)
+        ? navItems
+        : navItems.filter((item) => item.to === '/admin/tickets' || hasPermission(user, item.permission));
 
     const handleLogout = async () => {
         await logout();
@@ -287,10 +293,10 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                     </button>
                 </div>
 
-                {/* Navigation */}
+                {/* Dynamic Navigation */}
                 <nav style={styles.nav}>
-                    <div style={styles.navLabel}>Navigation</div>
-                    {navItems.map((item) => (
+                    <div style={styles.navLabel}>Permitted Modules ({visibleNavItems.length})</div>
+                    {visibleNavItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
@@ -302,7 +308,7 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                             })}
                             onMouseEnter={() => setHoveredItem(item.to)}
                             onMouseLeave={() => setHoveredItem(null)}
-                            id={`admin-nav-${item.label.toLowerCase()}`}
+                            id={`admin-nav-${item.label.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                         >
                             <span style={styles.navIcon}>{item.icon}</span>
                             {item.label}
@@ -337,12 +343,19 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                             <div style={styles.userName}>{user?.name || 'Admin'}</div>
                             <div style={{
                                 ...styles.roleBadge,
-                                ...getRoleBadgeStyle(user?.role),
+                                background: roleBadge.bg,
+                                color: roleBadge.color,
+                                border: `1px solid ${roleBadge.border}`,
                                 marginTop: '2px',
-                                padding: '1px 5px',
-                                fontSize: '0.55rem',
-                            }}>
-                                {user?.role === 'super_admin' ? '⭐ Super Admin' : '🛡 Admin'}
+                                padding: '1px 6px',
+                                fontSize: '0.56rem',
+                                maxWidth: '160px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-block',
+                            }} title={`${roleBadge.label}${roleBadge.team ? ` • ${roleBadge.team}` : ''}`}>
+                                {roleBadge.icon} {roleBadge.label} {roleBadge.team ? `• ${roleBadge.team}` : ''}
                             </div>
                         </div>
                     </div>
@@ -368,7 +381,7 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                     </div>
 
                     <div style={styles.topbarRight}>
-                        {/* Theme Toggle Button (Icon only) */}
+                        {/* Theme Toggle Button */}
                         <button
                             onClick={toggleTheme}
                             style={{
@@ -387,9 +400,11 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
 
                         <div style={{
                             ...styles.roleBadge,
-                            ...getRoleBadgeStyle(user?.role),
+                            background: roleBadge.bg,
+                            color: roleBadge.color,
+                            border: `1px solid ${roleBadge.border}`,
                         }}>
-                            {user?.role === 'super_admin' ? '⭐ Super Admin' : '🛡 Admin'}
+                            {roleBadge.icon} {roleBadge.label}
                         </div>
                         
                         <button

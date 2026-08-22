@@ -1,29 +1,19 @@
-import OrganizationModel from "../App/models/organization.js";
+import { authorize, isSuperAdmin, isAdminOrCustomRole, userHasPermission } from "./rbac.js";
 
 /**
- * Middleware: Allow only admin or super_admin roles
+ * Middleware: Allow admin, super_admin, or custom-role users
  */
 async function isAdmin(req, res, next) {
     if (!req.user) {
         return res.status(401).json({ status: 0, msg: "Unauthorized: Not logged in" });
     }
-    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
-        return res.status(403).json({ status: 0, msg: "Forbidden: Admin access required" });
+    if (req.user.accountStatus === "disabled") {
+        return res.status(403).json({ status: 0, msg: "Forbidden: Account has been disabled" });
     }
-    next();
+    if (req.user.role === "admin" || req.user.role === "super_admin" || req.user.customRole || Boolean(req.user.team)) {
+        return next();
+    }
+    return res.status(403).json({ status: 0, msg: "Forbidden: Admin access required" });
 }
 
-/**
- * Middleware: Allow only super_admin role
- */
-async function isSuperAdmin(req, res, next) {
-    if (!req.user) {
-        return res.status(401).json({ status: 0, msg: "Unauthorized: Not logged in" });
-    }
-    if (req.user.role !== "super_admin") {
-        return res.status(403).json({ status: 0, msg: "Forbidden: Super admin access required" });
-    }
-    next();
-}
-
-export { isAdmin, isSuperAdmin };
+export { isAdmin, isSuperAdmin, authorize, isAdminOrCustomRole, userHasPermission };

@@ -1,5 +1,5 @@
 import express from "express";
-import { isAdmin } from "../../middlewares/admin.js";
+import { isAdmin, authorize } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getAllEventsPublic,
@@ -30,12 +30,13 @@ eventsRouter.post("/register/:id", registerForEvent);
 eventsRouter.get("/my-registrations", getMyEventRegistrations);
 
 /* ── Admin Routes (Admin & Super Admin) ── */
-eventsRouter.get("/admin", isAdmin, getAllEventsAdmin);
-eventsRouter.post("/admin/ai-generate", isAdmin, generateEventAIContent);
-eventsRouter.get("/admin/:id", isAdmin, getEventByIdAdmin);
+eventsRouter.get("/admin", isAdmin, authorize("events.view"), getAllEventsAdmin);
+eventsRouter.post("/admin/ai-generate", isAdmin, authorize("events.create"), generateEventAIContent);
+eventsRouter.get("/admin/:id", isAdmin, authorize("events.view"), getEventByIdAdmin);
 eventsRouter.post(
   "/admin",
   isAdmin,
+  authorize("events.create"),
   eventUpload.fields([
     { name: "banner_image", maxCount: 1 },
     { name: "logo", maxCount: 1 },
@@ -45,13 +46,14 @@ eventsRouter.post(
 eventsRouter.put(
   "/admin/:id",
   isAdmin,
+  authorize("events.update"),
   eventUpload.fields([
     { name: "banner_image", maxCount: 1 },
     { name: "logo", maxCount: 1 },
   ]),
   updateEvent
 );
-eventsRouter.delete("/admin/:id", isAdmin, deleteEvent);
-eventsRouter.get("/admin/:id/attendees", isAdmin, getEventAttendees);
+eventsRouter.delete("/admin/:id", isAdmin, authorize("events.delete"), deleteEvent);
+eventsRouter.get("/admin/:id/attendees", isAdmin, authorize("events.attendees_view"), getEventAttendees);
 
 export default eventsRouter;

@@ -51,10 +51,10 @@ export default function IncubatorProfile() {
           />
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold text-[#172033] truncate">
-              {profile?.organizationName || profile?.companyName || user?.company_name || "Incubator / Accelerator"}
+              {profile?.organizationName || profile?.companyName || user?.company_name || (user?.company_type === 'accelerator' ? "Accelerator" : "Incubator")}
             </h1>
             <p className="text-sm font-semibold text-[#8E1B2E] mt-1">
-              {profile?.organizationType || "Incubator"} {profile?.establishedIn ? `• Estd. ${profile.establishedIn}` : ""}
+              {profile?.organizationType || (user?.company_type === 'accelerator' ? "Accelerator" : "Incubator")} {profile?.establishedIn ? `• Estd. ${profile.establishedIn}` : ""}
             </p>
             {location && <p className="text-xs text-gray-500 mt-1">📍 {location}</p>}
           </div>

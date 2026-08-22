@@ -10,6 +10,7 @@ import {
   signUp,
   updateAccount,
   updateProfile,
+  switchOrganizationType,
 } from '../controllers/organization.js';
 import { getPublicAuthSettings } from '../controllers/authSettingController.js';
 import { uploadFile } from '../../services/upload.js';
@@ -26,5 +27,6 @@ organizationRoutes.post('/me', fetchUser);
 organizationRoutes.post('/logout', logout);
 organizationRoutes.post('/update-account', uploadFile.single('image'), updateAccount);
 organizationRoutes.post('/update-profile', uploadFile.any(), updateProfile);
+organizationRoutes.post('/switch-organization-type', switchOrganizationType);
 
 export { organizationRoutes };

@@ -1,5 +1,5 @@
 import express from "express";
-import { isAdmin, isSuperAdmin } from "../../middlewares/admin.js";
+import { isAdmin, isSuperAdmin, authorize } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getAllServicesAdmin,
@@ -64,22 +64,23 @@ legalComplianceRouter.post("/applications/payment/order", createApplicationPayme
 legalComplianceRouter.post("/applications/payment/verify", verifyApplicationPayment);
 
 /* ─────────────────────────────────────────────────────────────
-   SUPER ADMIN ROUTES
+   ADMIN & SUPER ADMIN ROUTES WITH RBAC
 ───────────────────────────────────────────────────────────── */
 // Services Management
-legalComplianceRouter.get("/admin/services", isAdmin, getAllServicesAdmin);
-legalComplianceRouter.get("/admin/services/:id", isAdmin, getServiceByIdAdmin);
-legalComplianceRouter.post("/admin/services", isAdmin, createService);
-legalComplianceRouter.put("/admin/services/:id", isAdmin, updateService);
+legalComplianceRouter.get("/admin/services", isAdmin, authorize("legal_compliance.view"), getAllServicesAdmin);
+legalComplianceRouter.get("/admin/services/:id", isAdmin, authorize("legal_compliance.view"), getServiceByIdAdmin);
+legalComplianceRouter.post("/admin/services", isAdmin, authorize("legal_compliance.manage"), createService);
+legalComplianceRouter.put("/admin/services/:id", isAdmin, authorize("legal_compliance.manage"), updateService);
 legalComplianceRouter.delete("/admin/services/:id", isSuperAdmin, deleteService);
 
 // Applications Management
-legalComplianceRouter.get("/admin/applications", isAdmin, getAllApplicationsAdmin);
-legalComplianceRouter.get("/admin/applications/:id", isAdmin, getApplicationByIdAdmin);
-legalComplianceRouter.put("/admin/applications/:id/status", isAdmin, updateApplicationStatus);
+legalComplianceRouter.get("/admin/applications", isAdmin, authorize("legal_compliance.view"), getAllApplicationsAdmin);
+legalComplianceRouter.get("/admin/applications/:id", isAdmin, authorize("legal_compliance.view"), getApplicationByIdAdmin);
+legalComplianceRouter.put("/admin/applications/:id/status", isAdmin, authorize("legal_compliance.manage"), updateApplicationStatus);
 legalComplianceRouter.post(
   "/admin/applications/:id/final-documents",
   isAdmin,
+  authorize("legal_compliance.manage"),
   complianceUpload.any(),
   uploadFinalDocuments
 );

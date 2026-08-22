@@ -232,6 +232,37 @@ const OrganizationSchema = new mongoose.Schema(
       default: "normal",
     },
 
+    // RBAC: Custom Role and Team associations
+    customRole: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CustomRole",
+      default: null,
+    },
+
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
+    },
+
+    accountStatus: {
+      type: String,
+      enum: ["active", "invited", "disabled", "pending"],
+      default: "active",
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+
+    invitation: {
+      token: { type: String, default: null },
+      invitedAt: { type: Date, default: null },
+      expiresAt: { type: Date, default: null },
+      invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", default: null },
+    },
+
     // Embedded Account Schema
     account: {
       type: AccountSchema,

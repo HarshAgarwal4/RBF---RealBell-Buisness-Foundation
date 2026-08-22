@@ -7,7 +7,7 @@ import IncubatorEditProfile from './Profile/Incubator/Edit'
 import InvestorEditProfile from './Profile/Investor/Edit'
 import DynamicEditProfile from './Profile/DynamicEditProfile'
 
-const BUILTIN_ROLES = ['startup', 'mentor', 'incubator/accelerator', 'investor'];
+const BUILTIN_ROLES = ['startup', 'mentor', 'incubator', 'accelerator', 'incubator/accelerator', 'investor'];
 
 const EditProfilePage = () => {
     const { user } = useStore()
@@ -32,7 +32,7 @@ const EditProfilePage = () => {
             <Sidebar />
             {role === 'startup' && <StartupEditProfile profile={profile} />}
             {role === 'mentor' && <MentorEditProfile profile={profile} />}
-            {role === 'incubator/accelerator' && <IncubatorEditProfile profile={profile} />}
+            {(role === 'incubator' || role === 'accelerator' || role === 'incubator/accelerator') && <IncubatorEditProfile profile={profile} />}
             {role === 'investor' && <InvestorEditProfile profile={profile} />}
 
             {/* Dynamic Custom Role Profile Form */}

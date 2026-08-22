@@ -26,6 +26,61 @@ const TicketAttachmentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const TicketAssignmentHistorySchema = new mongoose.Schema(
+  {
+    assigned_to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+    },
+    assigned_team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
+    },
+    assigned_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+    },
+    action: {
+      type: String,
+      enum: ["assigned", "forwarded", "reassigned", "unassigned", "status_changed"],
+      default: "assigned",
+    },
+    note: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
+const TicketInternalNoteSchema = new mongoose.Schema(
+  {
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
 const TicketSchema = new mongoose.Schema(
   {
     ticket_number: {
@@ -63,11 +118,42 @@ const TicketSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Urgent"],
+      default: "Medium",
+      index: true,
+    },
     status: {
       type: String,
       enum: ["Open", "In Progress", "Resolved", "Closed"],
       default: "Open",
       index: true,
+    },
+    assigned_team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
+      index: true,
+    },
+    assigned_to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
+    },
+    assigned_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+    },
+    assignment_history: {
+      type: [TicketAssignmentHistorySchema],
+      default: [],
+    },
+    internal_notes: {
+      type: [TicketInternalNoteSchema],
+      default: [],
     },
     attachments: {
       type: [TicketAttachmentSchema],

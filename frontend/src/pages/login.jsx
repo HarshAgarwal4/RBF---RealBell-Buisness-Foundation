@@ -202,7 +202,7 @@ export default function LoginPage() {
 
     // If method is password only, log in directly
     if (loginMethod === "password") {
-      if (!password) {
+      if (!password || !password.trim()) {
         setError("Password is required");
         return;
       }
@@ -211,7 +211,7 @@ export default function LoginPage() {
       try {
         const res = await axios.post("/login", {
           email: email.trim(),
-          password,
+          password: password.trim(),
         });
 
         const { status, msg } = res.data;
@@ -249,7 +249,7 @@ export default function LoginPage() {
 
     // If method is 'both', verify password & dispatch OTP
     if (loginMethod === "both") {
-      if (!password) {
+      if (!password || !password.trim()) {
         setError("Password is required");
         return;
       }
@@ -258,7 +258,7 @@ export default function LoginPage() {
       try {
         const res = await axios.post("/sendotp", {
           email: email.trim(),
-          password,
+          password: password.trim(),
         });
 
         const { status, msg } = res.data;

@@ -71,6 +71,8 @@ const typeColors = {
     startup: { color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
     investor: { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)' },
     mentor: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    incubator: { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
+    accelerator: { color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
     'incubator/accelerator': { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
 };
 
@@ -245,6 +247,7 @@ export default function AdminDashboard() {
                             <MiniBar label="Investors" value={s?.users?.investors || 0} max={s?.users?.total || 1} color="#60a5fa" />
                             <MiniBar label="Mentors" value={s?.users?.mentors || 0} max={s?.users?.total || 1} color="#f59e0b" />
                             <MiniBar label="Incubators" value={s?.users?.incubators || 0} max={s?.users?.total || 1} color="#a78bfa" />
+                            <MiniBar label="Accelerators" value={s?.users?.accelerators || 0} max={s?.users?.total || 1} color="#ec4899" />
                         </div>
 
                         {/* Ticket Breakdown */}

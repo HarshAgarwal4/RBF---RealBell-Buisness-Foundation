@@ -56,7 +56,7 @@ const normalizeTicket = (ticket) => {
 
 export const createTicket = async (req, res) => {
   try {
-    const { issue_type, title, description, source } = req.body;
+    const { issue_type, title, description, source, priority } = req.body;
 
     if (!issue_type || !title || !description) {
       return res.status(400).json({
@@ -72,6 +72,7 @@ export const createTicket = async (req, res) => {
       issue_type,
       title,
       description,
+      priority: priority && ["Low", "Medium", "High", "Urgent"].includes(priority) ? priority : "Medium",
       status: "Open",
       attachments,
       source: source || "web",

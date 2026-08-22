@@ -74,9 +74,9 @@ const DEFAULT_ROLES = [
     }
   },
   {
-    key: "incubator/accelerator",
-    label: "Incubator / Accelerator",
-    description: "Organizations providing cohort programs, workspace, and resources.",
+    key: "incubator",
+    label: "Incubator",
+    description: "Organizations providing early-stage cohort programs, workspace, and resources.",
     icon: "Building2",
     isBuiltIn: true,
     hasSubtypes: false,
@@ -93,25 +93,51 @@ const DEFAULT_ROLES = [
         }
       ]
     }
+  },
+  {
+    key: "accelerator",
+    label: "Accelerator",
+    description: "Organizations running fixed-term, cohort-based growth and investment acceleration programs.",
+    icon: "Building2",
+    isBuiltIn: true,
+    hasSubtypes: false,
+    profileSchema: {
+      steps: [
+        {
+          stepId: "program",
+          title: "Program Info",
+          description: "Acceleration program details",
+          fields: [
+            { key: "cohort_size", label: "Annual Cohort Size", type: "number", required: false, placeholder: "10" },
+            { key: "location", label: "HQ Location", type: "text", required: false, placeholder: "City, Country" }
+          ]
+        }
+      ]
+    }
   }
 ];
 
 export async function seedDefaultRoles() {
   try {
-    const count = await RoleModel.countDocuments();
-    if (count === 0) {
-      console.log("🌱 Seeding default roles...");
-      await RoleModel.insertMany(DEFAULT_ROLES);
-      console.log("✅ Default roles seeded successfully.");
-    } else {
-      // Ensure default roles exist if missing
-      for (const defRole of DEFAULT_ROLES) {
-        const existing = await RoleModel.findOne({ key: defRole.key });
-        if (!existing) {
-          await RoleModel.create(defRole);
-        }
+    // Migration: Clean up legacy combined role if present
+    const legacyRole = await RoleModel.findOne({ key: "incubator/accelerator" });
+    if (legacyRole) {
+      await RoleModel.deleteOne({ key: "incubator/accelerator" });
+    }
+
+    // Ensure all default roles exist and have up-to-date labels/isBuiltIn flags
+    for (const defRole of DEFAULT_ROLES) {
+      const existing = await RoleModel.findOne({ key: defRole.key });
+      if (!existing) {
+        await RoleModel.create(defRole);
+      } else {
+        await RoleModel.updateOne(
+          { key: defRole.key },
+          { $set: { isBuiltIn: true, label: defRole.label, description: defRole.description } }
+        );
       }
     }
+    console.log("✅ Built-in roles verified and seeded.");
   } catch (err) {
     console.error("Error seeding default roles:", err);
   }
@@ -219,7 +245,7 @@ export async function deleteRole(req, res) {
     }
 
     if (role.isBuiltIn) {
-      return res.status(400).json({ status: 7, msg: "Built-in roles (Startup, Investor, Mentor, Incubator) cannot be deleted" });
+      return res.status(400).json({ status: 7, msg: "Built-in roles (Startup, Investor, Mentor, Incubator, Accelerator) cannot be deleted" });
     }
 
     // Check existing users in this role

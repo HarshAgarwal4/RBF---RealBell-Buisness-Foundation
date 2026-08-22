@@ -1065,8 +1065,18 @@ function ChatWorkspace({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => initiateCall(activePeerProfile || chatConnection)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#179B4B] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#13823E]"
+                onClick={() => initiateCall(activePeerProfile || chatConnection, "audio")}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#0284c7] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#0369a1] shadow-xs cursor-pointer"
+                title="Voice Call"
+              >
+                <Phone size={15} />
+                <span className="hidden sm:inline">Voice Call</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => initiateCall(activePeerProfile || chatConnection, "video")}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#179B4B] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#13823E] shadow-xs cursor-pointer"
                 title="Video Call"
               >
                 <Video size={15} />

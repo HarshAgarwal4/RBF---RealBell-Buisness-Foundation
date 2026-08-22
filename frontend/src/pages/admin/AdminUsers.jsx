@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from './AdminLayout.jsx';
 import axios from '../../services/axios.jsx';
 import { useStore } from '../../zustand/store.jsx';
+import { isSuperAdmin, hasPermission } from '../../utils/rbac.js';
 
 const typeColors = {
     startup: { color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
     investor: { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)' },
     mentor: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    incubator: { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
+    accelerator: { color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
     'incubator/accelerator': { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
 };
 
@@ -102,6 +105,9 @@ function RoleModal({ open, onClose, onSave, user, currentUserRole }) {
 
 export default function AdminUsers() {
     const currentUser = useStore(s => s.user);
+    const canAssignRole = isSuperAdmin(currentUser) || hasPermission(currentUser, 'users.assign_role');
+    const canDeleteUser = isSuperAdmin(currentUser) || hasPermission(currentUser, 'users.delete');
+
     const [users, setUsers] = useState([]);
     const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
     const [loading, setLoading] = useState(true);
@@ -188,7 +194,8 @@ export default function AdminUsers() {
                     <option value="startup">Startup</option>
                     <option value="investor">Investor</option>
                     <option value="mentor">Mentor</option>
-                    <option value="incubator/accelerator">Incubator / Accelerator</option>
+                    <option value="incubator">Incubator</option>
+                    <option value="accelerator">Accelerator</option>
                 </select>
                 <select id="admin-users-filter-role" className="admin-select-input" value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }}>
                     <option value="">All Roles</option>
@@ -242,16 +249,18 @@ export default function AdminUsers() {
                                         <td style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted, #94a3b8)' }}>{new Date(user.createdAt).toLocaleDateString('en-IN')}</td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                                <button
-                                                    id={`admin-user-role-${user._id}`}
-                                                    disabled={isSelf}
-                                                    onClick={() => setRoleModal({ open: true, user })}
-                                                    className="admin-btn admin-btn-secondary"
-                                                    style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', opacity: isSelf ? 0.4 : 1, cursor: isSelf ? 'not-allowed' : 'pointer' }}
-                                                >
-                                                    Assign Role
-                                                </button>
-                                                {currentUser?.role === 'super_admin' && (
+                                                {canAssignRole && (
+                                                    <button
+                                                        id={`admin-user-role-${user._id}`}
+                                                        disabled={isSelf}
+                                                        onClick={() => setRoleModal({ open: true, user })}
+                                                        className="admin-btn admin-btn-secondary"
+                                                        style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', opacity: isSelf ? 0.4 : 1, cursor: isSelf ? 'not-allowed' : 'pointer' }}
+                                                    >
+                                                        Assign Role
+                                                    </button>
+                                                )}
+                                                {canDeleteUser && (
                                                     <button
                                                         id={`admin-user-delete-${user._id}`}
                                                         disabled={isSelf}
@@ -261,6 +270,9 @@ export default function AdminUsers() {
                                                     >
                                                         Delete
                                                     </button>
+                                                )}
+                                                {!canAssignRole && !canDeleteUser && (
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-subtle, #475569)' }}>—</span>
                                                 )}
                                             </div>
                                         </td>

@@ -55,8 +55,14 @@ async function isLoggedIn(req, res, next) {
     try {
       const decoded = getUser(token);
       if (decoded && decoded.id) {
-        const findUser = await userModel.findById(decoded.id);
+        const findUser = await userModel.findById(decoded.id)
+          .populate("customRole", "name slug permissions status")
+          .populate("team", "name slug description department permissions status");
         if (findUser) {
+          if (findUser.accountStatus === "disabled") {
+            res.clearCookie("UID");
+            return res.status(403).json({ status: 54, msg: "Access Forbidden: Account is disabled" });
+          }
           const hasSession =
             findUser.sessions &&
             (findUser.sessions.some((s) => s.token === token) ||

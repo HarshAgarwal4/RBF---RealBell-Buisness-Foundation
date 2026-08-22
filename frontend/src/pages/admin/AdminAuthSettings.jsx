@@ -3,6 +3,7 @@ import AdminLayout from "./AdminLayout";
 import axios from "../../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../../zustand/store";
+import { isSuperAdmin, hasPermission } from "../../utils/rbac";
 import "./adminTheme.css";
 import {
   ShieldCheck,
@@ -65,6 +66,9 @@ const AUTH_METHODS = [
 ];
 
 export default function AdminAuthSettings() {
+  const currentUser = useStore((state) => state.user);
+  const canUpdateAuth = isSuperAdmin(currentUser) || hasPermission(currentUser, 'auth_settings.update');
+
   const [selectedMethod, setSelectedMethod] = useState("both");
   const [activeMethod, setActiveMethod] = useState("both");
   const [description, setDescription] = useState("");
@@ -177,18 +181,20 @@ export default function AdminAuthSettings() {
               <span>Refresh</span>
             </button>
 
-            <button
-              onClick={handleSave}
-              disabled={saving || loading || selectedMethod === activeMethod}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                background: "linear-gradient(135deg, #d97706, #b45309)",
-                boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)",
-              }}
-            >
-              <Save size={14} />
-              <span>{saving ? "Saving Changes..." : "Apply Method"}</span>
-            </button>
+            {canUpdateAuth && (
+              <button
+                onClick={handleSave}
+                disabled={saving || loading || selectedMethod === activeMethod}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{
+                  background: "linear-gradient(135deg, #d97706, #b45309)",
+                  boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)",
+                }}
+              >
+                <Save size={14} />
+                <span>{saving ? "Saving Changes..." : "Apply Method"}</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -523,9 +523,16 @@ export default function Sidebar() {
           </div>
           <div onClick={() => navigate("/profile")} style={{ flex: 1, cursor: "pointer", minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 13.5, color: COLORS.ink }} className="truncate">{user?.name}</div>
-            <span style={{ fontSize: 11.5, color: COLORS.muted, fontWeight: 500 }}>
-              My Profile
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+              <span style={{ fontSize: 10.5, color: COLORS.muted, fontWeight: 600, textTransform: "capitalize" }}>
+                {user?.company_type || "Member"}
+              </span>
+              {user?.team?.name && (
+                <span style={{ fontSize: 9.5, background: "rgba(56,189,248,0.15)", color: "#0284c7", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>
+                  🏢 {user.team.name}
+                </span>
+              )}
+            </div>
           </div>
           <div
             title="Total Active Connections"
@@ -567,7 +574,7 @@ export default function Sidebar() {
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {(user?.role === "admin" || user?.role === "super_admin") && (
+        {(user?.role === "admin" || user?.role === "super_admin" || Boolean(user?.team)) && (
           <button
             onClick={() => navigate("/admin")}
             style={{
@@ -576,7 +583,7 @@ export default function Sidebar() {
               alignItems: "center",
               gap: 12,
               padding: "12px 12px",
-              marginBottom: 6,
+              marginBottom: 8,
               borderRadius: 10,
               border: `1px solid ${COLORS.primary}40`,
               cursor: "pointer",
@@ -586,10 +593,21 @@ export default function Sidebar() {
               fontSize: 14.5,
               textAlign: "left",
               transition: "all 0.15s",
+              boxShadow: "0 2px 6px rgba(181,43,43,0.1)",
             }}
           >
             <ShieldCheck size={18} color={location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary} />
-            <span style={{ flex: 1 }}>Admin Panel</span>
+            <div style={{ flex: 1, lineHeight: 1.2 }}>
+              <div>Admin Panel</div>
+              {user?.team?.name && (
+                <div style={{ fontSize: 10, opacity: 0.8, fontWeight: 500 }}>
+                  Team: {user.team.name}
+                </div>
+              )}
+            </div>
+            <span style={{ fontSize: 11, background: "rgba(181,43,43,0.15)", padding: "2px 6px", borderRadius: 4, color: COLORS.primary, fontWeight: 700 }}>
+              Console →
+            </span>
           </button>
         )}
         {navItems.map((item) => renderNavItem(item))}

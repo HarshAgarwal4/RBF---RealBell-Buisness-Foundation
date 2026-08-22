@@ -1,5 +1,5 @@
 import express from "express";
-import { isAdmin } from "../../middlewares/admin.js";
+import { isAdmin, authorize } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getAllProgramsPublic,
@@ -31,12 +31,13 @@ programsRouter.post("/apply/:id", applyToProgram);
 programsRouter.get("/my-applications", getMyApplications);
 
 /* ── Admin Routes ── */
-programsRouter.get("/admin", isAdmin, getAllProgramsAdmin);
-programsRouter.post("/admin/ai-generate", isAdmin, generateAIContent);
-programsRouter.get("/admin/:id", isAdmin, getProgramByIdAdmin);
+programsRouter.get("/admin", isAdmin, authorize("programs.view"), getAllProgramsAdmin);
+programsRouter.post("/admin/ai-generate", isAdmin, authorize("programs.create"), generateAIContent);
+programsRouter.get("/admin/:id", isAdmin, authorize("programs.view"), getProgramByIdAdmin);
 programsRouter.post(
   "/admin",
   isAdmin,
+  authorize("programs.create"),
   programUpload.fields([
     { name: "banner_image", maxCount: 1 },
     { name: "logo", maxCount: 1 },
@@ -46,17 +47,19 @@ programsRouter.post(
 programsRouter.put(
   "/admin/:id",
   isAdmin,
+  authorize("programs.update"),
   programUpload.fields([
     { name: "banner_image", maxCount: 1 },
     { name: "logo", maxCount: 1 },
   ]),
   updateProgram
 );
-programsRouter.delete("/admin/:id", isAdmin, deleteProgram);
-programsRouter.get("/admin/:id/applications", isAdmin, getAllApplications);
+programsRouter.delete("/admin/:id", isAdmin, authorize("programs.delete"), deleteProgram);
+programsRouter.get("/admin/:id/applications", isAdmin, authorize("programs.applications_view"), getAllApplications);
 programsRouter.patch(
   "/admin/applications/:appId/status",
   isAdmin,
+  authorize("programs.applications_view"),
   updateApplicationStatus
 );
 

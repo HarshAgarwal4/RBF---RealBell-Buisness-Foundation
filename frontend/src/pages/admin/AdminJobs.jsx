@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from './AdminLayout.jsx';
 import axios from '../../services/axios.jsx';
+import { useStore } from '../../zustand/store.jsx';
+import { isSuperAdmin, hasPermission } from '../../utils/rbac.js';
 
 const statusColors = {
     active: { color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
@@ -50,6 +52,9 @@ export default function AdminJobs() {
     const [page, setPage] = useState(1);
     const [deleteModal, setDeleteModal] = useState({ open: false, job: null });
     const [toast, setToast] = useState(null);
+
+    const currentUser = useStore((s) => s.user);
+    const canDeleteJob = isSuperAdmin(currentUser) || hasPermission(currentUser, 'jobs.delete');
 
     const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
@@ -146,10 +151,14 @@ export default function AdminJobs() {
                                         <td><Badge color={sc.color} bg={sc.bg}>{job.status}</Badge></td>
                                         <td style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted, #94a3b8)' }}>{job.expiry_date ? new Date(job.expiry_date).toLocaleDateString('en-IN') : '—'}</td>
                                         <td>
-                                            <button id={`admin-job-delete-${job._id}`} onClick={() => setDeleteModal({ open: true, job })}
-                                                className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem' }}>
-                                                Delete
-                                            </button>
+                                            {canDeleteJob ? (
+                                                <button id={`admin-job-delete-${job._id}`} onClick={() => setDeleteModal({ open: true, job })}
+                                                    className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem' }}>
+                                                    Delete
+                                                </button>
+                                            ) : (
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-subtle, #475569)' }}>—</span>
+                                            )}
                                         </td>
                                     </tr>
                                 );

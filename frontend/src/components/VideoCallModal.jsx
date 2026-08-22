@@ -6,6 +6,7 @@ import {
   VideoOff,
   MonitorUp,
   MonitorOff,
+  Phone,
   PhoneOff,
   PhoneCall,
   Maximize2,
@@ -73,6 +74,8 @@ export default function VideoCallModal() {
 
   if (callStatus === "idle") return null;
 
+  const isVoiceCall = callDetails?.callType === "audio";
+
   const avatarUrl =
     callDetails?.peerAvatar ||
     `https://placehold.co/160x160/0F3D4A/FFFFFF?text=${encodeURIComponent(
@@ -97,14 +100,14 @@ export default function VideoCallModal() {
             {callDetails?.peerName || "Incoming Call"}
           </h3>
           <p className="mt-1 text-sm font-medium text-emerald-400">
-            Incoming Video Call...
+            {isVoiceCall ? "Incoming Voice Call..." : "Incoming Video Call..."}
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-6">
             <button
               type="button"
               onClick={declineCall}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700 hover:scale-105 active:scale-95"
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700 hover:scale-105 active:scale-95 cursor-pointer"
               title="Decline Call"
             >
               <PhoneOff size={28} />
@@ -113,7 +116,7 @@ export default function VideoCallModal() {
             <button
               type="button"
               onClick={answerCall}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg transition hover:bg-emerald-600 hover:scale-105 active:scale-95 animate-bounce"
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg transition hover:bg-emerald-600 hover:scale-105 active:scale-95 animate-bounce cursor-pointer"
               title="Answer Call"
             >
               <PhoneCall size={28} />
@@ -126,11 +129,11 @@ export default function VideoCallModal() {
       {callStatus === "calling" && (
         <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/20 bg-[#161B26] p-8 text-center shadow-2xl animate-fade-in">
           <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-rose-500/20 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-sky-500/20 animate-pulse" />
             <img
               src={avatarUrl}
               alt={callDetails?.peerName || "Recipient"}
-              className="relative h-24 w-24 rounded-full object-cover border-4 border-rose-500/80 shadow-lg"
+              className="relative h-24 w-24 rounded-full object-cover border-4 border-sky-500/80 shadow-lg"
             />
           </div>
 
@@ -138,14 +141,14 @@ export default function VideoCallModal() {
             {callDetails?.peerName || "Calling..."}
           </h3>
           <p className="mt-1 text-sm font-medium text-slate-400">
-            Calling... Waiting for response
+            {isVoiceCall ? "Voice Calling... Waiting for response" : "Video Calling... Waiting for response"}
           </p>
 
           <div className="mt-8 flex items-center justify-center">
             <button
               type="button"
               onClick={endCall}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700 hover:scale-105 active:scale-95"
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700 hover:scale-105 active:scale-95 cursor-pointer"
               title="Cancel Call"
             >
               <PhoneOff size={28} />
@@ -177,6 +180,9 @@ export default function VideoCallModal() {
                   <span className="text-xs font-medium text-emerald-400 font-mono">
                     {formatDuration(callDuration)}
                   </span>
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 font-medium">
+                    {isVoiceCall ? "Voice Call" : "Video Call"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -197,62 +203,79 @@ export default function VideoCallModal() {
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="rounded-full bg-white/10 p-2 text-white/80 transition hover:bg-white/20 hover:text-white"
+                className="rounded-full bg-white/10 p-2 text-white/80 transition hover:bg-white/20 hover:text-white cursor-pointer"
               >
                 {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
               </button>
             </div>
           </div>
 
-          {/* Video Streams Container */}
+          {/* Streams / Media Container */}
           <div className="relative flex-1 bg-[#090D16] overflow-hidden flex items-center justify-center">
-            {/* Remote Video Stream */}
-            {peerMediaState.isVideoOff ? (
-              <div className="flex flex-col items-center justify-center text-center p-8">
-                <img
-                  src={avatarUrl}
-                  alt={callDetails?.peerName}
-                  className="h-32 w-32 rounded-full object-cover border-4 border-white/20 shadow-2xl mb-4"
-                />
-                <p className="text-slate-400 text-sm font-medium">
-                  {callDetails?.peerName} turned off camera
+            {/* Always keep remote video element in DOM for audio playback even when video is hidden */}
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className={isVoiceCall || peerMediaState.isVideoOff ? "hidden" : "h-full w-full object-contain"}
+            />
+
+            {/* If audio call or camera off, show sleek avatar visualizer */}
+            {(isVoiceCall || peerMediaState.isVideoOff) && (
+              <div className="flex flex-col items-center justify-center text-center p-8 z-10">
+                <div className="relative mb-6">
+                  <div className="absolute -inset-4 rounded-full bg-sky-500/20 animate-ping" />
+                  <div className="absolute -inset-2 rounded-full bg-sky-500/30 animate-pulse" />
+                  <img
+                    src={avatarUrl}
+                    alt={callDetails?.peerName}
+                    className="relative h-32 w-32 rounded-full object-cover border-4 border-sky-400/80 shadow-2xl"
+                  />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">
+                  {callDetails?.peerName}
+                </h3>
+                <p className="text-sky-300 text-sm font-medium flex items-center gap-2">
+                  {isVoiceCall ? (
+                    <>
+                      <Phone size={14} className="animate-pulse" />
+                      Voice Call in Progress
+                    </>
+                  ) : (
+                    "Camera turned off"
+                  )}
                 </p>
               </div>
-            ) : (
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className="h-full w-full object-contain"
-              />
             )}
 
-            {/* Local Video Stream (PiP Window) */}
-            <div className="absolute bottom-24 right-6 z-20 h-44 w-60 overflow-hidden rounded-2xl border-2 border-white/20 bg-black/70 shadow-2xl transition-all duration-300 hover:scale-105">
-              {isVideoOff ? (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-slate-900 text-center p-2">
-                  <VideoOff size={24} className="text-slate-500 mb-1" />
-                  <span className="text-xs text-slate-400">Camera Off</span>
-                </div>
-              ) : (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="h-full w-full object-cover"
-                />
-              )}
-
-              <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
-                {isMuted ? (
-                  <MicOff size={10} className="text-red-400" />
+            {/* Local Video Stream (PiP Window) - shown only during video calls */}
+            {!isVoiceCall && (
+              <div className="absolute bottom-24 right-6 z-20 h-44 w-60 overflow-hidden rounded-2xl border-2 border-white/20 bg-black/70 shadow-2xl transition-all duration-300 hover:scale-105">
+                {isVideoOff ? (
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-slate-900 text-center p-2">
+                    <VideoOff size={24} className="text-slate-500 mb-1" />
+                    <span className="text-xs text-slate-400">Camera Off</span>
+                  </div>
                 ) : (
-                  <Mic size={10} className="text-emerald-400" />
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="h-full w-full object-cover"
+                  />
                 )}
-                <span>You</span>
+
+                <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+                  {isMuted ? (
+                    <MicOff size={10} className="text-red-400" />
+                  ) : (
+                    <Mic size={10} className="text-emerald-400" />
+                  )}
+                  <span>You</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Controls Bar */}
@@ -261,7 +284,7 @@ export default function VideoCallModal() {
             <button
               type="button"
               onClick={toggleAudio}
-              className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg ${
+              className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg cursor-pointer ${
                 isMuted
                   ? "bg-red-600/90 text-white hover:bg-red-700"
                   : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
@@ -271,39 +294,43 @@ export default function VideoCallModal() {
               {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
             </button>
 
-            {/* Video Toggle */}
-            <button
-              type="button"
-              onClick={toggleVideo}
-              className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg ${
-                isVideoOff
-                  ? "bg-red-600/90 text-white hover:bg-red-700"
-                  : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
-              }`}
-              title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
-            >
-              {isVideoOff ? <VideoOff size={24} /> : <VideoIcon size={24} />}
-            </button>
+            {/* Video Toggle (enabled in video call, or to add video) */}
+            {!isVoiceCall && (
+              <button
+                type="button"
+                onClick={toggleVideo}
+                className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg cursor-pointer ${
+                  isVideoOff
+                    ? "bg-red-600/90 text-white hover:bg-red-700"
+                    : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
+                }`}
+                title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
+              >
+                {isVideoOff ? <VideoOff size={24} /> : <VideoIcon size={24} />}
+              </button>
+            )}
 
             {/* Screen Share Toggle */}
-            <button
-              type="button"
-              onClick={toggleScreenShare}
-              className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg ${
-                isScreenSharing
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
-              }`}
-              title={isScreenSharing ? "Stop Sharing Screen" : "Share Screen"}
-            >
-              {isScreenSharing ? <MonitorOff size={24} /> : <MonitorUp size={24} />}
-            </button>
+            {!isVoiceCall && (
+              <button
+                type="button"
+                onClick={toggleScreenShare}
+                className={`flex h-14 w-14 items-center justify-center rounded-full transition shadow-lg cursor-pointer ${
+                  isScreenSharing
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
+                }`}
+                title={isScreenSharing ? "Stop Sharing Screen" : "Share Screen"}
+              >
+                {isScreenSharing ? <MonitorOff size={24} /> : <MonitorUp size={24} />}
+              </button>
+            )}
 
             {/* End Call */}
             <button
               type="button"
               onClick={endCall}
-              className="flex h-14 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition hover:bg-red-700 hover:scale-105 active:scale-95"
+              className="flex h-14 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition hover:bg-red-700 hover:scale-105 active:scale-95 cursor-pointer"
               title="End Call"
             >
               <PhoneOff size={26} />

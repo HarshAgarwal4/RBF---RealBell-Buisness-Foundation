@@ -178,6 +178,24 @@ export const useStore = create((set, get) => ({
         }
     },
 
+    switchOrganizationType: async (company_type) => {
+        try {
+            const res = await axios.post('/switch-organization-type', { company_type });
+            if (res.data?.status === 1) {
+                toast.success(res.data.msg || `Switched to ${company_type}`);
+                set({ user: res.data.user });
+                return { success: true, user: res.data.user };
+            } else {
+                toast.error(res.data?.msg || "Failed to switch organization type");
+                return { success: false };
+            }
+        } catch (err) {
+            console.error("switchOrganizationType error:", err);
+            toast.error("Failed to switch organization profile");
+            return { success: false };
+        }
+    },
+
     logout: async () => {
         try {
             let r = await axios.post('/logout');

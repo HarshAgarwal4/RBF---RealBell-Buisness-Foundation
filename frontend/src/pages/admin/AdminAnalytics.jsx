@@ -12,6 +12,8 @@ const typeColorMap = {
     startup: '#34d399',
     investor: '#60a5fa',
     mentor: '#f59e0b',
+    incubator: '#a78bfa',
+    accelerator: '#ec4899',
     'incubator/accelerator': '#a78bfa',
     normal: '#64748b',
     admin: '#818cf8',

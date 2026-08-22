@@ -22,8 +22,10 @@ import planRouter from './App/routes/plan.js';
 import paymentRouter from './App/routes/payment.js';
 import legalComplianceRouter from './App/routes/legalCompliance.js';
 import liveSessionRouter from './App/routes/liveSession.js';
+import notificationRouter from './App/routes/notification.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
+import { seedDefaultTeams } from './App/controllers/teamController.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 import LiveSessionModel from './App/models/liveSession.js';
@@ -61,6 +63,7 @@ app.use('/legal-compliance', legalComplianceRouter)
 app.use('/legal-compliances', legalComplianceRouter)
 app.use('/live-sessions', liveSessionRouter)
 app.use('/live_sessions', liveSessionRouter)
+app.use('/notifications', notificationRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {
@@ -95,6 +98,7 @@ mongoose.connect(process.env.DB_URL, {
     console.log("Connected to MongoDB Atlas");
     seedDefaultRoles();
     seedDefaultPlans();
+    seedDefaultTeams();
     LiveSessionModel.syncIndexes().catch((err) => {
         console.warn("LiveSessionModel syncIndexes warning:", err.message);
     });

@@ -1,5 +1,5 @@
 import express from "express";
-import { isAdmin } from "../../middlewares/admin.js";
+import { isAdmin, authorize } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getResources,
@@ -33,11 +33,11 @@ const resourceUpload = createUploadMiddleware({
 resourceRouter.get("/", getResources);
 resourceRouter.patch("/:id/download", incrementDownload);
 
-/* ── Admin only ── */
-// up to 1 file field: "file" (PDF/doc) and 1 "image" field (thumbnail/news image)
+/* ── Admin only with RBAC ── */
 resourceRouter.post(
   "/",
   isAdmin,
+  authorize("resources.create"),
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -48,6 +48,7 @@ resourceRouter.post(
 resourceRouter.put(
   "/:id",
   isAdmin,
+  authorize("resources.update"),
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -55,6 +56,6 @@ resourceRouter.put(
   updateResource
 );
 
-resourceRouter.delete("/:id", isAdmin, deleteResource);
+resourceRouter.delete("/:id", isAdmin, authorize("resources.delete"), deleteResource);
 
 export default resourceRouter;

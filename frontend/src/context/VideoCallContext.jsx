@@ -377,7 +377,11 @@ export const VideoCallProvider = ({ children }) => {
       "";
 
     try {
-      const stream = await acquireLocalMedia(callType === "audio");
+      const isAudioOnly = callType === "audio";
+      const stream = await acquireLocalMedia(isAudioOnly);
+      if (isAudioOnly) {
+        setIsVideoOff(true);
+      }
       setCallDetails({
         peerId: String(peerId),
         peerName,
@@ -390,7 +394,7 @@ export const VideoCallProvider = ({ children }) => {
       const pc = createPeerConnection(String(peerId), null);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: !isAudioOnly });
       await pc.setLocalDescription(offer);
 
       socketRef.current?.emit(
@@ -420,7 +424,11 @@ export const VideoCallProvider = ({ children }) => {
     if (!details?.offer || !details?.peerId || !details?.callId) return;
 
     try {
-      const stream = await acquireLocalMedia(details.callType === "audio");
+      const isAudioOnly = details.callType === "audio";
+      const stream = await acquireLocalMedia(isAudioOnly);
+      if (isAudioOnly) {
+        setIsVideoOff(true);
+      }
       const pc = createPeerConnection(details.peerId, details.callId);
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));

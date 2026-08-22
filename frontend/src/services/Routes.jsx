@@ -1,8 +1,8 @@
-import { createBrowserRouter} from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom';
 import Home from '../pages/Home.jsx';
 import SignUp from '../pages/signup.jsx';
 import LoginPage from '../pages/login.jsx';
-import { ProtectedRoute, IsAdminRoute } from './Auth.jsx';
+import { ProtectedRoute, IsAdminRoute, PermissionRoute } from './Auth.jsx';
 import Main from '../pages/Main.jsx';
 import { AccountPage } from '../pages/Account.jsx';
 import PageNotFound from '../pages/PageNotFound.jsx';
@@ -18,9 +18,12 @@ import Job from '../pages/app/Job.jsx';
 import Tickets from '../pages/app/Tickets.jsx';
 import Unauthorized from '../pages/Unauthorized.jsx';
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
+import AdminTeams from '../pages/admin/AdminTeams.jsx';
 import AdminUsers from '../pages/admin/AdminUsers.jsx';
 import AdminJobs from '../pages/admin/AdminJobs.jsx';
 import AdminTickets from '../pages/admin/AdminTickets.jsx';
+import AdminNotifications from '../pages/admin/AdminNotifications.jsx';
+import AdminMail from '../pages/admin/AdminMail.jsx';
 import AdminCommunity from '../pages/admin/AdminCommunity.jsx';
 import AdminAnalytics from '../pages/admin/AdminAnalytics.jsx';
 import AdminResources from '../pages/admin/AdminResources.jsx';
@@ -44,6 +47,7 @@ import Subscription from '../pages/Subscription.jsx';
 import AdminSubscriptions from '../pages/admin/AdminSubscriptions.jsx';
 import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
 import AdminAuthSettings from '../pages/admin/AdminAuthSettings.jsx';
+import AdminAuditLogs from '../pages/admin/AdminAuditLogs.jsx';
 import ForgotPassword from '../pages/ForgotPassword.jsx';
 import LegalServices from '../pages/app/legalCompliance/LegalServices.jsx';
 import LegalServiceApply from '../pages/app/legalCompliance/LegalServiceApply.jsx';
@@ -142,51 +146,159 @@ const Routes = createBrowserRouter([
         path: '/unauthorized',
         element: <Unauthorized />
     },
-    /* ── Admin Routes (ProtectedRoute → IsAdminRoute → Page) ── */
+
+    /* ── Admin Routes Protected by RBAC PermissionRoute ── */
     {
         path: '/admin',
-        element: <ProtectedRoute><IsAdminRoute><AdminDashboard /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="dashboard.view" moduleName="Admin Dashboard">
+                    <AdminDashboard />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
-        path: '/admin/roles',
-        element: <ProtectedRoute><IsAdminRoute><AdminRoles /></IsAdminRoute></ProtectedRoute>
-    },
-    {
-        path: '/admin/subscriptions',
-        element: <ProtectedRoute><IsAdminRoute><AdminSubscriptions /></IsAdminRoute></ProtectedRoute>
-    },
-    {
-        path: '/admin/theme-customizer',
-        element: <ProtectedRoute><IsAdminRoute><AdminThemeCustomizer /></IsAdminRoute></ProtectedRoute>
-    },
-    {
-        path: '/admin/auth-settings',
-        element: <ProtectedRoute><IsAdminRoute><AdminAuthSettings /></IsAdminRoute></ProtectedRoute>
+        path: '/admin/teams',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="teams.view" moduleName="Teams & Role Management">
+                    <AdminTeams />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/users',
-        element: <ProtectedRoute><IsAdminRoute><AdminUsers /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="users.view" moduleName="Ecosystem Users">
+                    <AdminUsers />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/roles',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="teams.view" moduleName="Role & Profile Schemas">
+                    <AdminRoles />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/subscriptions',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="subscriptions.view" moduleName="Subscription Plans">
+                    <AdminSubscriptions />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/theme-customizer',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="theme.manage" moduleName="Theme Customizer">
+                    <AdminThemeCustomizer />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/auth-settings',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="auth_settings.view" moduleName="Authentication Settings">
+                    <AdminAuthSettings />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/audit-logs',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="audit_logs.view" moduleName="Security & Audit Logs">
+                    <AdminAuditLogs />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/jobs',
-        element: <ProtectedRoute><IsAdminRoute><AdminJobs /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="jobs.view" moduleName="Job Opportunities">
+                    <AdminJobs />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/tickets',
-        element: <ProtectedRoute><IsAdminRoute><AdminTickets /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="tickets.view" moduleName="Support Tickets">
+                    <AdminTickets />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/notifications',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="notifications.view" moduleName="Notifications Hub">
+                    <AdminNotifications />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/mail',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="mail.view" moduleName="Mail Dispatcher">
+                    <AdminMail />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/community',
-        element: <ProtectedRoute><IsAdminRoute><AdminCommunity /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="community.view" moduleName="Community Wall">
+                    <AdminCommunity />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/analytics',
-        element: <ProtectedRoute><IsAdminRoute><AdminAnalytics /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="analytics.view" moduleName="Platform Analytics">
+                    <AdminAnalytics />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/resources',
-        element: <ProtectedRoute><IsAdminRoute><AdminResources /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="resources.view" moduleName="Resource Library">
+                    <AdminResources />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
+
     /* ── Resource Pages ── */
     {
         path: '/resources/contracts',
@@ -208,6 +320,7 @@ const Routes = createBrowserRouter([
         path: '/resources/videos',
         element: <ProtectedRoute><VideosPage /></ProtectedRoute>
     },
+
     /* ── Programs ── */
     {
         path: '/programs',
@@ -221,15 +334,27 @@ const Routes = createBrowserRouter([
         path: '/programs/:id/apply',
         element: <ProtectedRoute><ProgramApply /></ProtectedRoute>
     },
-    /* ── Admin Programs ── */
     {
         path: '/admin/programs',
-        element: <ProtectedRoute><IsAdminRoute><AdminPrograms /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="programs.view" moduleName="Incubation Programs">
+                    <AdminPrograms />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/programs/:id/applications',
-        element: <ProtectedRoute><IsAdminRoute><AdminProgramApplications /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="programs.applications_view" moduleName="Program Applications">
+                    <AdminProgramApplications />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
+
     /* ── Events ── */
     {
         path: '/events',
@@ -243,15 +368,27 @@ const Routes = createBrowserRouter([
         path: '/events/:id/apply',
         element: <ProtectedRoute><EventApply /></ProtectedRoute>
     },
-    /* ── Admin Events ── */
     {
         path: '/admin/events',
-        element: <ProtectedRoute><IsAdminRoute><AdminEvents /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="events.view" moduleName="Events & Workshops">
+                    <AdminEvents />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
     {
         path: '/admin/events/:id/attendees',
-        element: <ProtectedRoute><IsAdminRoute><AdminEventAttendees /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="events.attendees_view" moduleName="Event Attendees">
+                    <AdminEventAttendees />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
+
     /* ── Legal Compliances ── */
     {
         path: '/legal-compliances',
@@ -269,15 +406,21 @@ const Routes = createBrowserRouter([
         path: '/legal-compliances/documents',
         element: <ProtectedRoute><LegalComplianceDocuments /></ProtectedRoute>
     },
-    /* ── Admin Legal Compliance ── */
     {
         path: '/admin/legal-compliance',
-        element: <ProtectedRoute><IsAdminRoute><AdminLegalCompliance /></IsAdminRoute></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="legal_compliance.view" moduleName="Legal Compliance">
+                    <AdminLegalCompliance />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
     },
+
     {
         path: '*',
         element: <PageNotFound />
     }
-])
+]);
 
 export default Routes;

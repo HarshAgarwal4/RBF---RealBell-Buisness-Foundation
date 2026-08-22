@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "./AdminLayout.jsx";
 import axios from "../../services/axios.jsx";
+import { useStore } from "../../zustand/store.jsx";
+import { isSuperAdmin, hasPermission } from "../../utils/rbac.js";
 
 function Modal({ open, onClose, children }) {
   if (!open) return null;
@@ -248,6 +250,11 @@ export default function AdminSubscriptions() {
   const [planModal, setPlanModal] = useState({ open: false, plan: null });
   const [toast, setToast] = useState(null);
 
+  const currentUser = useStore((s) => s.user);
+  const canCreatePlan = isSuperAdmin(currentUser) || hasPermission(currentUser, 'subscriptions.create');
+  const canEditPlan = isSuperAdmin(currentUser) || hasPermission(currentUser, 'subscriptions.update');
+  const canDeletePlan = isSuperAdmin(currentUser) || hasPermission(currentUser, 'subscriptions.delete');
+
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -329,13 +336,15 @@ export default function AdminSubscriptions() {
           <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--admin-text-primary)', letterSpacing: '-0.02em', marginBottom: '0.15rem' }}>Subscription & Revenue Management</h1>
           <p style={{ color: 'var(--admin-text-subtle)', fontSize: '0.8rem' }}>Manage subscription plans, revenue analytics, and transaction logs.</p>
         </div>
-        <button
-          onClick={() => setPlanModal({ open: true, plan: null })}
-          className="admin-btn admin-btn-primary"
-          style={{ padding: "0.5rem 1rem", fontSize: "0.8rem" }}
-        >
-          + Add New Plan
-        </button>
+        {canCreatePlan && (
+          <button
+            onClick={() => setPlanModal({ open: true, plan: null })}
+            className="admin-btn admin-btn-primary"
+            style={{ padding: "0.5rem 1rem", fontSize: "0.8rem" }}
+          >
+            + Add New Plan
+          </button>
+        )}
       </div>
 
       {/* Stats Cards Grid */}
@@ -438,22 +447,28 @@ export default function AdminSubscriptions() {
                 ))}
               </div>
 
-              <div style={{ display: "flex", gap: "0.45rem", borderTop: "1px solid var(--admin-border-subtle)", paddingTop: "0.85rem" }}>
-                <button
-                  onClick={() => setPlanModal({ open: true, plan: p })}
-                  className="admin-btn admin-btn-secondary"
-                  style={{ flex: 1, padding: "0.45rem", fontSize: "0.72rem" }}
-                >
-                  Edit Plan
-                </button>
-                <button
-                  onClick={() => handleDeletePlan(p._id)}
-                  className="admin-btn admin-btn-danger"
-                  style={{ padding: "0.45rem 0.75rem", fontSize: "0.72rem" }}
-                >
-                  Delete
-                </button>
-              </div>
+              {(canEditPlan || canDeletePlan) && (
+                <div style={{ display: "flex", gap: "0.45rem", borderTop: "1px solid var(--admin-border-subtle)", paddingTop: "0.85rem" }}>
+                  {canEditPlan && (
+                    <button
+                      onClick={() => setPlanModal({ open: true, plan: p })}
+                      className="admin-btn admin-btn-secondary"
+                      style={{ flex: 1, padding: "0.45rem", fontSize: "0.72rem" }}
+                    >
+                      Edit Plan
+                    </button>
+                  )}
+                  {canDeletePlan && (
+                    <button
+                      onClick={() => handleDeletePlan(p._id)}
+                      className="admin-btn admin-btn-danger"
+                      style={{ padding: "0.45rem 0.75rem", fontSize: "0.72rem" }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -41,7 +41,8 @@ const DEFAULT_USER_TYPES = [
   { id: "startup", label: "Startup", icon: Rocket, desc: "Founders building next-gen products" },
   { id: "investor", label: "Investor", icon: TrendingUp, hasSubtypes: true, desc: "Angels, VCs & Syndicates" },
   { id: "mentor", label: "Mentor", icon: Users, desc: "Industry leaders & advisors" },
-  { id: "incubator/accelerator", label: "Incubator/Accelerator", icon: Building2, desc: "Ecosystem catalysts & programs" },
+  { id: "incubator", label: "Incubator", icon: Building2, desc: "Early-stage incubation & workspace" },
+  { id: "accelerator", label: "Accelerator", icon: Building2, desc: "Cohort-based scaling & acceleration" },
 ];
 
 const INVESTOR_SUBTYPES = [

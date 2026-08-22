@@ -64,7 +64,7 @@ export default function IncubatorEditProfile({ profile = {} }) {
     organizationName: profile?.organizationName || profile?.companyName || user?.company_name || "",
     tagline: profile?.tagline || "",
     establishedIn: profile?.establishedIn || "2020",
-    organizationType: profile?.organizationType || "Incubator",
+    organizationType: profile?.organizationType || (user?.company_type === "accelerator" ? "Accelerator" : "Incubator"),
     headline: profile?.headline || "",
     about: profile?.about || "",
     country: profile?.country || "India",
@@ -150,7 +150,7 @@ export default function IncubatorEditProfile({ profile = {} }) {
       });
 
       if (res.data?.status === 1) {
-        toast.success("Incubator/Accelerator profile updated successfully!");
+        toast.success(`${form.organizationType || "Profile"} updated successfully!`);
         await fetchUser({ silent: true });
       } else {
         toast.error(res.data?.msg || "Failed to update profile");
@@ -169,7 +169,7 @@ export default function IncubatorEditProfile({ profile = {} }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8 bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#172033]">Edit Profile</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage Incubator & Accelerator program profile</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage {form.organizationType || "Organization"} program profile</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">

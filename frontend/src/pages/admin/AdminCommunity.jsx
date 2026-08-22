@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from './AdminLayout.jsx';
 import axios from '../../services/axios.jsx';
+import { useStore } from '../../zustand/store.jsx';
+import { isSuperAdmin, hasPermission } from '../../utils/rbac.js';
 
 const typeColors = {
     startup: { color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
     investor: { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)' },
     mentor: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    incubator: { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
+    accelerator: { color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
     'incubator/accelerator': { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
 };
 
@@ -76,6 +80,10 @@ function PostModal({ open, onClose, post }) {
 }
 
 export default function AdminCommunity() {
+    const currentUser = useStore((s) => s.user);
+    const canModerate = isSuperAdmin(currentUser) || hasPermission(currentUser, 'community.moderate');
+    const canDeletePost = isSuperAdmin(currentUser) || hasPermission(currentUser, 'community.delete');
+
     const [posts, setPosts] = useState([]);
     const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
     const [loading, setLoading] = useState(true);
@@ -189,14 +197,18 @@ export default function AdminCommunity() {
                                                     className="admin-btn admin-btn-secondary" style={{ padding: '0.3rem 0.55rem', fontSize: '0.68rem' }}>
                                                     View
                                                 </button>
-                                                <button id={`admin-post-pin-${post._id}`} onClick={() => handlePin(post._id)}
-                                                    className="admin-btn admin-btn-secondary" style={{ padding: '0.3rem 0.55rem', fontSize: '0.68rem', color: post.is_pinned ? '#fbbf24' : undefined }}>
-                                                    {post.is_pinned ? 'Unpin' : 'Pin'}
-                                                </button>
-                                                <button id={`admin-post-delete-${post._id}`} onClick={() => handleDelete(post._id)}
-                                                    className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.55rem', fontSize: '0.68rem' }}>
-                                                    Delete
-                                                </button>
+                                                {canModerate && (
+                                                    <button id={`admin-post-pin-${post._id}`} onClick={() => handlePin(post._id)}
+                                                        className="admin-btn admin-btn-secondary" style={{ padding: '0.3rem 0.55rem', fontSize: '0.68rem', color: post.is_pinned ? '#fbbf24' : undefined }}>
+                                                        {post.is_pinned ? 'Unpin' : 'Pin'}
+                                                    </button>
+                                                )}
+                                                {canDeletePost && (
+                                                    <button id={`admin-post-delete-${post._id}`} onClick={() => handleDelete(post._id)}
+                                                        className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.55rem', fontSize: '0.68rem' }}>
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
