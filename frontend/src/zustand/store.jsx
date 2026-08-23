@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from '../services/axios';
 import { toast } from 'react-toastify';
+import { DEFAULT_PAGE_FALLBACKS } from '../config/pageFallbacks';
 
 export const useStore = create((set, get) => ({
     user: null,
@@ -8,22 +9,32 @@ export const useStore = create((set, get) => ({
     isInitialized: false,
     loginMethod: "both", // "otp" | "password" | "both"
     roles: [],
+    pageContents: DEFAULT_PAGE_FALLBACKS,
 
     setIsLoading: (data) => set({ isLoading: data }),
     setUser: (data) => set({ user: data }),
     setLoginMethod: (data) => set({ loginMethod: data }),
     setRoles: (data) => set({ roles: data }),
+    setPageContent: (pageKey, data) =>
+        set((state) => ({
+            pageContents: {
+                ...state.pageContents,
+                [pageKey]: { ...(state.pageContents[pageKey] || {}), ...data },
+            },
+        })),
+    setAllPageContents: (pagesMap) =>
+        set((state) => ({
+            pageContents: {
+                ...state.pageContents,
+                ...pagesMap,
+            },
+        })),
 
     // Runs once on app startup:
-    // If user is not logged in -> fetches BOTH organization types and login method
-    // If user is logged in -> fetches organization types for dashboard sidebar
+    // Fetches session, public page contents, roles, and auth settings in parallel
     initializeApp: async () => {
         try {
-
-            // Temporary 5-second delay for testing loading screen
-            // await new Promise((resolve) => setTimeout(resolve, 5000));
-
-            // 1. Check user session
+            // 1. Check user session and parallel public assets
             let user = null;
             try {
                 const meRes = await axios.post('/me');
@@ -36,54 +47,55 @@ export const useStore = create((set, get) => ({
 
             let loginMethod = "both";
             let roles = [];
+            let loadedPageContents = { ...DEFAULT_PAGE_FALLBACKS };
 
-            if (!user) {
-                // User is NOT logged in: Fetch BOTH organization types and login method in parallel
-                const [authRes, rolesRes] = await Promise.allSettled([
-                    axios.get('/auth-settings'),
-                    axios.get('/roles'),
-                ]);
+            // Fetch public page contents, auth settings, and roles in parallel
+            const [pagesRes, authRes, rolesRes] = await Promise.allSettled([
+                axios.get('/page-content'),
+                axios.get('/auth-settings'),
+                axios.get('/roles'),
+            ]);
 
-                if (
-                    authRes.status === 'fulfilled' &&
-                    authRes.value.data?.status === 1 &&
-                    authRes.value.data?.loginMethod
-                ) {
-                    loginMethod = authRes.value.data.loginMethod;
-                }
+            if (pagesRes.status === 'fulfilled' && pagesRes.value.data?.status === 1) {
+                const incomingMap = pagesRes.value.data.pagesMap || {};
+                loadedPageContents = {
+                    ...DEFAULT_PAGE_FALLBACKS,
+                    ...incomingMap,
+                };
+                console.log("[RBF INIT] ✅ Fetched dynamic page customizations for all pages");
+            }
 
-                if (
-                    rolesRes.status === 'fulfilled' &&
-                    rolesRes.value.data?.status === 1 &&
-                    Array.isArray(rolesRes.value.data?.roles)
-                ) {
-                    roles = rolesRes.value.data.roles;
-                }
+            if (
+                authRes.status === 'fulfilled' &&
+                authRes.value.data?.status === 1 &&
+                authRes.value.data?.loginMethod
+            ) {
+                loginMethod = authRes.value.data.loginMethod;
+            }
 
-                console.log("[RBF INIT] ✅ Fetched login method setting:", loginMethod);
-                console.log("[RBF INIT] ✅ Fetched organization types / roles:", roles);
-            } else {
-                // User IS logged in: Fetch organization types for the dashboard sidebar
-                try {
-                    const rolesRes = await axios.get('/roles');
-                    if (rolesRes.data?.status === 1 && Array.isArray(rolesRes.data?.roles)) {
-                        roles = rolesRes.data.roles;
-                    }
-                } catch (rolesErr) {
-                    console.error("Error fetching roles for sidebar:", rolesErr);
-                }
+            if (
+                rolesRes.status === 'fulfilled' &&
+                rolesRes.value.data?.status === 1 &&
+                Array.isArray(rolesRes.value.data?.roles)
+            ) {
+                roles = rolesRes.value.data.roles;
             }
 
             set({
                 user,
                 loginMethod,
                 roles,
+                pageContents: loadedPageContents,
                 isInitialized: true,
                 isLoading: false,
             });
         } catch (err) {
             console.error("App initialization error:", err);
-            set({ isInitialized: true, isLoading: false });
+            set({
+                pageContents: DEFAULT_PAGE_FALLBACKS,
+                isInitialized: true,
+                isLoading: false,
+            });
         }
     },
 

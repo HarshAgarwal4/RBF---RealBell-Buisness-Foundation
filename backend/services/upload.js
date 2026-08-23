@@ -9,10 +9,22 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const DEFAULT_IMAGE_FORMATS = ["jpg", "jpeg", "png", "webp"];
+const DEFAULT_ALLOWED_FORMATS = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "pdf",
+  "doc",
+  "docx",
+  "txt",
+  "csv",
+  "xlsx",
+  "xls",
+];
 
 const createUploadMiddleware = ({
-  maxFileSize = 5 * 1024 * 1024,
+  maxFileSize = 50 * 1024 * 1024, // 50MB
   allowedMimeTypes,
 } = {}) => {
   const config = {
@@ -41,13 +53,17 @@ async function uploadFileToCloud(fileBuffer, originalName, options = {}) {
   const {
     folder = "RBF",
     resourceType = "auto",
-    allowedFormats = DEFAULT_IMAGE_FORMATS,
+    allowedFormats = null, // null allows all formats (PDF, DOC, DOCX, images) via auto detection
   } = options;
+
+  const sanitizedName = String(originalName || "document")
+    .replace(/[^a-zA-Z0-9.-]/g, "_")
+    .slice(-80);
 
   const uploadOptions = {
     folder,
     resource_type: resourceType,
-    public_id: `${Date.now()}-${originalName}`,
+    public_id: `${Date.now()}-${sanitizedName}`,
   };
 
   if (Array.isArray(allowedFormats) && allowedFormats.length > 0) {

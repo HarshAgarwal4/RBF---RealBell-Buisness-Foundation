@@ -175,6 +175,16 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: "frontend_customizer",
+    name: "Frontend Customizer",
+    icon: "🖥️",
+    description: "Customize public pages content (Home, Login, Signup, Legal, etc.)",
+    permissions: [
+      { key: "frontend_customizer.view", label: "View Frontend Customizer", description: "View page content configurations" },
+      { key: "frontend_customizer.update", label: "Modify Page Content", description: "Edit and publish frontend page content" },
+    ],
+  },
+  {
     module: "audit_logs",
     name: "Audit Logs",
     icon: "📜",

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { useStore } from "../zustand/store";
 import { AppLoader } from "./Loading";
+import { DEFAULT_PAGE_FALLBACKS } from "../config/pageFallbacks";
 import {
   ArrowLeft,
   Bell,
@@ -81,7 +82,20 @@ function Logo() {
   );
 }
 
-function LeftPanel() {
+function LeftPanel({ customData }) {
+  const badge = customData?.leftPanelBadge || "Join India's Growth Foundation";
+  const mainTitle = customData?.mainTitle || "Launch, Scale & Fund";
+  const titleHighlight = customData?.titleHighlight || "Your Vision.";
+  const description = customData?.description || "Join a growing foundation where founders, investors, mentors, and incubators unite to build, fund, and scale real businesses.";
+  const features = customData?.features || [
+    { text: "Connect with a vetted community of founders and backers" },
+    { text: "Discover funding cohorts, mentorship, and growth tracks" },
+    { text: "Access curated legal contracts, tools, and startup intelligence" },
+    { text: "Be part of a foundation built on real relationships" },
+  ];
+  const footerNote = customData?.footerNote || "RealBell Business Foundation";
+  const statusText = customData?.platformStatusText || "Onboarding Open";
+
   return (
     <div className="hidden w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 p-10 xl:p-12 lg:flex relative overflow-hidden">
       {/* Glow shapes */}
@@ -94,31 +108,26 @@ function LeftPanel() {
         <div className="mt-10 xl:mt-14">
           <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-6">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Join India's Growth Foundation</span>
+            <span>{badge}</span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
-            Ring In Growth,
+            {mainTitle}
             <br />
-            <span className="text-amber-700 dark:text-amber-500">Together.</span>
+            <span className="text-amber-700 dark:text-amber-500">{titleHighlight}</span>
           </h1>
 
           <p className="mt-5 text-sm xl:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-            Join a growing foundation where founders, investors, mentors, and incubators unite to build, fund, and scale real businesses.
+            {description}
           </p>
 
           <div className="mt-8 space-y-3.5 text-sm text-slate-700 dark:text-slate-300">
-            {[
-              "Connect with a vetted community of founders and backers",
-              "Discover funding cohorts, mentorship, and growth tracks",
-              "Access curated legal contracts, tools, and startup intelligence",
-              "Be part of a foundation built on real relationships",
-            ].map((text, idx) => (
+            {features.map((item, idx) => (
               <div key={idx} className="flex items-start gap-3">
                 <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 mt-0.5">
                   <Check className="h-3 w-3" strokeWidth={3} />
                 </div>
-                <span className="leading-snug">{text}</span>
+                <span className="leading-snug">{item.text || item}</span>
               </div>
             ))}
           </div>
@@ -126,16 +135,20 @@ function LeftPanel() {
           <p className="mt-6 text-xs xl:text-sm font-medium text-slate-700 dark:text-slate-300">
             An initiative by{" "}
             <span className="font-bold text-amber-700 dark:text-amber-400">
-              RealBell Business Foundation.
+              {footerNote}.
             </span>
           </p>
         </div>
       </div>
 
-      <div className="relative z-10 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+      <div className="relative z-10 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
         <p className="leading-relaxed">
-          *Open Beta preview — Join us to collaborate and pioneer the future of Indian startup ecosystems.
+          *Open Beta preview — Pioneer the future of Indian startup ecosystems.
         </p>
+        <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap ml-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          {statusText}
+        </span>
       </div>
     </div>
   );
@@ -294,9 +307,17 @@ export default function SignUpPage() {
   const [resendTimer, setResendTimer] = useState(30);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const storeSignupData = useStore((state) => state.pageContents?.signup);
+  const [customData, setCustomData] = useState(storeSignupData || DEFAULT_PAGE_FALLBACKS.signup);
   const otpRefs = useRef([]);
 
   const storeRoles = useStore((state) => state.roles);
+
+  useEffect(() => {
+    if (storeSignupData) {
+      setCustomData(storeSignupData);
+    }
+  }, [storeSignupData]);
 
   const userTypes = React.useMemo(() => {
     if (Array.isArray(storeRoles) && storeRoles.length > 0) {
@@ -473,11 +494,11 @@ export default function SignUpPage() {
     }
   };
 
-  const dashboardPage = () => {
-    navigate("/dashboard");
+  const approvalPage = () => {
+    navigate("/approval-center");
   };
 
-  // ---------- Step 4: success / dashboard redirect ----------
+  // ---------- Step 4: success / approval redirect ----------
   if (step === 4) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 transition-colors">
@@ -486,23 +507,23 @@ export default function SignUpPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-10 text-center shadow-xl"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
             <CheckCircle2 className="h-10 w-10" />
           </div>
 
           <h2 className="mt-6 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            You're all set, {form.yourName.split(" ")[0] || "Founder"}!
+            Welcome, {form.yourName.split(" ")[0] || "Founder"}!
           </h2>
 
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Your RealBell Business Foundation account has been successfully created. Welcome to the ecosystem.
+            Your RealBell Business Foundation account has been created. To unlock your ecosystem dashboard, please complete your organization verification form.
           </p>
 
           <button
-            onClick={dashboardPage}
+            onClick={approvalPage}
             className="mt-8 w-full rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
-            Continue to Dashboard
+            Complete Verification Form →
           </button>
         </motion.div>
       </div>
@@ -512,7 +533,7 @@ export default function SignUpPage() {
   // ---------- Steps 1–3 shared shell ----------
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
-      <LeftPanel />
+      <LeftPanel customData={customData} />
 
       <div className="flex flex-1 flex-col justify-between">
         <MobileHeader />
@@ -791,13 +812,13 @@ export default function SignUpPage() {
                         />
                         <span>
                           I agree to the{" "}
-                          <a href="#" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
+                          <Link to="/terms-of-service" target="_blank" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
                             Terms & Conditions
-                          </a>{" "}
+                          </Link>{" "}
                           and{" "}
-                          <a href="#" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
+                          <Link to="/privacy-policy" target="_blank" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
                             Privacy Policy
-                          </a>{" "}
+                          </Link>{" "}
                           of RealBell Business Foundation.
                         </span>
                       </label>

@@ -56,6 +56,13 @@ import LegalComplianceDocuments from '../pages/app/legalCompliance/LegalComplian
 import AdminLegalCompliance from '../pages/admin/AdminLegalCompliance.jsx';
 import LiveSessions from '../pages/app/LiveSessions.jsx';
 import LiveSessionRoom from '../pages/app/liveSession/LiveSessionRoom.jsx';
+import AdminFrontendCustomizer from '../pages/admin/AdminFrontendCustomizer.jsx';
+import AdminApprovals from '../pages/admin/AdminApprovals.jsx';
+import AdminApprovalFormBuilder from '../pages/admin/AdminApprovalFormBuilder.jsx';
+import ApprovalCenter from '../pages/app/ApprovalCenter.jsx';
+import PrivacyPolicy from '../pages/PrivacyPolicy.jsx';
+import TermsOfService from '../pages/TermsOfService.jsx';
+import CodeOfConduct from '../pages/CodeOfConduct.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -73,6 +80,30 @@ const Routes = createBrowserRouter([
     {
         path: '/forgot-password',
         element: <ForgotPassword />
+    },
+    {
+        path: '/privacy-policy',
+        element: <PrivacyPolicy />
+    },
+    {
+        path: '/privacy',
+        element: <PrivacyPolicy />
+    },
+    {
+        path: '/terms-of-service',
+        element: <TermsOfService />
+    },
+    {
+        path: '/terms',
+        element: <TermsOfService />
+    },
+    {
+        path: '/code-of-conduct',
+        element: <CodeOfConduct />
+    },
+    {
+        path: '/approval-center',
+        element: <ApprovalCenter />
     },
     {
         path: '/dashboard',
@@ -159,6 +190,26 @@ const Routes = createBrowserRouter([
         )
     },
     {
+        path: '/admin/approvals',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="teams.view" moduleName="Ecosystem Approvals">
+                    <AdminApprovals />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/approval-forms',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="teams.view" moduleName="Approval Form Builder">
+                    <AdminApprovalFormBuilder />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
         path: '/admin/teams',
         element: (
             <ProtectedRoute>
@@ -204,6 +255,16 @@ const Routes = createBrowserRouter([
             <ProtectedRoute>
                 <PermissionRoute permission="theme.manage" moduleName="Theme Customizer">
                     <AdminThemeCustomizer />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/frontend-customizer',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="theme.manage" moduleName="Frontend Customizer">
+                    <AdminFrontendCustomizer />
                 </PermissionRoute>
             </ProtectedRoute>
         )

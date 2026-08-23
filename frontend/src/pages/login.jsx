@@ -18,6 +18,7 @@ import axios from "../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../zustand/store";
 import { AppLoader } from "./Loading";
+import { DEFAULT_PAGE_FALLBACKS } from "../config/pageFallbacks";
 
 function Logo() {
   return (
@@ -41,7 +42,20 @@ function Logo() {
   );
 }
 
-function LeftPanel() {
+function LeftPanel({ customData }) {
+  const badge = customData?.leftPanelBadge || "Welcome to RBF Ecosystem";
+  const mainTitle = customData?.mainTitle || "Welcome Back.";
+  const titleHighlight = customData?.titleHighlight || "Let's Continue";
+  const titleSuffix = customData?.titleSuffix || "Building.";
+  const description = customData?.description || "Log in to RealBell Business Foundation to access your dashboard, discover funding cohorts, connect with seasoned mentors, and scale your venture.";
+  const features = customData?.features || [
+    { text: "Direct access to founders & accredited investors" },
+    { text: "Curated incubator programs & startup cohorts" },
+    { text: "Verified contracts, guides & milestone tracking" },
+  ];
+  const footerNote = customData?.footerNote || "RealBell Foundation";
+  const statusText = customData?.platformStatusText || "Platform Active";
+
   return (
     <div className="hidden lg:flex w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 p-10 xl:p-12 relative overflow-hidden">
       {/* Decorative background glow */}
@@ -54,28 +68,24 @@ function LeftPanel() {
         <div className="mt-12 xl:mt-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-6">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Welcome to RBF Ecosystem</span>
+            <span>{badge}</span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black leading-tight text-slate-900 dark:text-white">
-            Welcome Back.
+            {mainTitle}
             <br />
-            <span className="text-amber-700 dark:text-amber-500">Let's Continue</span> Building.
+            <span className="text-amber-700 dark:text-amber-500">{titleHighlight}</span> {titleSuffix}
           </h1>
 
           <p className="mt-5 text-sm xl:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-            Log in to RealBell Business Foundation to access your dashboard, discover funding cohorts, connect with seasoned mentors, and scale your venture.
+            {description}
           </p>
 
           <div className="mt-8 space-y-3.5">
-            {[
-              { icon: ShieldCheck, text: "Direct access to founders & accredited investors" },
-              { icon: CheckCircle2, text: "Curated incubator programs & startup cohorts" },
-              { icon: Sparkles, text: "Verified contracts, guides & milestone tracking" },
-            ].map((item, idx) => (
+            {features.map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
-                  <item.icon className="h-3.5 w-3.5" />
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                 </div>
                 <span>{item.text}</span>
               </div>
@@ -85,10 +95,10 @@ function LeftPanel() {
       </div>
 
       <div className="relative z-10 pt-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span>© {new Date().getFullYear()} RealBell Foundation</span>
+        <span>© {new Date().getFullYear()} {footerNote}</span>
         <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          Platform Active
+          {statusText}
         </span>
       </div>
     </div>
@@ -168,8 +178,14 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState("");
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);
+  const storeLoginData = useStore((state) => state.pageContents?.login);
+  const [customData, setCustomData] = useState(storeLoginData || DEFAULT_PAGE_FALLBACKS.login);
 
-  const otpRefs = useRef([]);
+  useEffect(() => {
+    if (storeLoginData) {
+      setCustomData(storeLoginData);
+    }
+  }, [storeLoginData]);
 
   useEffect(() => {
     if (user) navigate("/dashboard");
@@ -218,8 +234,12 @@ export default function LoginPage() {
 
         if (status === 1) {
           toast.success(msg || "Login successful");
-          await fetchUser();
-          navigate("/dashboard");
+          const loggedInUser = await fetchUser();
+          if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.approvalStatus !== "Approved") {
+            navigate("/approval-center");
+          } else {
+            navigate("/dashboard");
+          }
           return;
         }
 
@@ -384,8 +404,12 @@ export default function LoginPage() {
 
       if (status === 1) {
         toast.success(msg || "Login successful");
-        await fetchUser();
-        navigate("/dashboard");
+        const loggedInUser = await fetchUser();
+        if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.approvalStatus !== "Approved") {
+          navigate("/approval-center");
+        } else {
+          navigate("/dashboard");
+        }
         return;
       }
 
@@ -421,7 +445,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
-      <LeftPanel />
+      <LeftPanel customData={customData} />
 
       <div className="flex flex-1 flex-col justify-between">
         <MobileHeader />

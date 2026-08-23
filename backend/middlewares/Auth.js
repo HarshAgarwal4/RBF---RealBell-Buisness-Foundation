@@ -2,10 +2,18 @@ import userModel from "../App/models/organization.js";
 import { getUser } from "../services/Auth.js";
 
 /**
+ * Helper to get normalized route path from request
+ */
+function getRoutePath(req) {
+  const raw = req.originalUrl || req.url || req.path || "";
+  return raw.split("?")[0];
+}
+
+/**
  * Helper to identify routes that unauthenticated guests can access
  */
 function isPublicRoute(req) {
-  const path = req.path;
+  const path = getRoutePath(req);
   const method = req.method;
 
   // Root endpoint
@@ -30,6 +38,7 @@ function isPublicRoute(req) {
     (path === "/roles" ||
       path === "/auth-settings" ||
       path === "/plans" ||
+      path.startsWith("/page-content") ||
       path.startsWith("/events/public") ||
       path.startsWith("/programs/public") ||
       path.startsWith("/resources/public") ||
@@ -44,8 +53,28 @@ function isPublicRoute(req) {
 }
 
 /**
+ * Helper to identify endpoints accessible to authenticated users awaiting approval
+ */
+function isAllowedDuringApproval(req) {
+  const path = getRoutePath(req);
+  if (
+    path === "/me" ||
+    path === "/logout" ||
+    path.startsWith("/approvals/my-status") ||
+    path.startsWith("/approvals/my-submission") ||
+    path.startsWith("/approvals/upload-document") ||
+    path.startsWith("/my-status") ||
+    path.startsWith("/my-submission") ||
+    path.startsWith("/upload-document")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Authentication middleware
- * Validates JWT session cookie UID and attaches req.user
+ * Validates JWT session cookie UID, attaches req.user, and enforces approval checks
  */
 async function isLoggedIn(req, res, next) {
   req.user = null;
@@ -57,7 +86,8 @@ async function isLoggedIn(req, res, next) {
       if (decoded && decoded.id) {
         const findUser = await userModel.findById(decoded.id)
           .populate("customRole", "name slug permissions status")
-          .populate("team", "name slug description department permissions status");
+          .populate("team", "name slug description department permissions status")
+          .populate("approvalSubmission");
         if (findUser) {
           if (findUser.accountStatus === "disabled") {
             res.clearCookie("UID");
@@ -69,6 +99,28 @@ async function isLoggedIn(req, res, next) {
               findUser.sessions[0]?.token === token);
           if (hasSession) {
             req.user = findUser;
+
+            // Auto-grant approval for super_admin
+            if (findUser.role === "super_admin" && findUser.approvalStatus !== "Approved") {
+              findUser.approvalStatus = "Approved";
+              await findUser.save();
+            }
+
+            // Enforce Approval restriction on protected dashboard APIs
+            if (
+              findUser.role !== "super_admin" &&
+              findUser.approvalStatus !== "Approved" &&
+              !isPublicRoute(req) &&
+              !isAllowedDuringApproval(req)
+            ) {
+              return res.status(403).json({
+                status: 403,
+                code: "APPROVAL_REQUIRED",
+                approvalStatus: findUser.approvalStatus || "Pending Form",
+                msg: "Dashboard access is restricted until your application is approved by Super Admin.",
+              });
+            }
+
             return next();
           }
         }

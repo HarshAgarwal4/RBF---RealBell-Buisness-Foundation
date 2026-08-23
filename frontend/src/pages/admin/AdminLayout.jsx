@@ -7,6 +7,8 @@ import './adminTheme.css';
 
 const navItems = [
     { to: '/admin', label: 'Admin Dashboard', icon: '📊', end: true, permission: 'dashboard.view' },
+    { to: '/admin/approvals', label: 'Approvals Hub', icon: '🛡️', permission: 'teams.view' },
+    { to: '/admin/approval-forms', label: 'Approval Form Builder', icon: '📝', permission: 'teams.view' },
     { to: '/admin/teams', label: 'Teams & Access', icon: '🏢', permission: 'teams.view' },
     { to: '/admin/users', label: 'Ecosystem Users', icon: '👥', permission: 'users.view' },
     { to: '/admin/auth-settings', label: 'Auth Methods', icon: '🔐', permission: 'auth_settings.view' },
@@ -23,6 +25,7 @@ const navItems = [
     { to: '/admin/legal-compliance', label: 'Legal Compliance', icon: '⚖️', permission: 'legal_compliance.view' },
     { to: '/admin/subscriptions', label: 'Subscription Plans', icon: '💳', permission: 'subscriptions.view' },
     { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨', permission: 'theme.manage' },
+    { to: '/admin/frontend-customizer', label: 'Frontend Customizer', icon: '🖥️', permission: 'theme.manage' },
     { to: '/admin/audit-logs', label: 'Security & Audit', icon: '📜', permission: 'audit_logs.view' },
 ];
 

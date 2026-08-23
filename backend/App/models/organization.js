@@ -251,6 +251,37 @@ const OrganizationSchema = new mongoose.Schema(
       default: "active",
     },
 
+    // Approval & Role-Based Onboarding workflow state
+    approvalStatus: {
+      type: String,
+      enum: [
+        "Pending Form",
+        "Form Submitted",
+        "Under Review",
+        "Changes Requested",
+        "Approved",
+        "Rejected",
+      ],
+      default: "Pending Form",
+    },
+
+    approvalSubmission: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ApprovalSubmission",
+      default: null,
+    },
+
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+    },
+
     mustChangePassword: {
       type: Boolean,
       default: false,

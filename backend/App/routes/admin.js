@@ -43,8 +43,20 @@ import {
     getAvailablePermissions,
 } from "../controllers/customRoleController.js";
 import { getAuditLogs } from "../controllers/auditLogController.js";
+import {
+    getAdminPagesList,
+    getAdminPageContent,
+    updatePageContent,
+    resetPageContent,
+} from "../controllers/frontendCustomizerController.js";
 
 const adminRouter = express.Router();
+
+/* ── Frontend Customizer ── */
+adminRouter.get("/frontend-customizer/pages", authorize(["theme.manage", "dashboard.view"]), getAdminPagesList);
+adminRouter.get("/frontend-customizer/pages/:pageKey", authorize(["theme.manage", "dashboard.view"]), getAdminPageContent);
+adminRouter.put("/frontend-customizer/pages/:pageKey", authorize(["theme.manage"]), updatePageContent);
+adminRouter.post("/frontend-customizer/pages/:pageKey/reset", authorize(["theme.manage"]), resetPageContent);
 
 // Base admin gate (ensures authenticated admin/custom-role user)
 adminRouter.use(isAdmin);

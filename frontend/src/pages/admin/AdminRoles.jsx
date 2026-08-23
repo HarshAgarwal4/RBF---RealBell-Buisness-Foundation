@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout.jsx";
 import axios from "../../services/axios.jsx";
 import { useStore } from "../../zustand/store.jsx";
@@ -436,6 +437,21 @@ export default function AdminRoles() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-end gap-2 pt-2.5 border-t border-slate-800/80">
+                  <Link
+                    to={`/admin/approval-forms?org=${role.key}&role=default`}
+                    className="admin-btn"
+                    style={{
+                      padding: "4px 10px",
+                      fontSize: "0.72rem",
+                      backgroundColor: "rgba(245, 158, 11, 0.15)",
+                      color: "#fbbf24",
+                      border: "1px solid rgba(245, 158, 11, 0.3)",
+                    }}
+                    title="Configure Role Approval Form"
+                  >
+                    <Sliders className="h-3 w-3" /> Approval Form
+                  </Link>
+
                   <button
                     onClick={() => openEditModal(role)}
                     className="admin-btn admin-btn-secondary"

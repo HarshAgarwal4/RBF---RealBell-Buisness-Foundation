@@ -5,6 +5,8 @@ import OrganizationModel from "../models/organization.js";
 import { uploadFileToCloud, deleteImageByUrl } from "../../services/upload.js";
 import { isUserOnline } from "../../services/chat.js";
 import { hashPassword, verifyPassword } from "../../services/encryption.js";
+import ApprovalSubmissionModel from "../models/approvalSubmission.js";
+import { sendMail } from "../../services/mail.js";
 import { getEffectiveLoginMethod } from "./authSettingController.js";
 
 function normalizeCompanyType(type = "") {
@@ -91,7 +93,7 @@ async function signUp(req, res) {
             hashedPassword = await hashPassword(password);
         }
 
-        // Strictly enforce default permitted role for public registrations
+        // Strictly enforce default permitted role and Pending Approval state for public registrations
         const organization = new OrganizationModel({
             company_type,
             investing_as:
@@ -108,6 +110,7 @@ async function signUp(req, res) {
             customRole: null,
             team: null,
             accountStatus: "active",
+            approvalStatus: "Pending Form",
             account: {},
             sessions: []
         });
@@ -130,9 +133,72 @@ async function signUp(req, res) {
 
         await organization.save();
 
+        // Create initial Approval Submission record
+        const year = new Date().getFullYear();
+        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+        const appId = `APP-${year}-${randomSuffix}`;
+
+        const initialSubmission = await ApprovalSubmissionModel.create({
+            applicationId: appId,
+            user: organization._id,
+            organizationType: company_type,
+            roleKey: investing_as || "default",
+            status: "Pending Form",
+            auditLog: [
+                {
+                    action: "USER_REGISTERED",
+                    previousStatus: "",
+                    newStatus: "Pending Form",
+                    performedBy: organization._id,
+                    performedByName: organization.name,
+                    comment: "User registered. Approval form completion required for ecosystem dashboard access.",
+                    timestamp: new Date(),
+                },
+            ],
+        });
+
+        organization.approvalSubmission = initialSubmission._id;
+        await organization.save();
+
+        // Send registration & approval form link email
+        try {
+            const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+            await sendMail(
+                email,
+                "Welcome to RealBell Foundation — Complete Your Verification Form",
+                `
+                <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0f172a; color: #f8fafc; border-radius: 12px;">
+                  <h2 style="color: #f59e0b; margin-top: 0;">Welcome to RealBell Business Foundation</h2>
+                  <p>Hello <strong>${name}</strong>,</p>
+                  <p>Your account for <strong>${company_name}</strong> (${company_type.toUpperCase()}) has been successfully created with Application ID: <strong>${appId}</strong>.</p>
+                  <div style="background: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+                    <p style="margin: 0; font-size: 13px; color: #94a3b8;">Account Status:</p>
+                    <p style="margin: 4px 0 0; font-size: 16px; font-weight: bold; color: #fbbf24;">Pending Approval Form Completion</p>
+                  </div>
+                  <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
+                    To protect our ecosystem community, all new organizations must submit required verification credentials before full dashboard functionality is enabled.
+                  </p>
+                  <div style="text-align: center; margin: 28px 0;">
+                    <a href="${frontendUrl}/approval-center" style="display: inline-block; background: #f59e0b; color: #0f172a; font-weight: bold; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 14px;">
+                      Complete Verification Form →
+                    </a>
+                  </div>
+                  <hr style="border: 0; border-top: 1px solid #334155; margin: 24px 0;" />
+                  <p style="font-size: 12px; color: #64748b; margin: 0;">
+                    © ${new Date().getFullYear()} RealBell Business Foundation.
+                  </p>
+                </div>
+                `
+            );
+        } catch (mailErr) {
+            console.error("Signup email error:", mailErr);
+        }
+
         return res.send({
             status: 1,
-            msg: "Organization registered successfully"
+            msg: "Organization registered successfully. Please complete your verification form for dashboard access.",
+            approvalStatus: "Pending Form",
+            applicationId: appId,
         });
 
     } catch (err) {
@@ -231,6 +297,8 @@ async function login(req, res) {
                 team: findUser.team,
                 customRole: findUser.customRole,
                 accountStatus: findUser.accountStatus,
+                approvalStatus: findUser.approvalStatus || (findUser.role === "super_admin" ? "Approved" : "Pending Form"),
+                approvalSubmission: findUser.approvalSubmission,
                 mustChangePassword: findUser.mustChangePassword,
                 permissions,
             },
