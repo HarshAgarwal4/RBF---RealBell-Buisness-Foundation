@@ -193,7 +193,7 @@ const Routes = createBrowserRouter([
         path: '/admin/approvals',
         element: (
             <ProtectedRoute>
-                <PermissionRoute permission="teams.view" moduleName="Ecosystem Approvals">
+                <PermissionRoute permission="approvals.view" moduleName="Ecosystem Approvals">
                     <AdminApprovals />
                 </PermissionRoute>
             </ProtectedRoute>
@@ -203,7 +203,7 @@ const Routes = createBrowserRouter([
         path: '/admin/approval-forms',
         element: (
             <ProtectedRoute>
-                <PermissionRoute permission="teams.view" moduleName="Approval Form Builder">
+                <PermissionRoute permission="approvals.manage_forms" moduleName="Approval Form Builder">
                     <AdminApprovalFormBuilder />
                 </PermissionRoute>
             </ProtectedRoute>
@@ -263,7 +263,7 @@ const Routes = createBrowserRouter([
         path: '/admin/frontend-customizer',
         element: (
             <ProtectedRoute>
-                <PermissionRoute permission="theme.manage" moduleName="Frontend Customizer">
+                <PermissionRoute permission="frontend_customizer.view" moduleName="Frontend Customizer">
                     <AdminFrontendCustomizer />
                 </PermissionRoute>
             </ProtectedRoute>

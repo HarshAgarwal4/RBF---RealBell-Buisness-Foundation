@@ -10,6 +10,7 @@ export function userHasPermission(user, requiredPermission) {
 
   const permissions =
     user.team?.permissions ||
+    user.customRole?.permissions ||
     user.permissions ||
     [];
 

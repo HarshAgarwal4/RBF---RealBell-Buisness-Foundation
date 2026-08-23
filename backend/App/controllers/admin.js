@@ -421,9 +421,9 @@ async function updateUserRoleAndTeam(req, res) {
             }
         }
 
-        // Only super_admin can grant or remove super_admin role
-        if (role === "super_admin" && req.user.role !== "super_admin") {
-            return res.status(403).json({ status: 0, msg: "Only Super Admins can assign the super_admin role" });
+        // Only super_admin can grant or remove roles and team assignments
+        if ((role !== undefined || teamId !== undefined) && req.user.role !== "super_admin") {
+            return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can assign or change roles and teams" });
         }
 
         const previousData = {
@@ -437,6 +437,9 @@ async function updateUserRoleAndTeam(req, res) {
                 return res.status(400).json({ status: 7, msg: "Invalid role value" });
             }
             user.role = role;
+            if (role === "admin" || role === "super_admin") {
+                user.approvalStatus = "Approved";
+            }
         }
 
         if (company_type !== undefined) {
@@ -454,6 +457,7 @@ async function updateUserRoleAndTeam(req, res) {
                 user.team = team._id;
                 if (user.role === "normal") {
                     user.role = "admin";
+                    user.approvalStatus = "Approved";
                 }
             }
         }
@@ -575,9 +579,9 @@ async function updateUserRole(req, res) {
                 return res.status(400).json({ status: 7, msg: "Invalid role. Must be normal, admin, or super_admin" });
             }
 
-            // Only super_admin can assign super_admin role
-            if (role === "super_admin" && req.user.role !== "super_admin") {
-                return res.status(403).json({ status: 0, msg: "Only super admins can assign super_admin role" });
+            // Only super_admin can assign or change roles
+            if (role && req.user.role !== "super_admin") {
+                return res.status(403).json({ status: 0, msg: "Access Forbidden: Only super admins can assign or change user roles" });
             }
 
             // Cannot change own system role
@@ -586,6 +590,9 @@ async function updateUserRole(req, res) {
             }
 
             updates.role = role;
+            if (role === "admin" || role === "super_admin") {
+                updates.approvalStatus = "Approved";
+            }
         }
 
         if (company_type) {

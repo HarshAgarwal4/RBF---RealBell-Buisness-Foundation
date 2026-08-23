@@ -14,10 +14,11 @@ const ProtectedRoute = ({ children }) => {
     if (isLoading) return <FullScreenLoader />;
     if (!user && !isLoading) return <Navigate to='/login' replace />;
 
-    // If user is not super_admin and approval is not granted, redirect to /approval-center
+    // If user is not super_admin or admin and approval is not granted, redirect to /approval-center
     if (
         user &&
         user.role !== "super_admin" &&
+        user.role !== "admin" &&
         user.approvalStatus &&
         user.approvalStatus !== "Approved"
     ) {

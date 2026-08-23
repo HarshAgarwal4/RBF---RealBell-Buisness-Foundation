@@ -175,13 +175,24 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: "approvals",
+    name: "Onboarding Approvals",
+    icon: "🛡️",
+    description: "Manage organization onboarding verification forms, approval queues, submissions review, status decisions, and approval settings",
+    permissions: [
+      { key: "approvals.view", label: "View Applications & Queue", description: "View onboarding submissions, applicant details, status queue, and statistics" },
+      { key: "approvals.review", label: "Review & Decide Applications", description: "Approve, reject, or request changes on applicant verification forms" },
+      { key: "approvals.manage_forms", label: "Manage Approval Forms", description: "Create, edit, publish, and delete dynamic approval form templates" },
+    ],
+  },
+  {
     module: "frontend_customizer",
     name: "Frontend Customizer",
     icon: "🖥️",
-    description: "Customize public pages content (Home, Login, Signup, Legal, etc.)",
+    description: "Customize public pages content (Home, Login, Signup, Legal, Hero, Footer, etc.)",
     permissions: [
-      { key: "frontend_customizer.view", label: "View Frontend Customizer", description: "View page content configurations" },
-      { key: "frontend_customizer.update", label: "Modify Page Content", description: "Edit and publish frontend page content" },
+      { key: "frontend_customizer.view", label: "View Frontend Customizer", description: "View page content configurations and live preview" },
+      { key: "frontend_customizer.update", label: "Modify & Publish Page Content", description: "Edit, publish, and reset frontend page content" },
     ],
   },
   {

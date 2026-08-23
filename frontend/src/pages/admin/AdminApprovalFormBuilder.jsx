@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout.jsx";
 import axios from "../../services/axios.jsx";
 import { toast } from "react-toastify";
+import { useStore } from "../../zustand/store.jsx";
+import { hasPermission, isSuperAdmin } from "../../utils/rbac.js";
+import { useSearchParams , useNavigate , Link } from "react-router-dom";
+import { useState , useEffect} from "react";
 import {
   Sliders,
   Plus,
@@ -33,6 +35,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   X,
+  Lock,
 } from "lucide-react";
 
 const FIELD_PALETTE = [
@@ -54,6 +57,9 @@ const FIELD_PALETTE = [
 ];
 
 export default function AdminApprovalFormBuilder() {
+  const currentUser = useStore((state) => state.user);
+  const canManageForms = isSuperAdmin(currentUser) || hasPermission(currentUser, "approvals.manage_forms");
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -287,8 +293,13 @@ export default function AdminApprovalFormBuilder() {
 
   // Save form handler
   const handleSaveForm = async (publishStatus = "published") => {
-    if (!formConfig.title.trim()) {
-      toast.error("Form title is required.");
+    if (!canManageForms) {
+      toast.error("You do not have permission to publish or edit approval forms.");
+      return;
+    }
+
+    if (!formConfig.title || !formConfig.title.trim()) {
+      toast.error("Please provide a form title.");
       return;
     }
     if (formConfig.fields.length === 0) {
@@ -397,15 +408,22 @@ export default function AdminApprovalFormBuilder() {
               <span>Preview</span>
             </button>
 
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => handleSaveForm("published")}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition cursor-pointer"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              <span>Publish Form</span>
-            </button>
+            {canManageForms ? (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => handleSaveForm("published")}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition cursor-pointer"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Publish Form</span>
+              </button>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-semibold border border-slate-700">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Read-Only Mode</span>
+              </div>
+            )}
           </div>
         </div>
 

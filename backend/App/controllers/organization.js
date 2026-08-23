@@ -278,6 +278,10 @@ async function login(req, res) {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
+        if ((findUser.role === "super_admin" || findUser.role === "admin") && findUser.approvalStatus !== "Approved") {
+            findUser.approvalStatus = "Approved";
+        }
+
         await findUser.save();
 
         const permissions =
@@ -297,7 +301,7 @@ async function login(req, res) {
                 team: findUser.team,
                 customRole: findUser.customRole,
                 accountStatus: findUser.accountStatus,
-                approvalStatus: findUser.approvalStatus || (findUser.role === "super_admin" ? "Approved" : "Pending Form"),
+                approvalStatus: findUser.approvalStatus || (findUser.role === "super_admin" || findUser.role === "admin" ? "Approved" : "Pending Form"),
                 approvalSubmission: findUser.approvalSubmission,
                 mustChangePassword: findUser.mustChangePassword,
                 permissions,
@@ -463,6 +467,9 @@ async function fetchUser(req, res) {
         delete userObj.password;
         delete userObj.sessions;
         userObj.permissions = permissions;
+        if (userObj.role === "super_admin" || userObj.role === "admin") {
+            userObj.approvalStatus = "Approved";
+        }
 
         return res.send({ status: 1, user: userObj });
     } catch (err) {

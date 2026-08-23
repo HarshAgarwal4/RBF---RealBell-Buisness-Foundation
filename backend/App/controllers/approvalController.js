@@ -250,9 +250,17 @@ export async function getMyApprovalStatus(req, res) {
       }
     }
 
+    const isExempt = user.role === "super_admin" || user.role === "admin";
+    if (isExempt && user.approvalStatus !== "Approved") {
+      user.approvalStatus = "Approved";
+      await user.save();
+    }
+
+    const currentStatus = isExempt ? "Approved" : (user.approvalStatus || submission.status || "Pending Form");
+
     return res.status(200).json({
       status: 1,
-      approvalStatus: user.approvalStatus || submission.status || "Pending Form",
+      approvalStatus: currentStatus,
       user: {
         _id: user._id,
         name: user.name,
@@ -262,7 +270,7 @@ export async function getMyApprovalStatus(req, res) {
         company_type: user.company_type,
         investing_as: user.investing_as,
         role: user.role,
-        approvalStatus: user.approvalStatus || submission.status || "Pending Form",
+        approvalStatus: currentStatus,
       },
       form,
       submission,

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout.jsx";
 import axios from "../../services/axios.jsx";
 import { toast } from "react-toastify";
+import { useStore } from "../../zustand/store.jsx";
+import { hasPermission, isSuperAdmin } from "../../utils/rbac.js";
+import { Link } from "react-router-dom";
 import {
   ShieldCheck,
   Search,
@@ -31,9 +32,15 @@ import {
   ArrowUpDown,
   History,
   MessageSquare,
+  Lock,
 } from "lucide-react";
+import { useState, useCallback , useEffect } from "react";
 
 export default function AdminApprovals() {
+  const currentUser = useStore((state) => state.user);
+  const canReview = isSuperAdmin(currentUser) || hasPermission(currentUser, "approvals.review");
+  const canManageForms = isSuperAdmin(currentUser) || hasPermission(currentUser, "approvals.manage_forms");
+
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -222,15 +229,17 @@ export default function AdminApprovals() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Link
-              to="/admin/approval-forms"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition shadow-sm cursor-pointer"
-            >
-              <Sliders className="w-4 h-4" />
-              <span>Approval Form Builder</span>
-            </Link>
-          </div>
+          {canManageForms && (
+            <div className="flex items-center gap-2.5">
+              <Link
+                to="/admin/approval-forms"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition shadow-sm cursor-pointer"
+              >
+                <Sliders className="w-4 h-4" />
+                <span>Approval Form Builder</span>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* METRICS COUNTER CARDS */}
@@ -698,58 +707,65 @@ export default function AdminApprovals() {
                 Close View
               </button>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActionModal({
-                      open: true,
-                      type: "REQUEST_CHANGES",
-                      reasonOrFeedback: "",
-                      comment: "",
-                      submitting: false,
-                    })
-                  }
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-xs font-bold transition cursor-pointer"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Request Changes</span>
-                </button>
+              {canReview ? (
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActionModal({
+                        open: true,
+                        type: "REQUEST_CHANGES",
+                        reasonOrFeedback: "",
+                        comment: "",
+                        submitting: false,
+                      })
+                    }
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-xs font-bold transition cursor-pointer"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Request Changes</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActionModal({
-                      open: true,
-                      type: "REJECT",
-                      reasonOrFeedback: "",
-                      comment: "",
-                      submitting: false,
-                    })
-                  }
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-bold transition cursor-pointer"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  <span>Reject</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActionModal({
+                        open: true,
+                        type: "REJECT",
+                        reasonOrFeedback: "",
+                        comment: "",
+                        submitting: false,
+                      })
+                    }
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-bold transition cursor-pointer"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Reject</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActionModal({
-                      open: true,
-                      type: "APPROVE",
-                      reasonOrFeedback: "",
-                      comment: "All credentials and incorporation documentation verified.",
-                      submitting: false,
-                    })
-                  }
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md shadow-emerald-600/20 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Approve Access</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActionModal({
+                        open: true,
+                        type: "APPROVE",
+                        reasonOrFeedback: "",
+                        comment: "All credentials and incorporation documentation verified.",
+                        submitting: false,
+                      })
+                    }
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md shadow-emerald-600/20 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Approve Access</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-medium border border-slate-700">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Read-only Mode (Review privileges restricted)</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

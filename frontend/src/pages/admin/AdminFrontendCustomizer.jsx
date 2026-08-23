@@ -3,6 +3,7 @@ import AdminLayout from "./AdminLayout";
 import axios from "../../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../../zustand/store";
+import { hasPermission, isSuperAdmin } from "../../utils/rbac";
 import {
   Sparkles,
   Save,
@@ -29,6 +30,7 @@ import {
   MapPin,
   Eye,
   RefreshCw,
+  Lock,
 } from "lucide-react";
 
 const PAGES_CONFIG = [
@@ -97,6 +99,9 @@ const HOME_SUBTABS = [
 ];
 
 export default function AdminFrontendCustomizer() {
+  const currentUser = useStore((state) => state.user);
+  const canEdit = isSuperAdmin(currentUser) || hasPermission(currentUser, "frontend_customizer.update") || hasPermission(currentUser, "theme.manage");
+
   const [selectedPageKey, setSelectedPageKey] = useState("home");
   const [homeSubTab, setHomeSubTab] = useState("hero");
   const [pageData, setPageData] = useState(null);
@@ -158,6 +163,10 @@ export default function AdminFrontendCustomizer() {
   };
 
   const handleSave = async () => {
+    if (!canEdit) {
+      toast.error("You do not have permission to modify or publish page content.");
+      return;
+    }
     if (!pageData) return;
     setIsSaving(true);
     try {
@@ -192,6 +201,10 @@ export default function AdminFrontendCustomizer() {
   };
 
   const handleReset = async () => {
+    if (!canEdit) {
+      toast.error("You do not have permission to reset page content.");
+      return;
+    }
     const activePageObj = PAGES_CONFIG.find((p) => p.key === selectedPageKey);
     const pageName = activePageObj ? activePageObj.title : selectedPageKey;
 
@@ -221,12 +234,12 @@ export default function AdminFrontendCustomizer() {
         if (res.data.page.data) {
           setPageContent(selectedPageKey, res.data.page.data);
         }
-        toast.info(`"${pageName}" has been reset to default preset!`);
+        toast.success(`'${pageName}' reset to factory defaults.`);
       } else {
-        toast.error(res.data?.msg || "Failed to reset page");
+        toast.error(res.data?.msg || "Failed to reset page content");
       }
     } catch (err) {
-      console.error("Error resetting page:", err);
+      console.error("Error resetting page content:", err);
       toast.error("Server error while resetting page");
     } finally {
       setIsResetting(false);
@@ -266,27 +279,36 @@ export default function AdminFrontendCustomizer() {
               </a>
             )}
 
-            <button
-              onClick={handleReset}
-              disabled={isResetting || isLoading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition hover:scale-[1.02] disabled:opacity-50"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? "animate-spin" : ""}`} />
-              Reset Default
-            </button>
+            {canEdit ? (
+              <>
+                <button
+                  onClick={handleReset}
+                  disabled={isResetting || isLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? "animate-spin" : ""}`} />
+                  Reset Default
+                </button>
 
-            <button
-              onClick={handleSave}
-              disabled={isSaving || isLoading}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-lg hover:scale-[1.02] disabled:opacity-50 ${
-                hasUnsavedChanges
-                  ? "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white shadow-amber-900/30"
-                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/30"
-              }`}
-            >
-              <Save className={`w-4 h-4 ${isSaving ? "animate-spin" : ""}`} />
-              {isSaving ? "Publishing..." : hasUnsavedChanges ? "Publish Changes *" : "Save & Publish"}
-            </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || isLoading}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-lg hover:scale-[1.02] disabled:opacity-50 cursor-pointer ${
+                    hasUnsavedChanges
+                      ? "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white shadow-amber-900/30"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/30"
+                  }`}
+                >
+                  <Save className={`w-4 h-4 ${isSaving ? "animate-spin" : ""}`} />
+                  {isSaving ? "Publishing..." : hasUnsavedChanges ? "Publish Changes *" : "Save & Publish"}
+                </button>
+              </>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-semibold border border-slate-700">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Read-Only Mode (Edit restricted by Super Admin)</span>
+              </div>
+            )}
           </div>
         </div>
 

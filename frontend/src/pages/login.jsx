@@ -235,7 +235,7 @@ export default function LoginPage() {
         if (status === 1) {
           toast.success(msg || "Login successful");
           const loggedInUser = await fetchUser();
-          if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.approvalStatus !== "Approved") {
+          if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.role !== "admin" && loggedInUser.approvalStatus !== "Approved") {
             navigate("/approval-center");
           } else {
             navigate("/dashboard");
@@ -405,7 +405,7 @@ export default function LoginPage() {
       if (status === 1) {
         toast.success(msg || "Login successful");
         const loggedInUser = await fetchUser();
-        if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.approvalStatus !== "Approved") {
+        if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.role !== "admin" && loggedInUser.approvalStatus !== "Approved") {
           navigate("/approval-center");
         } else {
           navigate("/dashboard");

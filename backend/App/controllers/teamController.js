@@ -51,6 +51,8 @@ const DEFAULT_TEAMS = [
       "tickets.update",
       "community.view",
       "community.moderate",
+      "approvals.view",
+      "approvals.review",
       "analytics.view",
       "reports.view",
     ],
@@ -156,6 +158,10 @@ export async function getTeams(req, res) {
  */
 export async function createTeam(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can create teams and configure RBAC permissions" });
+    }
+
     const { name, description, department, leader, permissions, status } = req.body;
 
     if (!name || !name.trim()) {
@@ -223,6 +229,10 @@ export async function createTeam(req, res) {
  */
 export async function updateTeam(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can modify teams and assign RBAC permissions" });
+    }
+
     const { id } = req.params;
     const { name, description, department, leader, permissions, status } = req.body;
 
@@ -285,6 +295,10 @@ export async function updateTeam(req, res) {
  */
 export async function deleteTeam(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can delete teams" });
+    }
+
     const { id } = req.params;
     const { reassignToTeamId } = req.body;
 

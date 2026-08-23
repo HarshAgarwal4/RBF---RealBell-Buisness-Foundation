@@ -100,8 +100,8 @@ async function isLoggedIn(req, res, next) {
           if (hasSession) {
             req.user = findUser;
 
-            // Auto-grant approval for super_admin
-            if (findUser.role === "super_admin" && findUser.approvalStatus !== "Approved") {
+            // Auto-grant approval for super_admin & admin
+            if ((findUser.role === "super_admin" || findUser.role === "admin") && findUser.approvalStatus !== "Approved") {
               findUser.approvalStatus = "Approved";
               await findUser.save();
             }
@@ -109,6 +109,7 @@ async function isLoggedIn(req, res, next) {
             // Enforce Approval restriction on protected dashboard APIs
             if (
               findUser.role !== "super_admin" &&
+              findUser.role !== "admin" &&
               findUser.approvalStatus !== "Approved" &&
               !isPublicRoute(req) &&
               !isAllowedDuringApproval(req)

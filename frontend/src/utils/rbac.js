@@ -30,6 +30,14 @@ export function getUserPermissions(user) {
     }
   }
 
+  // If customRole object is populated with permissions
+  if (user.customRole && typeof user.customRole === "object") {
+    if (user.customRole.status === "inactive") return [];
+    if (Array.isArray(user.customRole.permissions)) {
+      return user.customRole.permissions;
+    }
+  }
+
   return [];
 }
 

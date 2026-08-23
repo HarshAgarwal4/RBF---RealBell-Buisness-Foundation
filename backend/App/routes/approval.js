@@ -28,45 +28,45 @@ approvalRouter.post(
   uploadApprovalDocument
 );
 
-// Super Admin / Reviewer Endpoints
+// Super Admin / Reviewer Endpoints (Protected by RBAC)
 approvalRouter.get(
   "/stats",
-  authorize(["teams.view", "users.view"]),
+  authorize(["approvals.view", "approvals.review"]),
   getApprovalStats
 );
 approvalRouter.get(
   "/forms",
-  authorize(["teams.view", "users.view"]),
+  authorize(["approvals.view", "approvals.manage_forms"]),
   getApprovalForms
 );
 approvalRouter.get(
   "/forms/:id",
-  authorize(["teams.view", "users.view"]),
+  authorize(["approvals.view", "approvals.manage_forms"]),
   getApprovalFormById
 );
 approvalRouter.post(
   "/forms",
-  authorize(["teams.view", "users.view"]),
+  authorize("approvals.manage_forms"),
   saveApprovalForm
 );
 approvalRouter.delete(
   "/forms/:id",
-  authorize(["teams.view", "users.view"]),
+  authorize("approvals.manage_forms"),
   deleteApprovalForm
 );
 approvalRouter.get(
   "/applications",
-  authorize(["teams.view", "users.view"]),
+  authorize("approvals.view"),
   getApprovalApplications
 );
 approvalRouter.get(
   "/applications/:id",
-  authorize(["teams.view", "users.view"]),
+  authorize("approvals.view"),
   getApplicationDetails
 );
 approvalRouter.post(
   "/applications/:id/review",
-  authorize(["teams.view", "users.view"]),
+  authorize("approvals.review"),
   reviewApplication
 );
 

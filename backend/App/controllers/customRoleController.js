@@ -22,6 +22,8 @@ const DEFAULT_RBAC_ROLES = [
       "tickets.update",
       "community.view",
       "community.moderate",
+      "approvals.view",
+      "approvals.review",
       "analytics.view",
       "reports.view",
     ],
@@ -130,6 +132,10 @@ export async function getCustomRoles(req, res) {
  */
 export async function createCustomRole(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can create custom RBAC roles" });
+    }
+
     const { name, description, team, permissions, status } = req.body;
 
     if (!name || !name.trim()) {
@@ -197,6 +203,10 @@ export async function createCustomRole(req, res) {
  */
 export async function updateCustomRole(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can update custom RBAC roles" });
+    }
+
     const { id } = req.params;
     const { name, description, team, permissions, status } = req.body;
 
@@ -258,6 +268,10 @@ export async function updateCustomRole(req, res) {
  */
 export async function deleteCustomRole(req, res) {
   try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ status: 0, msg: "Access Forbidden: Only Super Admins can delete custom RBAC roles" });
+    }
+
     const { id } = req.params;
     const { reassignToRoleId } = req.body;
 

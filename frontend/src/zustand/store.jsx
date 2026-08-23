@@ -105,18 +105,20 @@ export const useStore = create((set, get) => ({
             if (r.status === 200) {
                 if (r.data.status === 0) {
                     set({ user: null });
-                    return;
+                    return null;
                 }
                 if (r.data.status === 1) {
                     if (!silent) {
                         toast.success("Welcome again");
                     }
                     set({ user: r.data.user });
-                    return;
+                    return r.data.user;
                 }
             }
+            return null;
         } catch (err) {
             console.error(err);
+            return null;
         }
     },
 
