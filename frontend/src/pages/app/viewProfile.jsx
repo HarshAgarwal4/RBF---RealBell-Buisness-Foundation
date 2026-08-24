@@ -346,11 +346,11 @@ export default function ViewProfile() {
                 <div className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 xl:px-10">
                         <Link
-                            to={`/connect/${type}`}
+                            to={type ? `/connect/${type}` : "/connections"}
                             className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                         >
                             <ArrowLeft size={15} />
-                            Back to {type}
+                            {type ? `Back to ${type}` : "Back to Connections"}
                         </Link>
 
                         <div className="flex items-center gap-2 self-start sm:self-auto">

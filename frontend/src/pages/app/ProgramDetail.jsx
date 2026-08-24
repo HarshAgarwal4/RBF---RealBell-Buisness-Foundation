@@ -42,7 +42,7 @@ function FaqItem({ question, answer }) {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "16px 22px",
-          background: open ? `${COLORS.primary}06` : "#fff",
+          background: open ? `${COLORS.primary}12` : COLORS.card,
           border: "none",
           cursor: "pointer",
           textAlign: "left",
@@ -68,7 +68,7 @@ function FaqItem({ question, answer }) {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: open ? COLORS.primary : "#F2F4F7",
+            background: open ? COLORS.primary : "rgba(100, 116, 139, 0.15)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -97,9 +97,9 @@ function FaqItem({ question, answer }) {
           style={{
             padding: "16px 22px 20px",
             fontSize: 14.5,
-            color: "#555",
+            color: COLORS.textSubtle,
             lineHeight: 1.72,
-            background: "#FAFAFA",
+            background: "rgba(100, 116, 139, 0.05)",
             borderTop: `1px solid ${COLORS.border}`,
             whiteSpace: "pre-wrap",
           }}
@@ -189,7 +189,7 @@ const mdComponents = {
     <h3 style={{ fontSize: 15.5, fontWeight: 700, color: COLORS.ink, margin: "16px 0 5px" }}>{children}</h3>
   ),
   p: ({ children }) => (
-    <p style={{ fontSize: 15, color: "#4A4A5A", lineHeight: 1.78, margin: "8px 0" }}>{children}</p>
+    <p style={{ fontSize: 15, color: COLORS.textSubtle, lineHeight: 1.78, margin: "8px 0" }}>{children}</p>
   ),
   ul: ({ children }) => (
     <ul style={{ paddingLeft: 22, margin: "8px 0" }}>{children}</ul>
@@ -198,16 +198,16 @@ const mdComponents = {
     <ol style={{ paddingLeft: 22, margin: "8px 0" }}>{children}</ol>
   ),
   li: ({ children }) => (
-    <li style={{ fontSize: 15, color: "#4A4A5A", lineHeight: 1.75, marginBottom: 4 }}>{children}</li>
+    <li style={{ fontSize: 15, color: COLORS.textSubtle, lineHeight: 1.75, marginBottom: 4 }}>{children}</li>
   ),
   strong: ({ children }) => (
     <strong style={{ color: COLORS.ink, fontWeight: 700 }}>{children}</strong>
   ),
   em: ({ children }) => (
-    <em style={{ color: "#666", fontStyle: "italic" }}>{children}</em>
+    <em style={{ color: COLORS.muted, fontStyle: "italic" }}>{children}</em>
   ),
   blockquote: ({ children }) => (
-    <blockquote style={{ borderLeft: `3.5px solid ${COLORS.primary}`, paddingLeft: 16, margin: "14px 0", color: "#666", background: `${COLORS.primary}05`, padding: "12px 16px", borderRadius: "0 8px 8px 0" }}>
+    <blockquote style={{ borderLeft: `3.5px solid ${COLORS.primary}`, paddingLeft: 16, margin: "14px 0", color: COLORS.textSubtle, background: `${COLORS.primary}12`, padding: "12px 16px", borderRadius: "0 8px 8px 0" }}>
       {children}
     </blockquote>
   ),
@@ -223,9 +223,9 @@ const mdComponents = {
    Application status config
 ══════════════════════════════════════ */
 const appStatusConfig = {
-  pending: { icon: Hourglass, color: "#E65100", bg: "#FFF3E0", border: "#FFCC80", label: "Application Pending Review" },
-  approved: { icon: CheckCircle, color: "#2E7D32", bg: "#E8F5E9", border: "#A5D6A7", label: "Application Approved! 🎉" },
-  rejected: { icon: XCircle, color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A", label: "Application Not Approved" },
+  pending: { icon: Hourglass, color: "#fb923c", bg: "rgba(230, 81, 0, 0.2)", border: "rgba(251, 146, 60, 0.4)", label: "Application Pending Review" },
+  approved: { icon: CheckCircle, color: "#4ade80", bg: "rgba(46, 125, 50, 0.2)", border: "rgba(74, 222, 128, 0.4)", label: "Application Approved! 🎉" },
+  rejected: { icon: XCircle, color: "#f87171", bg: "rgba(198, 40, 40, 0.2)", border: "rgba(248, 113, 113, 0.4)", label: "Application Not Approved" },
 };
 
 /* ══════════════════════════════════════
@@ -266,13 +266,13 @@ export default function ProgramDetail() {
   const canApply = !myApplication && !isExpired;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Sidebar />
 
       <main className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0">
 
         {/* ── Sticky top nav bar ── */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="sticky top-0 z-20 bg-white/95 dark:bg-[#151D2E]/95 backdrop-blur border-b border-gray-200 dark:border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             onClick={() => navigate("/programs")}
             style={{
@@ -290,7 +290,7 @@ export default function ProgramDetail() {
               borderRadius: 8,
               transition: "background 0.15s, color 0.15s",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#F2F4F7"; e.currentTarget.style.color = COLORS.ink; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(100, 116, 139, 0.1)"; e.currentTarget.style.color = COLORS.ink; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = COLORS.muted; }}
           >
             <ArrowLeft size={15} /> Back to Programs
@@ -347,7 +347,7 @@ export default function ProgramDetail() {
         ) : !program ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 12, color: COLORS.muted }}>
             <Award size={40} color={COLORS.border} />
-            <div style={{ fontWeight: 600, fontSize: 16 }}>Program not found.</div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: COLORS.ink }}>Program not found.</div>
           </div>
         ) : (
           <>
@@ -472,7 +472,6 @@ export default function ProgramDetail() {
             {/* ════════════════════════════
                 BODY — two-column layout
             ════════════════════════════ */}
-            {/* BODY — two-column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 sm:gap-8 px-4 py-6 sm:px-6 lg:px-10 max-w-7xl mx-auto min-w-0 overflow-hidden">
               {/* ── Left column: main content ── */}
               <div style={{ minWidth: 0 }}>
@@ -506,7 +505,7 @@ export default function ProgramDetail() {
                 {/* Program Details content card */}
                 <div
                   style={{
-                    background: "#fff",
+                    background: COLORS.card,
                     borderRadius: 18,
                     border: `1px solid ${COLORS.border}`,
                     overflow: "hidden",
@@ -613,7 +612,7 @@ export default function ProgramDetail() {
                 {/* Quick info card */}
                 <div
                   style={{
-                    background: "#fff",
+                    background: COLORS.card,
                     borderRadius: 16,
                     border: `1px solid ${COLORS.border}`,
                     padding: "20px",
@@ -627,18 +626,18 @@ export default function ProgramDetail() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
                     {deadline && (
                       <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 9, background: isExpired ? "#FFEBEE" : `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <CalendarClock size={16} color={isExpired ? "#C62828" : COLORS.primary} />
+                        <div style={{ width: 34, height: 34, borderRadius: 9, background: isExpired ? "rgba(198, 40, 40, 0.2)" : `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <CalendarClock size={16} color={isExpired ? "#f87171" : COLORS.primary} />
                         </div>
                         <div>
                           <div style={{ fontSize: 11.5, color: COLORS.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Application Deadline
                           </div>
-                          <div style={{ fontSize: 13.5, color: isExpired ? "#C62828" : COLORS.ink, fontWeight: 600, marginTop: 2 }}>
+                          <div style={{ fontSize: 13.5, color: isExpired ? "#f87171" : COLORS.ink, fontWeight: 600, marginTop: 2 }}>
                             {isExpired ? "Closed" : deadline.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
                           </div>
                           {daysLeft && (
-                            <div style={{ fontSize: 12, color: daysLeft <= 3 ? "#E65100" : COLORS.muted, marginTop: 2 }}>
+                            <div style={{ fontSize: 12, color: daysLeft <= 3 ? "#fb923c" : COLORS.muted, marginTop: 2 }}>
                               {daysLeft} day{daysLeft !== 1 ? "s" : ""} remaining
                             </div>
                           )}
@@ -648,7 +647,7 @@ export default function ProgramDetail() {
 
                     {program.created_by && (
                       <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Award size={16} color={COLORS.primary} />
                         </div>
                         <div>
@@ -664,7 +663,7 @@ export default function ProgramDetail() {
 
                     {program.tags?.length > 0 && (
                       <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Tag size={15} color={COLORS.primary} />
                         </div>
                         <div>
@@ -676,7 +675,7 @@ export default function ProgramDetail() {
                               <span
                                 key={t}
                                 style={{
-                                  background: `${COLORS.primary}10`,
+                                  background: `${COLORS.primary}15`,
                                   color: COLORS.primary,
                                   fontSize: 11.5,
                                   fontWeight: 600,
@@ -723,7 +722,7 @@ export default function ProgramDetail() {
                 {program.external_links?.length > 0 && (
                   <div
                     style={{
-                      background: "#fff",
+                      background: COLORS.card,
                       borderRadius: 16,
                       border: `1px solid ${COLORS.border}`,
                       padding: "20px",
@@ -764,15 +763,15 @@ export default function ProgramDetail() {
                             fontSize: 13.5,
                             fontWeight: 600,
                             transition: "all 0.15s",
-                            background: "#FAFBFC",
+                            background: "rgba(100, 116, 139, 0.08)",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = `${COLORS.primary}08`;
+                            e.currentTarget.style.background = `${COLORS.primary}12`;
                             e.currentTarget.style.borderColor = `${COLORS.primary}40`;
                             e.currentTarget.style.color = COLORS.primary;
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#FAFBFC";
+                            e.currentTarget.style.background = "rgba(100, 116, 139, 0.08)";
                             e.currentTarget.style.borderColor = COLORS.border;
                             e.currentTarget.style.color = COLORS.ink;
                           }}

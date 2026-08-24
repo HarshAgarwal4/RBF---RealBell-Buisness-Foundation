@@ -152,7 +152,7 @@ export default function Events() {
       );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F4F6F9" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
 
       <main
@@ -162,14 +162,14 @@ export default function Events() {
         }}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="sticky top-0 z-10 bg-white dark:bg-[#151D2E] border-b border-gray-200 dark:border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
-              Events & Workshops
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
+              Events &amp; Workshops
             </h1>
           </div>
 
-          <div className="flex items-center gap-2.5 bg-[#F7F8FA] border border-gray-200 rounded-xl px-3.5 py-2 w-full sm:w-72">
+          <div className="flex items-center gap-2.5 bg-[#F7F8FA] dark:bg-[#1E293B] border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2 w-full sm:w-72">
             <Search size={15} color={COLORS.muted} className="shrink-0" />
             <input
               value={search}
@@ -194,7 +194,7 @@ export default function Events() {
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 16,
                 border: `1px solid ${COLORS.border}`,
                 padding: "24px 28px",
@@ -213,22 +213,22 @@ export default function Events() {
                   {monthNames[month]} {year}
                 </div>
 
-                <div className="flex items-center gap-1 bg-[#EBECEF] rounded-xl p-1 self-start sm:self-auto">
+                <div className="flex items-center gap-1 bg-[#EBECEF] dark:bg-[#1E293B] rounded-xl p-1 self-start sm:self-auto">
                   <button
                     onClick={prevMonth}
-                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] hover:bg-white/50 transition cursor-pointer"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Previous
                   </button>
                   <button
                     onClick={goToday}
-                    className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] bg-white shadow-xs transition cursor-pointer"
+                    className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] dark:text-slate-100 bg-white dark:bg-[#151D2E] shadow-xs transition cursor-pointer"
                   >
                     Today
                   </button>
                   <button
                     onClick={nextMonth}
-                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] hover:bg-white/50 transition cursor-pointer"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-[#4A4A5A] dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Next
                   </button>
@@ -236,7 +236,7 @@ export default function Events() {
               </div>
 
               {/* Day Headers */}
-              <div className="grid grid-cols-7 text-center font-bold text-[10px] sm:text-xs md:text-sm text-gray-700 mb-2">
+              <div className="grid grid-cols-7 text-center font-bold text-[10px] sm:text-xs md:text-sm text-gray-700 dark:text-slate-300 mb-2">
                 {daysOfWeek.map((day) => (
                   <div key={day} className="py-1.5">
                     {day}
@@ -279,12 +279,12 @@ export default function Events() {
                         borderRight: `1px solid ${COLORS.border}`,
                         borderBottom: `1px solid ${COLORS.border}`,
                         background: isSelected
-                          ? `${COLORS.primary}12`
+                          ? `${COLORS.primary}25`
                           : isToday
-                          ? "#F3F4F6"
+                          ? "rgba(142, 27, 46, 0.1)"
                           : cell.isCurrentMonth
-                          ? "#fff"
-                          : "#FAFAFA",
+                          ? COLORS.card
+                          : "rgba(100, 116, 139, 0.05)",
                         cursor: dayEvents.length > 0 ? "pointer" : "default",
                       }}
                     >
@@ -292,10 +292,10 @@ export default function Events() {
                         className="text-xs sm:text-sm font-semibold mb-1 text-right"
                         style={{
                           color: !cell.isCurrentMonth
-                            ? "#D1D5DB"
+                            ? COLORS.muted
                             : isToday
                             ? COLORS.primary
-                            : "#1F2937",
+                            : COLORS.ink,
                         }}
                       >
                         {cell.day}
@@ -394,7 +394,7 @@ export default function Events() {
               ) : displayEvents.length === 0 ? (
                 <div
                   style={{
-                    background: "#fff",
+                    background: COLORS.card,
                     borderRadius: 14,
                     border: `1px solid ${COLORS.border}`,
                     padding: "36px",
@@ -423,7 +423,7 @@ export default function Events() {
                         key={event._id}
                         onClick={() => navigate(`/events/${event._id}`)}
                         style={{
-                          background: "#fff",
+                          background: COLORS.card,
                           borderRadius: 14,
                           border: `1px solid ${COLORS.border}`,
                           overflow: "hidden",
@@ -434,7 +434,7 @@ export default function Events() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "translateY(-3px)";
-                          e.currentTarget.style.boxShadow = "0 10px 24px rgba(0,0,0,0.08)";
+                          e.currentTarget.style.boxShadow = "0 10px 24px rgba(0,0,0,0.18)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = "translateY(0)";
@@ -455,8 +455,8 @@ export default function Events() {
                               position: "absolute",
                               top: 10,
                               right: 10,
-                              background: event.event_type === "free" ? "#E8F5E9" : `${COLORS.primary}18`,
-                              color: event.event_type === "free" ? "#2E7D32" : COLORS.primary,
+                              background: event.event_type === "free" ? "rgba(46, 125, 50, 0.2)" : `${COLORS.primary}25`,
+                              color: event.event_type === "free" ? "#4ade80" : COLORS.primary,
                               fontSize: 11,
                               fontWeight: 800,
                               padding: "3px 10px",
@@ -549,12 +549,12 @@ export default function Events() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Sidebar Cards matching screenshot */}
+          {/* RIGHT COLUMN: Sidebar Cards */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {/* Card 1: Events you are attending */}
             <div
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 16,
                 border: `1px solid ${COLORS.border}`,
                 padding: "24px 20px",
@@ -576,7 +576,7 @@ export default function Events() {
               {myRegistrations.length === 0 ? (
                 <div
                   style={{
-                    background: "#F7F8FA",
+                    background: "rgba(100, 116, 139, 0.08)",
                     borderRadius: 10,
                     padding: "22px 16px",
                     textAlign: "center",
@@ -604,13 +604,13 @@ export default function Events() {
                           gap: 12,
                           padding: "12px 14px",
                           borderRadius: 12,
-                          background: "#F7F8FA",
+                          background: "rgba(100, 116, 139, 0.08)",
                           border: `1px solid ${COLORS.border}`,
                           cursor: "pointer",
                           transition: "background 0.15s",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF1F5")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(142, 27, 46, 0.12)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(100, 116, 139, 0.08)")}
                       >
                         <div
                           style={{
@@ -675,7 +675,7 @@ export default function Events() {
             {/* Card 2: Events happening this week */}
             <div
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 16,
                 border: `1px solid ${COLORS.border}`,
                 padding: "24px 20px",
@@ -697,7 +697,7 @@ export default function Events() {
               {eventsThisWeek.length === 0 ? (
                 <div
                   style={{
-                    background: "#F7F8FA",
+                    background: "rgba(100, 116, 139, 0.08)",
                     borderRadius: 10,
                     padding: "22px 16px",
                     textAlign: "center",
@@ -719,7 +719,7 @@ export default function Events() {
                         style={{
                           padding: "12px 14px",
                           borderRadius: 12,
-                          background: "#F7F8FA",
+                          background: "rgba(100, 116, 139, 0.08)",
                           border: `1px solid ${COLORS.border}`,
                           cursor: "pointer",
                         }}

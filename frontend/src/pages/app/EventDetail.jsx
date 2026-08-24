@@ -46,7 +46,7 @@ function FaqItem({ question, answer }) {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "16px 22px",
-          background: open ? `${COLORS.primary}06` : "#fff",
+          background: open ? `${COLORS.primary}12` : COLORS.card,
           border: "none",
           cursor: "pointer",
           textAlign: "left",
@@ -72,7 +72,7 @@ function FaqItem({ question, answer }) {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: open ? COLORS.primary : "#F2F4F7",
+            background: open ? COLORS.primary : "rgba(100, 116, 139, 0.15)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -101,9 +101,9 @@ function FaqItem({ question, answer }) {
           style={{
             padding: "16px 22px 20px",
             fontSize: 14.5,
-            color: "#555",
+            color: COLORS.textSubtle,
             lineHeight: 1.72,
-            background: "#FAFAFA",
+            background: "rgba(100, 116, 139, 0.05)",
             borderTop: `1px solid ${COLORS.border}`,
             whiteSpace: "pre-wrap",
           }}
@@ -192,7 +192,7 @@ const mdComponents = {
     <h3 style={{ fontSize: 15.5, fontWeight: 700, color: COLORS.ink, margin: "16px 0 5px" }}>{children}</h3>
   ),
   p: ({ children }) => (
-    <p style={{ fontSize: 15, color: "#4A4A5A", lineHeight: 1.78, margin: "8px 0" }}>{children}</p>
+    <p style={{ fontSize: 15, color: COLORS.textSubtle, lineHeight: 1.78, margin: "8px 0" }}>{children}</p>
   ),
   ul: ({ children }) => (
     <ul style={{ paddingLeft: 22, margin: "8px 0" }}>{children}</ul>
@@ -201,13 +201,13 @@ const mdComponents = {
     <ol style={{ paddingLeft: 22, margin: "8px 0" }}>{children}</ol>
   ),
   li: ({ children }) => (
-    <li style={{ fontSize: 15, color: "#4A4A5A", lineHeight: 1.75, marginBottom: 4 }}>{children}</li>
+    <li style={{ fontSize: 15, color: COLORS.textSubtle, lineHeight: 1.75, marginBottom: 4 }}>{children}</li>
   ),
   strong: ({ children }) => (
     <strong style={{ color: COLORS.ink, fontWeight: 700 }}>{children}</strong>
   ),
   blockquote: ({ children }) => (
-    <blockquote style={{ borderLeft: `3.5px solid ${COLORS.primary}`, paddingLeft: 16, margin: "14px 0", color: "#666", background: `${COLORS.primary}05`, padding: "12px 16px", borderRadius: "0 8px 8px 0" }}>
+    <blockquote style={{ borderLeft: `3.5px solid ${COLORS.primary}`, paddingLeft: 16, margin: "14px 0", color: COLORS.textSubtle, background: `${COLORS.primary}12`, padding: "12px 16px", borderRadius: "0 8px 8px 0" }}>
       {children}
     </blockquote>
   ),
@@ -247,12 +247,12 @@ export default function EventDetail() {
   const canRegister = Boolean(event && !myRegistration && !isExpired && !isSoldOut);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Sidebar />
 
       <main className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0">
         {/* Sticky top nav bar */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="sticky top-0 z-20 bg-white/95 dark:bg-[#151D2E]/95 backdrop-blur border-b border-gray-200 dark:border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             onClick={() => navigate("/events")}
             style={{
@@ -280,9 +280,9 @@ export default function EventDetail() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  background: "#E8F5E9",
-                  color: "#2E7D32",
-                  border: "1px solid #A5D6A7",
+                  background: "rgba(46, 125, 50, 0.2)",
+                  color: "#4ade80",
+                  border: "1px solid rgba(74, 222, 128, 0.4)",
                   fontSize: 13,
                   fontWeight: 700,
                   padding: "6px 16px",
@@ -321,7 +321,7 @@ export default function EventDetail() {
         ) : !event ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 12 }}>
             <TicketIcon size={40} color={COLORS.border} />
-            <div style={{ fontWeight: 600, fontSize: 16 }}>Event not found.</div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: COLORS.ink }}>Event not found.</div>
           </div>
         ) : (
           <>
@@ -417,8 +417,8 @@ export default function EventDetail() {
                 {myRegistration && (
                   <div
                     style={{
-                      background: "#E8F5E9",
-                      border: "1px solid #A5D6A7",
+                      background: "rgba(46, 125, 50, 0.15)",
+                      border: "1px solid rgba(74, 222, 128, 0.4)",
                       borderRadius: 14,
                       padding: "16px 22px",
                       marginBottom: 20,
@@ -427,12 +427,12 @@ export default function EventDetail() {
                       gap: 12,
                     }}
                   >
-                    <CheckCircle size={22} color="#2E7D32" />
+                    <CheckCircle size={22} color="#4ade80" />
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "#2E7D32" }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "#4ade80" }}>
                         You are registered for this event! 🎉
                       </div>
-                      <div style={{ fontSize: 13, color: "#2E7D32", marginTop: 2 }}>
+                      <div style={{ fontSize: 13, color: "#4ade80", marginTop: 2 }}>
                         Ticket Number: <strong>{myRegistration.ticket_number}</strong>
                       </div>
                     </div>
@@ -441,7 +441,7 @@ export default function EventDetail() {
 
                 <div
                   style={{
-                    background: "#fff",
+                    background: COLORS.card,
                     borderRadius: 18,
                     border: `1px solid ${COLORS.border}`,
                     overflow: "hidden",
@@ -496,7 +496,7 @@ export default function EventDetail() {
                 {/* Event Summary Card */}
                 <div
                   style={{
-                    background: "#fff",
+                    background: COLORS.card,
                     borderRadius: 16,
                     border: `1px solid ${COLORS.border}`,
                     padding: "20px",
@@ -510,7 +510,7 @@ export default function EventDetail() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {/* Date & Time */}
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Calendar size={16} color={COLORS.primary} />
                       </div>
                       <div>
@@ -526,7 +526,7 @@ export default function EventDetail() {
 
                     {/* Location */}
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <MapPin size={16} color={COLORS.primary} />
                       </div>
                       <div>
@@ -544,7 +544,7 @@ export default function EventDetail() {
 
                     {/* Pricing */}
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: `${COLORS.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <TicketIcon size={16} color={COLORS.primary} />
                       </div>
                       <div>
@@ -582,7 +582,7 @@ export default function EventDetail() {
                 {event.external_links?.length > 0 && (
                   <div
                     style={{
-                      background: "#fff",
+                      background: COLORS.card,
                       borderRadius: 16,
                       border: `1px solid ${COLORS.border}`,
                       padding: "20px",
@@ -604,7 +604,7 @@ export default function EventDetail() {
                             justifyContent: "space-between",
                             padding: "10px 12px",
                             borderRadius: 8,
-                            background: "#F7F8FA",
+                            background: "rgba(100, 116, 139, 0.08)",
                             border: `1px solid ${COLORS.border}`,
                             color: COLORS.primary,
                             fontWeight: 600,

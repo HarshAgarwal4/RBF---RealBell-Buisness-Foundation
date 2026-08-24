@@ -33,7 +33,7 @@ function VideoCard({ item, isAdmin, onDelete }) {
 
   return (
     <div
-      style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid #F0F0F5", display: "flex", flexDirection: "column", transition: "box-shadow 0.15s, transform 0.15s" }}
+      style={{ background: COLORS.card, borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column", transition: "box-shadow 0.15s, transform 0.15s" }}
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.13)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.07)"; e.currentTarget.style.transform = "none"; }}
     >
@@ -58,14 +58,14 @@ function VideoCard({ item, isAdmin, onDelete }) {
         )}
       </div>
       <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a2e", lineHeight: 1.4 }}>{item.title}</div>
-        {item.courtesy && <div style={{ fontSize: 12.5, color: "#777" }}>Courtesy: <span style={{ color: COLORS.primary }}>{item.courtesy}</span></div>}
-        {item.speaker && <div style={{ fontSize: 12.5, color: "#555" }}>Speaker: {item.speaker}</div>}
-        {item.industry && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "#F0F4FF", color: "#3B82F6", alignSelf: "flex-start", marginTop: 4 }}>{item.industry}</span>}
+        <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.ink, lineHeight: 1.4 }}>{item.title}</div>
+        {item.courtesy && <div style={{ fontSize: 12.5, color: COLORS.muted }}>Courtesy: <span style={{ color: COLORS.primary }}>{item.courtesy}</span></div>}
+        {item.speaker && <div style={{ fontSize: 12.5, color: COLORS.textSubtle }}>Speaker: {item.speaker}</div>}
+        {item.industry && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6", alignSelf: "flex-start", marginTop: 4 }}>{item.industry}</span>}
       </div>
       {isAdmin && (
         <div style={{ padding: "0 18px 14px", display: "flex", justifyContent: "flex-end" }}>
-          <button onClick={() => onDelete(item._id)} style={{ background: "none", border: "1px solid #fee2e2", color: "#ef4444", borderRadius: 8, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600 }}>
+          <button onClick={() => onDelete(item._id)} style={{ background: "none", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#ef4444", borderRadius: 8, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600 }}>
             <Trash2 size={13} /> Delete
           </button>
         </div>
@@ -101,9 +101,9 @@ function AddModal({ onClose, onAdded }) {
   const f = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: 520, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
-        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700 }}>Add Video</h2>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" }}>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, width: 520, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", maxHeight: "90vh", overflowY: "auto", color: COLORS.ink }}>
+        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: COLORS.ink }}>Add Video</h2>
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <input placeholder="Title *" value={form.title} onChange={f("title")} style={inputStyle} />
           <input placeholder="YouTube URL *" value={form.videoUrl} onChange={f("videoUrl")} style={inputStyle} />
@@ -115,10 +115,10 @@ function AddModal({ onClose, onAdded }) {
           <textarea placeholder="Description (optional)" value={form.description} onChange={f("description")} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
           {/* Optional custom thumbnail */}
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 13, color: "#555", fontWeight: 600 }}>Custom Thumbnail (optional – auto from YouTube)</span>
-            <div style={{ border: "2px dashed #e5e7eb", borderRadius: 10, padding: "14px", textAlign: "center", cursor: "pointer", background: thumbnailFile ? "#F0FFF4" : "#FAFAFA", position: "relative" }}>
+            <span style={{ fontSize: 13, color: COLORS.muted, fontWeight: 600 }}>Custom Thumbnail (optional – auto from YouTube)</span>
+            <div style={{ border: `2px dashed ${COLORS.border}`, borderRadius: 10, padding: "14px", textAlign: "center", cursor: "pointer", background: "rgba(142, 27, 46, 0.08)", position: "relative" }}>
               <Upload size={18} color={thumbnailFile ? "#16a34a" : "#aaa"} style={{ marginBottom: 4 }} />
-              <div style={{ fontSize: 12, color: thumbnailFile ? "#16a34a" : "#aaa" }}>{thumbnailFile ? thumbnailFile.name : "Click to upload thumbnail image"}</div>
+              <div style={{ fontSize: 12, color: thumbnailFile ? "#16a34a" : COLORS.muted }}>{thumbnailFile ? thumbnailFile.name : "Click to upload thumbnail image"}</div>
               <input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files[0] || null)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
             </div>
           </label>
@@ -132,8 +132,8 @@ function AddModal({ onClose, onAdded }) {
   );
 }
 
-const inputStyle = { padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" };
-const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14 };
+const inputStyle = { padding: "10px 14px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-input-bg, #ffffff)", color: "var(--color-text-main, #0f172a)", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" };
+const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-card, #fff)", color: "var(--color-text-main, #0f172a)", cursor: "pointer", fontWeight: 600, fontSize: 14 };
 const submitBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "none", background: COLORS.primary, color: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14 };
 
 export default function VideosPage() {
@@ -172,19 +172,19 @@ export default function VideosPage() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
       <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#1a1a2e" }}>Videos</h1>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: COLORS.ink }}>Videos</h1>
             <div className="relative w-full sm:w-52">
-              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
-              <input placeholder="Search videos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 14px 9px 36px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", width: "100%" }} />
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.muted }} />
+              <input placeholder="Search videos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ ...inputStyle, padding: "9px 14px 9px 36px", fontSize: 13.5, width: "100%" }} />
             </div>
             <div className="relative w-full sm:w-44 flex items-center">
-              <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
-              <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", width: "100%" }}>
+              <Filter size={14} style={{ position: "absolute", left: 12, color: COLORS.muted }} />
+              <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{ ...inputStyle, padding: "9px 14px 9px 34px", fontSize: 13.5, cursor: "pointer", appearance: "none", width: "100%" }}>
                 {INDUSTRIES.map((i) => <option key={i}>{i}</option>)}
               </select>
             </div>
@@ -197,9 +197,9 @@ export default function VideosPage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>Loading...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No videos found.{isAdmin && " Click 'Add Video' to get started."}</div>
+          <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>No videos found.{isAdmin && " Click 'Add Video' to get started."}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((v) => <VideoCard key={v._id} item={v} isAdmin={isAdmin} onDelete={handleDelete} />)}

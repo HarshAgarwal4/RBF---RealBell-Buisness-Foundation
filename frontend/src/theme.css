@@ -1,0 +1,68 @@
+﻿/* ==========================================================================
+   REALBELL GLOBAL THEME & COLOR CONFIGURATION
+   Edit any color values in this single file to update the entire app!
+   ========================================================================== */
+
+:root {
+  /* ================= LIGHT MODE PALETTE ================= */
+  --color-primary: #8E1B2E;
+  --color-primary-dark: #6E1524;
+  --color-primary-light: #B52B43;
+  --color-primary-hover: #741728;
+  --color-accent: #8E1B2E;
+
+  --color-bg: #F8FAFC;
+  --color-sidebar-bg: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-card-elevated: #F1F5F9;
+  --color-hover: #F1F5F9;
+  --color-border: #E2E8F0;
+
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #475569;
+
+  --color-input-bg: #FFFFFF;
+  --color-input-border: #CBD5E1;
+  --color-input-text: #0F172A;
+  --color-dropdown-bg: #FFFFFF;
+  --color-dark-btn-bg: #14142B;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #F43F5E;
+
+  color-scheme: light;
+}
+
+html.dark {
+  /* ================= DARK MODE PALETTE (SLATE + CYAN) ================= */
+  --color-primary: #06B6D4;
+  --color-primary-dark: #0891B2;
+  --color-primary-light: #22D3EE;
+  --color-primary-hover: #0891B2;
+  --color-accent: #06B6D4;
+
+  --color-bg: #0A0F14;
+  --color-sidebar-bg: #0D141B;
+  --color-card: #121B24;
+  --color-card-elevated: #182530;
+  --color-hover: #182530;
+  --color-border: #263744;
+
+  --color-text-main: #F1F5F9;
+  --color-text-muted: #94A3B8;
+  --color-text-subtle: #64748B;
+
+  --color-input-bg: #0D141B;
+  --color-input-border: #263744;
+  --color-input-text: #F1F5F9;
+  --color-dropdown-bg: #121B24;
+  --color-dark-btn-bg: #06B6D4;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #F43F5E;
+
+  color-scheme: dark;
+}

@@ -28,13 +28,14 @@ function TabButton({ label, active, onClick }) {
       onClick={onClick}
       style={{
         border: "none",
-        background: active ? "#F5EDEE" : "transparent",
-        color: active ? COLORS.primary : "#3A3A46",
+        background: active ? "rgba(142, 27, 46, 0.14)" : "transparent",
+        color: active ? COLORS.primary : COLORS.ink,
         fontWeight: 700,
         fontSize: 14.5,
         padding: "10px 16px",
         borderRadius: 8,
         cursor: "pointer",
+        transition: "all 0.15s ease",
       }}
     >
       {label}
@@ -57,14 +58,14 @@ function FieldRow({ label, required, value, onChange, note, disabled, type = "te
           onChange={(e) => onChange && onChange(e.target.value)}
           style={{
             width: "100%",
-            border: "none",
+            border: `1px solid ${COLORS.border}`,
             outline: "none",
-            background: disabled ? "#E9E9EE" : "#F1F2F6",
+            background: disabled ? "rgba(100, 116, 139, 0.12)" : COLORS.inputBg,
             borderRadius: 8,
             padding: "12px 14px",
             fontSize: 14.5,
             fontWeight: 600,
-            color: disabled ? "#8B8B95" : "#3A3A46",
+            color: disabled ? COLORS.muted : COLORS.ink,
             boxSizing: "border-box",
             cursor: disabled ? "not-allowed" : "text",
           }}
@@ -87,11 +88,12 @@ function OptionCard({ label, active, onClick }) {
         padding: "13px 16px",
         borderRadius: 10,
         border: active ? `1.5px dashed ${COLORS.primary}` : `1px solid ${COLORS.border}`,
-        background: "#fff",
+        background: COLORS.card,
+        color: COLORS.ink,
         cursor: "pointer",
       }}
     >
-      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${active ? COLORS.primary : "#C7C7D1"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${active ? COLORS.primary : "#94A3B8"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
         {active && <div style={{ width: 9, height: 9, borderRadius: "50%", background: COLORS.primary }} />}
       </div>
       <span style={{ fontSize: 14.5, fontWeight: 600 }}>{label}</span>
@@ -101,7 +103,7 @@ function OptionCard({ label, active, onClick }) {
 
 function Toggle({ on, onChange }) {
   return (
-    <button onClick={() => onChange(!on)} style={{ width: 46, height: 25, borderRadius: 20, border: "none", background: on ? COLORS.primary : "#D8D8DE", position: "relative", cursor: "pointer" }}>
+    <button onClick={() => onChange(!on)} style={{ width: 46, height: 25, borderRadius: 20, border: "none", background: on ? COLORS.primary : "#475569", position: "relative", cursor: "pointer" }}>
       <span style={{ position: "absolute", top: 3, left: on ? 24 : 3, width: 19, height: 19, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
     </button>
   );
@@ -126,7 +128,7 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
   };
 
   return (
-    <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
+    <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
       <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.ink, marginBottom: 4 }}>Personal Information</div>
       <div style={{ height: 1, background: COLORS.border, margin: "14px -26px 22px" }} />
 
@@ -141,19 +143,19 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
                 width: 120,
                 height: 120,
                 borderRadius: 12,
-                background: "#FDE94B",
+                background: "rgba(142, 27, 46, 0.14)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
                 overflow: "hidden",
-                border: "1px solid #eee",
+                border: `1px solid ${COLORS.border}`,
               }}
             >
               {preview || formData.account.image ? (
                 <img src={preview || formData.account.image} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <Bell size={48} color="#E31E24" />
+                <Bell size={48} color={COLORS.primary} />
               )}
             </div>
             {/* Pencil Icon Overlay */}
@@ -163,7 +165,7 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
                 position: "absolute",
                 top: -8,
                 right: -8,
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -171,14 +173,15 @@ function PersonalInformation({ saving, formData, setFormData, onSave }) {
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                border: `1px solid ${COLORS.border}`,
                 cursor: "pointer",
               }}
             >
-              <Pencil size={16} color="#666" />
+              <Pencil size={16} color={COLORS.ink} />
             </div>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg, image/jpg" style={{ display: "none" }} />
-          <div style={{ fontSize: 13, color: "#A0A0AB", marginTop: 12 }}>
+          <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 12 }}>
             Allowed file types: png, jpg, jpeg and max size of 512kb.
           </div>
         </div>
@@ -221,7 +224,7 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
     updateAvailability("weekly_schedule", newList);
   };
   return (
-    <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
+    <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
       <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.ink }}>Manage Availability</div>
       <div style={{ height: 1, background: COLORS.border, margin: "14px -26px 22px" }} />
       <div style={{ display: "flex", gap: 16, marginBottom: 28 }}>
@@ -232,13 +235,13 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
 
       {availability.type === "Specific Days" && (
         <div style={{ marginBottom: 28, border: `1px solid ${COLORS.border}`, borderRadius: 10, overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", background: "#F7F7FA", padding: "12px 18px", fontWeight: 800, fontSize: 13 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", background: COLORS.hoverBg, padding: "12px 18px", fontWeight: 800, fontSize: 13, color: COLORS.ink }}>
             <div>Day</div><div>Not Available</div><div>From</div><div>To</div>
           </div>
           {Object.keys(DAY_MAP).map((d) => {
             const dayData = availability.weekly_schedule.find((sd) => sd.day === DAY_MAP[d]) || { not_available: false, from: "09:00", to: "18:00" };
             return (
-              <div key={d} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "12px 18px", borderTop: `1px solid ${COLORS.border}`, alignItems: "center" }}>
+              <div key={d} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "12px 18px", borderTop: `1px solid ${COLORS.border}`, alignItems: "center", color: COLORS.ink }}>
                 <div style={{ fontWeight: 600 }}>{d}</div>
                 <input type="checkbox" checked={dayData.not_available} onChange={(e) => handleDayChange(d, "not_available", e.target.checked)} />
                 <select disabled={dayData.not_available} value={dayData.from} onChange={(e) => handleDayChange(d, "from", e.target.value)} style={{ padding: 6 }}>
@@ -256,11 +259,11 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
       {availability.type === "Temporary Unavailable" && (
         <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13, fontWeight: 700 }}>Unavailable From</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink }}>Unavailable From</label>
             <input type="date" style={{ width: "100%", padding: 10, marginTop: 5 }} onChange={(e) => updateAvailability("unavailable_from", e.target.value)} />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13, fontWeight: 700 }}>Unavailable To</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink }}>Unavailable To</label>
             <input type="date" style={{ width: "100%", padding: 10, marginTop: 5 }} onChange={(e) => updateAvailability("unavailable_to", e.target.value)} />
           </div>
         </div>
@@ -277,15 +280,15 @@ function AvailabilityHours({ saving, formData, setFormData, onSave }) {
 
 function EmailNotifications({ saving, formData, setFormData, onSave }) {
   return (
-    <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
+    <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 26 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 10, background: "#F5EDEE", display: "flex", alignItems: "center", justifyContent: "center" }}><Mail size={20} color={COLORS.primary} /></div>
-        <div style={{ fontSize: 17, fontWeight: 800 }}>Email Notifications</div>
+        <div style={{ width: 48, height: 48, borderRadius: 10, background: "rgba(142, 27, 46, 0.14)", display: "flex", alignItems: "center", justifyContent: "center" }}><Mail size={20} color={COLORS.primary} /></div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.ink }}>Email Notifications</div>
       </div>
       <div style={{ height: 1, background: COLORS.border, margin: "20px -26px" }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <div style={{ fontWeight: 700 }}>Promotional Emails</div>
+          <div style={{ fontWeight: 700, color: COLORS.ink }}>Promotional Emails</div>
           <div style={{ fontSize: 13, color: COLORS.muted }}>Receive updates about opportunities and events.</div>
         </div>
         <Toggle

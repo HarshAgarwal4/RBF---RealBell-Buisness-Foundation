@@ -117,7 +117,7 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
   const currentStep = steps[activeStepIdx] || steps[0];
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] lg:ml-75 pt-20 lg:pt-10 px-4 sm:px-6 md:px-8 lg:px-10 pb-6 sm:pb-8 font-sans transition-colors">
       {/* Header Banner */}
       <div className="mb-6 sm:mb-8">
         <span
@@ -126,13 +126,13 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
         >
           {roleData?.label || roleKey}
         </span>
-        <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">{bannerTitle}</h1>
-        <p className="mt-1 text-xs sm:text-sm text-slate-500">{bannerSubtitle}</p>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">{bannerTitle}</h1>
+        <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">{bannerSubtitle}</p>
       </div>
 
       {/* Multi-step Navigation Stepper */}
       {steps.length > 1 && (
-        <div className="mb-6 sm:mb-8 border-b border-slate-200 bg-white p-3 sm:p-4 rounded-xl shadow-sm overflow-x-auto scrollbar-none">
+        <div className="mb-6 sm:mb-8 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2E] p-3 sm:p-4 rounded-xl shadow-sm overflow-x-auto scrollbar-none">
           <div className="flex items-center justify-between min-w-max sm:min-w-0">
             {steps.map((step, idx) => {
               const isActive = idx === activeStepIdx;
@@ -143,10 +143,10 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
                   onClick={() => setActiveStepIdx(idx)}
                   className={`flex flex-1 items-center gap-3 border-b-2 py-3 px-4 text-left transition-all ${
                     isActive
-                      ? "font-bold text-slate-900"
+                      ? "font-bold text-slate-900 dark:text-slate-100"
                       : isCompleted
-                      ? "border-slate-300 text-slate-700 hover:text-slate-900"
-                      : "border-transparent text-slate-400 hover:text-slate-600"
+                      ? "border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                      : "border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                   }`}
                   style={{
                     borderColor: isActive ? accentColor : undefined,
@@ -155,7 +155,7 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
                   <span
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white transition-colors"
                     style={{
-                      backgroundColor: isActive ? accentColor : isCompleted ? "#334155" : "#cbd5e1",
+                      backgroundColor: isActive ? accentColor : isCompleted ? "#334155" : "#64748b",
                     }}
                   >
                     {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
@@ -169,10 +169,10 @@ export default function DynamicEditProfile({ profile = {}, roleKey }) {
       )}
 
       {/* Step Form Container */}
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-bold text-slate-900">{currentStep.title}</h2>
-          {currentStep.description && <p className="mt-1 text-sm text-slate-500">{currentStep.description}</p>}
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2E] p-6 shadow-sm sm:p-8">
+        <div className="mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{currentStep.title}</h2>
+          {currentStep.description && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{currentStep.description}</p>}
         </div>
 
         {/* Dynamic Fields Grid */}

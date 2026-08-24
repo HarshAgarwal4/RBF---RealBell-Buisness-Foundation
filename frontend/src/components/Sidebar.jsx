@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../zustand/store";
 import axios from "../services/axios";
@@ -47,17 +47,24 @@ import {
 } from "lucide-react";
 
 const ICON_MAP = {
-  Rocket,
-  TrendingUp,
-  Users,
-  Building2,
-  Briefcase,
-  Award,
-  GraduationCap,
-  Globe,
   Landmark,
   Handshake,
+  Rocket,
+  Building2,
   Search,
+  Users,
+  Radio,
+  Scale,
+  Scissors,
+  HandCoins,
+  Megaphone,
+  Newspaper,
+  Briefcase,
+  CreditCard: DollarSign,
+  DollarSign,
+  BookOpen,
+  Ticket,
+  UserCircle2,
 };
 
 const DEFAULT_CONNECT_CHILDREN = [
@@ -75,7 +82,7 @@ const pillBtnStyle = {
   padding: "9px 0",
   borderRadius: 20,
   border: `1px solid ${COLORS.border}`,
-  background: COLORS.card,
+  background: COLORS.cardElevated,
   fontSize: 13,
   fontWeight: 600,
   color: COLORS.ink,
@@ -92,6 +99,7 @@ export default function Sidebar() {
   const { logout, user } = useStore();
   const roles = useStore((state) => state.roles);
   const { theme, toggleTheme } = useTheme();
+  const navRef = useRef(null);
 
   const [activeCount, setActiveCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -154,7 +162,7 @@ export default function Sidebar() {
       { path: "/resources/news", label: "Industry News", icon: Newspaper },
       { path: "/resources/videos", label: "Knowledge Videos", icon: Video },
       { path: "/jobs", label: "Job Opportunities", icon: Briefcase },
-      { path: "/subscription", label: "Membership Plans", icon: CreditCard },
+      { path: "/subscription", label: "Membership Plans", icon: DollarSign },
       { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
       {
         key: "resources",
@@ -175,6 +183,23 @@ export default function Sidebar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Restore sidebar scroll position across renders & page navigation
+  useLayoutEffect(() => {
+    const restore = () => {
+      const saved = sessionStorage.getItem("rbf_sidebar_scroll");
+      if (saved !== null && navRef.current) {
+        navRef.current.scrollTop = Number(saved);
+      }
+    };
+    restore();
+    const rafId = requestAnimationFrame(restore);
+    const timer = setTimeout(restore, 60);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timer);
+    };
+  }, [location.pathname]);
+
   useEffect(() => {
     async function loadConnectionsCount() {
       try {
@@ -193,15 +218,42 @@ export default function Sidebar() {
   const [openKeys, setOpenKeys] = useState({});
 
   // Auto-expand a section when the current route lives inside it.
-  const routeOpenKeys = {};
-  navItems.forEach((item) => {
-    if (item.children && isChildActive(item, location.pathname)) {
-      routeOpenKeys[item.key] = true;
-    }
-  });
+  const routeOpenKeys = useMemo(() => {
+    const keys = {};
+    navItems.forEach((item) => {
+      if (item.children && isChildActive(item, location.pathname)) {
+        keys[item.key] = true;
+      }
+    });
+    return keys;
+  }, [navItems, location.pathname]);
 
-  const toggleKey = (key) => {
-    setOpenKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  const isItemOpen = (key) => {
+    if (openKeys[key] !== undefined) {
+      return !!openKeys[key];
+    }
+    return !!routeOpenKeys[key];
+  };
+
+  const toggleKey = (key, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (navRef.current) {
+      sessionStorage.setItem("rbf_sidebar_scroll", String(navRef.current.scrollTop));
+    }
+    setOpenKeys((prev) => {
+      const currentVal = prev[key] !== undefined ? prev[key] : !routeOpenKeys[key];
+      return { ...prev, [key]: !currentVal };
+    });
+  };
+
+  const handleNavigate = (path) => {
+    if (navRef.current) {
+      sessionStorage.setItem("rbf_sidebar_scroll", String(navRef.current.scrollTop));
+    }
+    navigate(path);
   };
 
   const handleLogout = async () => {
@@ -214,13 +266,14 @@ export default function Sidebar() {
 
     // Expandable parent item
     if (item.children) {
-      const open = !!openKeys[item.key] || !!routeOpenKeys[item.key];
+      const open = isItemOpen(item.key);
       const parentActive = isChildActive(item, location.pathname);
 
       return (
         <div key={item.key} style={{ marginBottom: 2 }}>
           <button
-            onClick={() => toggleKey(item.key)}
+            type="button"
+            onClick={(e) => toggleKey(item.key, e)}
             aria-expanded={open}
             style={{
               width: "100%",
@@ -231,8 +284,8 @@ export default function Sidebar() {
               borderRadius: 10,
               border: "none",
               cursor: "pointer",
-              background: parentActive && !open ? "#F6E9EB" : "transparent",
-              color: "#3A3A46",
+              background: parentActive && !open ? "color-mix(in srgb, var(--color-primary) 15%, transparent)" : "transparent",
+              color: parentActive ? COLORS.primary : COLORS.ink,
               fontWeight: parentActive ? 700 : 500,
               fontSize: 14.5,
               textAlign: "left",
@@ -268,8 +321,9 @@ export default function Sidebar() {
                   (child.path === "/live_sessions" && location.pathname === "/live-sessions");
                 return (
                   <button
+                    type="button"
                     key={child.path}
-                    onClick={() => navigate(child.path)}
+                    onClick={() => handleNavigate(child.path)}
                     style={{
                       width: "100%",
                       display: "flex",
@@ -280,7 +334,7 @@ export default function Sidebar() {
                       border: "none",
                       cursor: "pointer",
                       background: childActive ? COLORS.primary : "transparent",
-                      color: childActive ? "#fff" : "#5B5B68",
+                      color: childActive ? "#fff" : COLORS.textSubtle,
                       fontWeight: childActive ? 700 : 500,
                       fontSize: 13.5,
                       textAlign: "left",
@@ -306,8 +360,9 @@ export default function Sidebar() {
       (item.path === "/live_sessions" && location.pathname === "/live-sessions");
     return (
       <button
+        type="button"
         key={item.path}
-        onClick={() => navigate(item.path)}
+        onClick={() => handleNavigate(item.path)}
         style={{
           width: "100%",
           display: "flex",
@@ -319,7 +374,7 @@ export default function Sidebar() {
           border: "none",
           cursor: "pointer",
           background: active ? COLORS.primary : "transparent",
-          color: active ? "#fff" : "#3A3A46",
+          color: active ? "#fff" : COLORS.ink,
           fontWeight: active ? 700 : 500,
           fontSize: 14.5,
           textAlign: "left",
@@ -335,12 +390,12 @@ export default function Sidebar() {
   return (
     <>
       {/* Top Mobile Navbar with Hamburger Button (appears on mobile/tablet screen sizes < 1024px) */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-[#E4E9F1] bg-white px-4 lg:hidden shadow-xs">
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-[#E4E9F1] dark:border-[#263744] bg-white dark:bg-[#0D141B] px-4 lg:hidden shadow-xs">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F6F7FA] text-[#18213A] hover:bg-[#EEF0F5] transition active:scale-95 cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F6F7FA] dark:bg-[#182530] text-[#18213A] dark:text-[#F1F5F9] hover:bg-[#EEF0F5] dark:hover:bg-[#203040] transition active:scale-95 cursor-pointer"
             aria-label="Toggle navigation menu"
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -372,22 +427,21 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-[#182530] text-slate-700 dark:text-cyan-400 hover:bg-slate-200 dark:hover:bg-[#203040] transition cursor-pointer"
             title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
           >
-            {theme === "dark" ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="#6366f1" />}
+            {theme === "dark" ? <Sun size={18} color="#06B6D4" /> : <Moon size={18} color="#6366f1" />}
           </button>
           <button
-            type="button"
             onClick={() => navigate("/connections?section=chat")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F6E9EB] text-[#B52B2B] hover:bg-[#F0D5D8] transition cursor-pointer"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F6E9EB] text-[#B52B2B] hover:bg-[#F0D5D8] transition relative cursor-pointer"
             title="Messages"
           >
-            <MessageCircle size={18} />
+            <MessageCircle size={16} />
           </button>
-          <div
+          <button
             onClick={() => navigate("/profile")}
-            className="h-9 w-9 rounded-full bg-[#FDEB6B] overflow-hidden border border-gray-200 cursor-pointer"
+            className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 dark:border-[#263744] cursor-pointer"
             title="Profile"
           >
             <img
@@ -395,28 +449,27 @@ export default function Sidebar() {
               alt="Profile"
               className="h-full w-full object-cover"
             />
-          </div>
+          </button>
         </div>
       </div>
 
-      {/* Backdrop for mobile drawer */}
+      {/* Mobile Drawer Backdrop */}
       {mobileOpen && (
         <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-xs"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity lg:hidden"
-          aria-hidden="true"
         />
       )}
 
-      {/* Main Sidebar Drawer: Fixed on Desktop (>= 1024px), Slide-in Overlay on Mobile (< 1024px) */}
+      {/* Main Sidebar (Drawer on mobile/tablet, Fixed on desktop) */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col border-r border-[#E4E9F1] bg-white transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-[#E7E7EC] dark:border-[#263744] bg-white dark:bg-[#0D141B] transition-transform duration-300 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
           width: 300,
           minWidth: 300,
-          background: COLORS.card,
+          background: COLORS.sidebarBg,
           fontFamily: "'Inter', system-ui, sans-serif",
         }}
       >
@@ -473,24 +526,24 @@ export default function Sidebar() {
             onClick={toggleTheme}
             style={{
               display: "flex",
-              height: 32,
-              width: 32,
               alignItems: "center",
               justifyContent: "center",
+              width: 32,
+              height: 32,
               borderRadius: 8,
               border: `1px solid ${COLORS.border}`,
-              background: COLORS.bg,
+              background: COLORS.hoverBg,
               cursor: "pointer",
             }}
             title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
           >
-            {theme === "dark" ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} color="#6366f1" />}
+            {theme === "dark" ? <Sun size={16} color="#06B6D4" /> : <Moon size={16} color="#6366f1" />}
           </button>
           {/* Mobile Close Button inside Sidebar */}
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition cursor-pointer"
+            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-[#182530] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#203040] transition cursor-pointer"
             title="Close sidebar"
           >
             <X size={18} />
@@ -528,7 +581,7 @@ export default function Sidebar() {
                 {user?.company_type || "Member"}
               </span>
               {user?.team?.name && (
-                <span style={{ fontSize: 9.5, background: "rgba(56,189,248,0.15)", color: "#0284c7", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>
+                <span style={{ fontSize: 9.5, background: "rgba(6,182,212,0.15)", color: "#06B6D4", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>
                   🏢 {user.team.name}
                 </span>
               )}
@@ -543,8 +596,8 @@ export default function Sidebar() {
               gap: 4,
               padding: "4px 9px",
               borderRadius: 14,
-              background: "#F6E9EB",
-              color: "#B52B2B",
+              background: "color-mix(in srgb, var(--color-primary) 16%, transparent)",
+              color: "var(--color-primary)",
               fontSize: 11.5,
               fontWeight: 700,
               cursor: "pointer",
@@ -567,6 +620,10 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav
+        ref={navRef}
+        onScroll={(e) => {
+          sessionStorage.setItem("rbf_sidebar_scroll", String(e.currentTarget.scrollTop));
+        }}
         className="flex-1 overflow-y-auto px-3 py-2 sidebar-desktop-scroll"
         style={{
           overflowY: "auto",
@@ -585,15 +642,15 @@ export default function Sidebar() {
               padding: "12px 12px",
               marginBottom: 8,
               borderRadius: 10,
-              border: `1px solid ${COLORS.primary}40`,
+              border: `1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)`,
               cursor: "pointer",
-              background: location.pathname.startsWith("/admin") ? COLORS.primary : "#FFF5F6",
+              background: location.pathname.startsWith("/admin") ? COLORS.primary : "color-mix(in srgb, var(--color-primary) 10%, transparent)",
               color: location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary,
               fontWeight: 700,
               fontSize: 14.5,
               textAlign: "left",
               transition: "all 0.15s",
-              boxShadow: "0 2px 6px rgba(181,43,43,0.1)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}
           >
             <ShieldCheck size={18} color={location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary} />
@@ -605,7 +662,7 @@ export default function Sidebar() {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: 11, background: "rgba(181,43,43,0.15)", padding: "2px 6px", borderRadius: 4, color: COLORS.primary, fontWeight: 700 }}>
+            <span style={{ fontSize: 11, background: "color-mix(in srgb, var(--color-primary) 18%, transparent)", padding: "2px 6px", borderRadius: 4, color: COLORS.primary, fontWeight: 700 }}>
               Console →
             </span>
           </button>
@@ -619,9 +676,9 @@ export default function Sidebar() {
           onClick={handleLogout}
           style={{
             width: "100%",
-            background: COLORS.ink,
+            background: COLORS.darkBtnBg,
             color: "#fff",
-            border: "none",
+            border: `1px solid ${COLORS.border}`,
             borderRadius: 12,
             padding: "13px 0",
             fontWeight: 700,
@@ -631,6 +688,7 @@ export default function Sidebar() {
             justifyContent: "center",
             gap: 8,
             cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
           }}
         >
           <LogOut size={16} /> Logout

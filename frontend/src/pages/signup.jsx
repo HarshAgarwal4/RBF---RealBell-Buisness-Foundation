@@ -303,8 +303,9 @@ export default function SignUpPage() {
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState({});
   const [otp, setOtp] = useState(Array(6).fill(""));
+  const [otpSent, setOtpSent] = useState(false);
   const [otpError, setOtpError] = useState("");
-  const [resendTimer, setResendTimer] = useState(30);
+  const [resendTimer, setResendTimer] = useState(0);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const storeSignupData = useStore((state) => state.pageContents?.signup);
@@ -334,11 +335,11 @@ export default function SignUpPage() {
   }, [storeRoles]);
 
   useEffect(() => {
-    if (step === 3 && resendTimer > 0) {
+    if (resendTimer > 0) {
       const t = setTimeout(() => setResendTimer((r) => r - 1), 1000);
       return () => clearTimeout(t);
     }
-  }, [step, resendTimer]);
+  }, [resendTimer]);
 
   useEffect(() => {
     if (user) navigate("/dashboard");
@@ -356,7 +357,7 @@ export default function SignUpPage() {
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-  const validateStep2 = () => {
+  const validateBasicDetails = () => {
     const e = {};
     if (!form.companyName.trim()) e.companyName = "Company or entity name is required";
     if (!form.yourName.trim()) e.yourName = "Your full name is required";
@@ -366,6 +367,27 @@ export default function SignUpPage() {
     if (!form.mobile.trim()) e.mobile = "Mobile number is required";
     else if (!/^\d{7,12}$/.test(form.mobile))
       e.mobile = "Enter a valid mobile number";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateStep2 = () => {
+    if (!validateBasicDetails()) return false;
+    const code = otp.join("");
+    if (!otpSent) {
+      setOtpError("Please click 'Send OTP' to verify your email address");
+      return false;
+    }
+    if (code.length < 6) {
+      setOtpError("Please enter the 6-digit verification code sent to your email");
+      return false;
+    }
+    setOtpError("");
+    return true;
+  };
+
+  const validateStep3 = () => {
+    const e = {};
     if (!form.password) e.password = "Password is required";
     else if (form.password.length < 6)
       e.password = "Password must be at least 6 characters";
@@ -380,24 +402,34 @@ export default function SignUpPage() {
     if (canContinueStep1) setStep(2);
   };
 
-  // Step 2 -> Step 3: validate the form, then trigger the OTP email via zustand
-  const goToStep3 = async (e) => {
+  // Step 2: Trigger OTP send
+  const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
-    if (!validateStep2()) return;
+    if (!validateBasicDetails()) return;
 
     setSendingOtp(true);
+    setOtpError("");
     try {
       const res = await sendSignupOtp(form.email.trim());
       if (res && res.success) {
-        setOtp(Array(6).fill(""));
-        setOtpError("");
+        setOtpSent(true);
         setResendTimer(30);
-        setStep(3);
+        setTimeout(() => {
+          otpRefs.current[0]?.focus();
+        }, 100);
       }
     } catch {
       toast.error("Failed to send verification code");
     } finally {
       setSendingOtp(false);
+    }
+  };
+
+  // Step 2 -> Step 3: Validate basic details + OTP entered, then go to Password Creation
+  const goToStep3 = (e) => {
+    if (e) e.preventDefault();
+    if (validateStep2()) {
+      setStep(3);
     }
   };
 
@@ -426,12 +458,15 @@ export default function SignUpPage() {
     }
   };
 
-  // Step 3 -> Step 4: send everything to POST /signup
-  const handleVerify = async (e) => {
+  // Step 3 -> Step 4: Validate password & submit everything to POST /signup
+  const handleCompleteSignup = async (e) => {
     if (e) e.preventDefault();
+    if (!validateStep3()) return;
+
     const code = otp.join("");
     if (code.length < 6) {
-      setOtpError("Enter the full 6-digit code sent to your email");
+      toast.error("Please enter a valid 6-digit OTP");
+      setStep(2);
       return;
     }
 
@@ -460,11 +495,14 @@ export default function SignUpPage() {
           return;
         }
         if (status === 2) {
-          setOtpError(msg || "Invalid verification code");
+          toast.error(msg || "Invalid or expired verification code");
+          setStep(2);
+          setOtpError(msg || "Invalid verification code. Please check or resend OTP.");
           return;
         }
         if (status === 3) {
           toast.error(msg || "Email already registered");
+          setStep(2);
           return;
         }
         if (status === 7) {
@@ -626,7 +664,7 @@ export default function SignUpPage() {
                 </motion.div>
               )}
 
-              {/* ---------------- STEP 2 ---------------- */}
+              {/* ---------------- STEP 2: DETAILS & OTP VERIFICATION ---------------- */}
               {step === 2 && (
                 <motion.div
                   key="step2"
@@ -638,10 +676,10 @@ export default function SignUpPage() {
                 >
                   <div className="space-y-2">
                     <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                      Create Your Profile
+                      Profile & Email Verification
                     </h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Tell us about yourself and your organization to setup your ecosystem account.
+                      Fill in your profile details and verify your email address to continue.
                     </p>
                   </div>
 
@@ -696,7 +734,12 @@ export default function SignUpPage() {
                           type="email"
                           placeholder="rahul.sharma@nexatech.in"
                           value={form.email}
-                          onChange={(e) => updateForm("email", e.target.value)}
+                          onChange={(e) => {
+                            updateForm("email", e.target.value);
+                            setOtpSent(false);
+                            setOtp(Array(6).fill(""));
+                            setOtpError("");
+                          }}
                           className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
                             errors.email ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
                           }`}
@@ -740,8 +783,125 @@ export default function SignUpPage() {
                       )}
                     </div>
 
+                    {/* OTP Trigger & Input Section */}
+                    <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-4 sm:p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <ShieldCheck size={16} className="text-amber-700 dark:text-amber-500" />
+                            <span>Email OTP Verification</span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {otpSent
+                              ? `Code sent to ${form.email}`
+                              : "Click Send OTP to receive your 6-digit verification code"}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={sendingOtp || (otpSent && resendTimer > 0)}
+                          className="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-4 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex-shrink-0"
+                        >
+                          {sendingOtp && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                          <span>
+                            {sendingOtp
+                              ? "Sending..."
+                              : otpSent
+                              ? resendTimer > 0
+                                ? `Resend in ${resendTimer}s`
+                                : "Resend OTP"
+                              : "Send OTP"}
+                          </span>
+                        </button>
+                      </div>
+
+                      {otpSent && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3"
+                        >
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                            Enter 6-Digit Code
+                          </label>
+                          <div
+                            className="flex items-center justify-between gap-1.5 sm:gap-2.5 max-w-sm"
+                            onPaste={handleOtpPaste}
+                          >
+                            {otp.map((digit, idx) => (
+                              <input
+                                key={idx}
+                                ref={(el) => (otpRefs.current[idx] = el)}
+                                value={digit}
+                                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                                maxLength={1}
+                                inputMode="numeric"
+                                className={`h-11 w-10 sm:h-12 sm:w-11 rounded-xl border bg-white dark:bg-slate-900 text-center text-lg font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 ${
+                                  otpError
+                                    ? "border-red-400 dark:border-red-500"
+                                    : "border-slate-200 dark:border-slate-700"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {otpError && (
+                        <p className="mt-2 text-xs font-medium text-red-500 dark:text-red-400">
+                          {otpError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="rounded-xl bg-slate-100 dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="submit"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                      >
+                        <span>Next: Set Password →</span>
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ---------------- STEP 3: PASSWORD CREATION ---------------- */}
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
+                  className="mt-6 sm:mt-8"
+                >
+                  <div className="space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                      Set Your Password
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Create a secure password to protect your{" "}
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {form.companyName || "organization"}
+                      </span>{" "}
+                      account.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleCompleteSignup} className="mt-6 space-y-5">
                     {/* Password & Confirm Password */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-4">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                           Create Password
@@ -750,6 +910,7 @@ export default function SignUpPage() {
                           <input
                             type={showPassword ? "text" : "password"}
                             placeholder="At least 6 characters"
+                            autoFocus
                             value={form.password}
                             onChange={(e) => updateForm("password", e.target.value)}
                             className={`w-full rounded-xl border bg-white dark:bg-slate-900 pl-4 pr-11 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
@@ -827,108 +988,7 @@ export default function SignUpPage() {
                       )}
                     </div>
 
-                    <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="rounded-xl bg-slate-100 dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={sendingOtp}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
-                      >
-                        {sendingOtp && <Loader2 className="h-4 w-4 animate-spin" />}
-                        <span>{sendingOtp ? "Sending Code..." : "Verify Email"}</span>
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              )}
-
-              {/* ---------------- STEP 3 ---------------- */}
-              {step === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25 }}
-                  className="mt-6 sm:mt-8"
-                >
-                  <div className="space-y-2">
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                      Verify Your Email
-                    </h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Enter the 6-digit verification code sent to{" "}
-                      <span className="font-bold text-slate-900 dark:text-white break-all">
-                        {form.email}
-                      </span>
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleVerify} className="mt-8 space-y-6">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">
-                        6-Digit Security Code
-                      </label>
-                      <div
-                        className="flex items-center justify-between gap-1.5 sm:gap-3"
-                        onPaste={handleOtpPaste}
-                      >
-                        {otp.map((digit, idx) => (
-                          <input
-                            key={idx}
-                            ref={(el) => (otpRefs.current[idx] = el)}
-                            value={digit}
-                            autoFocus={idx === 0}
-                            onChange={(e) => handleOtpChange(idx, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                            maxLength={1}
-                            inputMode="numeric"
-                            className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl border bg-white dark:bg-slate-900 text-center text-lg sm:text-xl font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                              otpError
-                                ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
-                                : "border-slate-200 dark:border-slate-700"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {otpError && (
-                        <p className="mt-2 text-xs sm:text-sm font-medium text-red-500 dark:text-red-400">
-                          {otpError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs sm:text-sm">
-                      {resendTimer > 0 ? (
-                        <span className="text-slate-500 dark:text-slate-400">
-                          Resend code in <strong className="text-amber-700 dark:text-amber-500">{resendTimer}s</strong>
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleResend}
-                          className="font-bold text-amber-700 dark:text-amber-500 hover:underline cursor-pointer"
-                        >
-                          Resend Code
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
-                      >
-                        Edit Details
-                      </button>
-                    </div>
-
-                    <div className="mt-10 flex items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="mt-8 flex items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => setStep(2)}

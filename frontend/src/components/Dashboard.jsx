@@ -45,7 +45,7 @@ function ProgressRing({ percent }) {
   const offset = c - (percent / 100) * c;
   return (
     <svg width={72} height={72} viewBox="0 0 100 100" className="shrink-0">
-      <circle cx="50" cy="50" r={r} fill="none" stroke="#F1E4E6" strokeWidth="8" />
+      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--color-border, #E2E8F0)" strokeWidth="8" />
       <circle
         cx="50"
         cy="50"
@@ -295,7 +295,7 @@ export default function Dashboard() {
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <div className="text-sm text-[#555]">Welcome back,</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back,</div>
           <div
             className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight"
             style={{
@@ -315,7 +315,7 @@ export default function Dashboard() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: "#fff",
+                background: COLORS.card,
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 10,
                 padding: "5px 10px",
@@ -381,7 +381,7 @@ export default function Dashboard() {
 
       {/* Quick Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5 mt-5">
-        <div className="flex-1 flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-2xs">
+        <div className="flex-1 flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 shadow-2xs">
           <Search size={16} color={COLORS.muted} className="shrink-0" />
           <input
             placeholder="Search startups, investors, mentors, or programs..."
@@ -390,7 +390,7 @@ export default function Dashboard() {
                 navigate(`/connect/startups?search=${encodeURIComponent(e.target.value.trim())}`);
               }
             }}
-            className="border-none outline-none flex-1 text-xs sm:text-sm text-gray-800 bg-transparent"
+            className="border-none outline-none flex-1 text-xs sm:text-sm text-slate-800 dark:text-slate-100 bg-transparent placeholder:text-slate-400"
           />
         </div>
         <button
@@ -605,7 +605,7 @@ export default function Dashboard() {
                     <div
                       style={{
                         height: 78,
-                        background: COLORS.ink,
+                        background: "linear-gradient(135deg, #1E293B, #0F172A)",
                         display: "flex",
                         alignItems: "flex-end",
                         padding: "0 10px 8px",
@@ -661,11 +661,11 @@ export default function Dashboard() {
                   borderRadius: 12,
                   padding: 14,
                   cursor: "pointer",
-                  background: "#FAFAFC",
+                  background: COLORS.card,
                   alignItems: "center",
                 }}
               >
-                <div style={{ width: 56, height: 56, borderRadius: 10, background: "#F5EDEE", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 10, background: "rgba(142, 27, 46, 0.12)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                   📰
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -698,7 +698,7 @@ export default function Dashboard() {
                       padding: 12,
                       cursor: "pointer",
                       transition: "all 0.15s ease",
-                      background: "#fff",
+                      background: COLORS.card,
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.borderColor = COLORS.primary)}
                     onMouseLeave={(e) => (e.currentTarget.style.borderColor = COLORS.border)}
@@ -708,7 +708,7 @@ export default function Dashboard() {
                         width: 76,
                         height: 64,
                         borderRadius: 8,
-                        background: "#F5EDEE",
+                        background: "rgba(142, 27, 46, 0.12)",
                         flexShrink: 0,
                         overflow: "hidden",
                         display: "flex",
@@ -757,7 +757,7 @@ export default function Dashboard() {
                             style={{
                               fontSize: 10.5,
                               fontWeight: 700,
-                              background: "#F5EDEE",
+                              background: "rgba(142, 27, 46, 0.15)",
                               color: COLORS.primary,
                               padding: "2px 7px",
                               borderRadius: 4,

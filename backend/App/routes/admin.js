@@ -22,6 +22,7 @@ import {
     sendInviteMemberOTP,
     inviteOrAddAdminUser,
     updateUserRoleAndTeam,
+    updateUserDetails,
     toggleUserStatus,
 } from "../controllers/admin.js";
 import {
@@ -73,6 +74,8 @@ adminRouter.put("/auth-settings", authorize("auth_settings.update"), updateAuthS
 /* ── Users & Invitations ── */
 adminRouter.get("/users", authorize(["users.view", "teams.view"]), getAllUsers);
 adminRouter.get("/users/:id", authorize("users.view"), getUserById);
+adminRouter.put("/users/:id", authorize("users.update"), updateUserDetails);
+adminRouter.patch("/users/:id", authorize("users.update"), updateUserDetails);
 adminRouter.post("/users/send-invite-otp", authorize("users.create"), sendInviteMemberOTP);
 adminRouter.post("/users/invite", authorize("users.create"), inviteOrAddAdminUser);
 adminRouter.patch("/users/:id/role", authorize(["users.update", "users.assign_role"]), updateUserRole);

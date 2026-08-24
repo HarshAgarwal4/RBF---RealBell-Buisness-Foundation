@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../zustand/store';
 import { useAdminTheme, AdminThemeProvider } from './AdminThemeContext';
@@ -68,14 +68,10 @@ const styles = {
         display: 'inline-block',
         fontSize: '0.58rem',
         fontWeight: '600',
-        padding: '2px 6px',
-        borderRadius: '99px',
-        background: 'rgba(99,102,241,0.15)',
-        color: '#818cf8',
-        border: '1px solid rgba(99,102,241,0.3)',
-        marginTop: '2px',
-        letterSpacing: '0.05em',
+        color: '#94a3b8',
         textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        marginTop: '2px',
     },
     nav: {
         flex: 1,
@@ -149,59 +145,49 @@ const styles = {
     },
     userInfo: {
         flex: 1,
-        overflow: 'hidden',
+        minWidth: 0,
     },
     userName: {
-        fontSize: '0.75rem',
+        fontSize: '0.78rem',
         fontWeight: '600',
-        color: 'var(--admin-text-primary, #e2e8f0)',
+        color: 'var(--admin-text-primary, #f1f5f9)',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+    },
+    userRole: {
+        fontSize: '0.65rem',
+        color: 'var(--admin-text-subtle, #94a3b8)',
+        textTransform: 'capitalize',
     },
     content: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     },
     topbar: {
-        height: '48px',
-        background: 'var(--admin-topbar-bg, rgba(11,13,20,0.95))',
-        backdropFilter: 'blur(16px)',
+        height: '56px',
+        background: 'var(--admin-topbar-bg, #0b0d14)',
         borderBottom: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        padding: '0 1.5rem',
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        padding: '0 1rem',
         transition: 'background-color 0.2s ease',
     },
-    topbarLeft: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.4rem',
-        overflow: 'hidden',
-    },
     topbarTitle: {
-        fontSize: '0.8rem',
-        fontWeight: '600',
+        fontSize: '1rem',
+        fontWeight: '700',
         color: 'var(--admin-text-primary, #f1f5f9)',
-        maxWidth: '220px',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        display: 'inline-block',
-        verticalAlign: 'bottom',
     },
     topbarRight: {
         display: 'flex',
         alignItems: 'center',
         gap: '0.45rem',
-        flexShrink: 0,
     },
     topbarBtn: {
         padding: '0.25rem 0.55rem',
@@ -244,6 +230,7 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useAdminTheme();
+    const navRef = useRef(null);
     
     const [hoveredItem, setHoveredItem] = useState(null);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -253,11 +240,23 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
         setMobileOpen(false);
     }, [location.pathname]);
 
+    // Restore admin sidebar scroll position across renders & page navigation
+    useLayoutEffect(() => {
+        const restore = () => {
+            const saved = sessionStorage.getItem('rbf_admin_sidebar_scroll');
+            if (saved !== null && navRef.current) {
+                navRef.current.scrollTop = Number(saved);
+            }
+        };
+        restore();
+        const raf = requestAnimationFrame(restore);
+        return () => cancelAnimationFrame(raf);
+    }, [location.pathname]);
+
     const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD';
     const roleBadge = getRoleBadgeInfo(user);
 
     // Dynamically filter navigation items based on user's authorized permissions
-    // Support Tickets / Ticket Center is accessible to all admin/team members for their common team & personal tickets
     const visibleNavItems = isSuperAdmin(user)
         ? navItems
         : navItems.filter((item) => item.to === '/admin/tickets' || hasPermission(user, item.permission));
@@ -297,13 +296,24 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
                 </div>
 
                 {/* Dynamic Navigation */}
-                <nav style={styles.nav}>
+                <nav 
+                    ref={navRef}
+                    onScroll={(e) => {
+                        sessionStorage.setItem('rbf_admin_sidebar_scroll', String(e.currentTarget.scrollTop));
+                    }}
+                    style={styles.nav}
+                >
                     <div style={styles.navLabel}>Permitted Modules ({visibleNavItems.length})</div>
                     {visibleNavItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
                             end={item.end}
+                            onClick={() => {
+                                if (navRef.current) {
+                                    sessionStorage.setItem('rbf_admin_sidebar_scroll', String(navRef.current.scrollTop));
+                                }
+                            }}
                             style={({ isActive }) => ({
                                 ...styles.navItem,
                                 ...(isActive ? styles.navItemActive : {}),

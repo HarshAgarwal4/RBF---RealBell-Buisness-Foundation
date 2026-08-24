@@ -101,7 +101,7 @@ export default function EventApply() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
         <Sidebar />
         <main style={{ marginLeft: 300, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.muted }}>
           Loading registration details…
@@ -112,7 +112,7 @@ export default function EventApply() {
 
   if (!event) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
         <Sidebar />
         <main style={{ marginLeft: 300, flex: 1, padding: 40, textAlign: "center", color: COLORS.muted }}>
           Event not found.
@@ -124,14 +124,14 @@ export default function EventApply() {
   const evtDate = event.event_date ? new Date(event.event_date) : null;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F4F5F7", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Sidebar />
 
       <main className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0 pb-16">
         {/* Header bar */}
         <div
           style={{
-            background: "#fff",
+            background: COLORS.card,
             borderBottom: `1px solid ${COLORS.border}`,
             padding: "16px 36px",
             display: "flex",
@@ -169,7 +169,7 @@ export default function EventApply() {
             /* Ticket Confirmation Card */
             <div
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 20,
                 border: `1px solid ${COLORS.border}`,
                 padding: "36px",
@@ -182,8 +182,8 @@ export default function EventApply() {
                   width: 60,
                   height: 60,
                   borderRadius: "50%",
-                  background: "#E8F5E9",
-                  color: "#2E7D32",
+                  background: "rgba(46, 125, 50, 0.2)",
+                  color: "#4ade80",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -260,7 +260,7 @@ export default function EventApply() {
             <form
               onSubmit={handleSubmit}
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 20,
                 border: `1px solid ${COLORS.border}`,
                 padding: "32px",
@@ -289,7 +289,7 @@ export default function EventApply() {
                         onClick={() => setRegistrationType("paid_ticket")}
                         style={{
                           border: `2px solid ${registrationType === "paid_ticket" ? COLORS.primary : COLORS.border}`,
-                          background: registrationType === "paid_ticket" ? `${COLORS.primary}08` : "#FAFAFA",
+                          background: registrationType === "paid_ticket" ? `${COLORS.primary}12` : "rgba(100, 116, 139, 0.06)",
                           borderRadius: 12,
                           padding: "14px 16px",
                           cursor: "pointer",
@@ -310,7 +310,7 @@ export default function EventApply() {
                         onClick={() => setRegistrationType("paid_token")}
                         style={{
                           border: `2px solid ${registrationType === "paid_token" ? COLORS.primary : COLORS.border}`,
-                          background: registrationType === "paid_token" ? `${COLORS.primary}08` : "#FAFAFA",
+                          background: registrationType === "paid_token" ? `${COLORS.primary}12` : "rgba(100, 116, 139, 0.06)",
                           borderRadius: 12,
                           padding: "14px 16px",
                           cursor: "pointer",
@@ -339,7 +339,7 @@ export default function EventApply() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {event.custom_form_fields.map((field) => (
                       <div key={field.id}>
-                        <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#4A4A5A", marginBottom: 6 }}>
+                        <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: COLORS.textSubtle, marginBottom: 6 }}>
                           {field.label} {field.required && <span style={{ color: "#C62828" }}>*</span>}
                         </label>
 
@@ -354,6 +354,8 @@ export default function EventApply() {
                               padding: "10px 12px",
                               borderRadius: 8,
                               border: `1px solid ${COLORS.border}`,
+                              background: "var(--color-input-bg, #ffffff)",
+                              color: "var(--color-text-main, #0f172a)",
                               fontSize: 13.5,
                               fontFamily: "inherit",
                               boxSizing: "border-box",
@@ -368,10 +370,11 @@ export default function EventApply() {
                               padding: "10px 12px",
                               borderRadius: 8,
                               border: `1px solid ${COLORS.border}`,
+                              background: "var(--color-input-bg, #ffffff)",
+                              color: "var(--color-text-main, #0f172a)",
                               fontSize: 13.5,
                               fontFamily: "inherit",
                               boxSizing: "border-box",
-                              background: "#fff",
                             }}
                           >
                             <option value="">Select option…</option>
@@ -392,6 +395,8 @@ export default function EventApply() {
                               padding: "10px 12px",
                               borderRadius: 8,
                               border: `1px solid ${COLORS.border}`,
+                              background: "var(--color-input-bg, #ffffff)",
+                              color: "var(--color-text-main, #0f172a)",
                               fontSize: 13.5,
                               fontFamily: "inherit",
                               boxSizing: "border-box",

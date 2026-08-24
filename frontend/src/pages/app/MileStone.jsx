@@ -189,19 +189,19 @@ export default function Milestones() {
     return (
         <>
             <Sidebar />
-            <div className="ml-0 lg:ml-75 pt-16 lg:pt-0 flex min-h-screen flex-col bg-[#f5f7fb]">
+            <div className="ml-0 lg:ml-75 pt-16 lg:pt-0 flex min-h-screen flex-col bg-[#f5f7fb] dark:bg-[#0B0F19]">
                 <div className="flex-1 p-4 sm:p-8 max-w-full overflow-hidden">
 
                     {/* HEADER */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900">
+                        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-slate-100">
                             {view === "list" ? "Milestones" : "Create Milestone"}
                         </h1>
 
                         {view === "list" && (
                             <button
                                 onClick={() => setView("create")}
-                                className="flex items-center justify-center gap-2 rounded-xl bg-[#b03052] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-[#96263f] shrink-0 cursor-pointer self-start sm:self-auto"
+                                className="flex items-center justify-center gap-2 rounded-xl bg-[#b03052] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-[#96263f] shrink-0 cursor-pointer self-start sm:self-auto shadow-sm"
                             >
                                 <Plus size={16} />
                                 Add Milestone
@@ -213,35 +213,35 @@ export default function Milestones() {
                         <>
                             {/* Count + search */}
                             <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700">
-                                    You have <span className="font-bold">{activeCount}</span> active
+                                <p className="text-xs sm:text-sm text-gray-700 dark:text-slate-300">
+                                    You have <span className="font-bold text-gray-900 dark:text-slate-100">{activeCount}</span> active
                                     milestones
                                 </p>
 
                                 <div className="relative w-full sm:w-80">
                                     <Search
-                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
                                         size={16}
                                     />
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Search milestones..."
-                                        className="w-full rounded-xl border bg-white py-2.5 pl-10 pr-3.5 text-xs sm:text-sm outline-none focus:border-black"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-[#151D2E] text-gray-900 dark:text-slate-100 py-2.5 pl-10 pr-3.5 text-xs sm:text-sm outline-none focus:border-[#b03052] dark:focus:border-[#b03052]"
                                     />
                                 </div>
                             </div>
 
                             {/* List / empty state */}
-                            <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm">
+                            <div className="mt-6 rounded-3xl bg-white dark:bg-[#151D2E] border border-gray-100 dark:border-slate-800 p-6 shadow-sm">
                                 {loading ? (
-                                    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+                                    <div className="flex flex-col items-center justify-center py-24 text-gray-400 dark:text-slate-500">
                                         Loading milestones...
                                     </div>
                                 ) : milestones.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-24 text-center">
-                                        <AlertCircle className="mb-4 h-16 w-16 text-gray-300" strokeWidth={1.5} />
-                                        <p className="mb-6 text-lg font-semibold text-gray-800">
+                                        <AlertCircle className="mb-4 h-16 w-16 text-gray-300 dark:text-slate-600" strokeWidth={1.5} />
+                                        <p className="mb-6 text-lg font-semibold text-gray-800 dark:text-slate-200">
                                             No milestones created yet
                                         </p>
                                         <button
@@ -255,35 +255,35 @@ export default function Milestones() {
                                 ) : (
                                     <div className="space-y-4">
                                         {milestones.map((m) => (
-                                            <div
+                                             <div
                                                 key={m._id}
-                                                className="rounded-2xl border p-5 transition hover:shadow-md"
+                                                className="rounded-2xl border border-gray-100 dark:border-slate-800 p-5 transition hover:shadow-md bg-white dark:bg-[#151D2E]"
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div>
-                                                        <h3 className="text-lg font-semibold text-gray-900">
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                                                             {m.title}
                                                         </h3>
-                                                        <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+                                                        <p className="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-slate-400">
                                                             {m.description}
                                                         </p>
                                                     </div>
                                                     <span
                                                         className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                                                             m.status === "active"
-                                                                ? "bg-green-50 text-green-700"
+                                                                ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
                                                                 : m.status === "completed"
-                                                                ? "bg-blue-50 text-blue-700"
+                                                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
                                                                 : m.status === "overdue"
-                                                                ? "bg-red-50 text-red-700"
-                                                                : "bg-gray-100 text-gray-600"
+                                                                ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+                                                                : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300"
                                                         }`}
                                                     >
                                                         {m.status}
                                                     </span>
                                                 </div>
 
-                                                <div className="mt-4 flex flex-wrap gap-5 text-sm text-gray-500">
+                                                <div className="mt-4 flex flex-wrap gap-5 text-sm text-gray-500 dark:text-slate-400">
                                                     <span className="flex items-center gap-1">
                                                         <Calendar size={15} />
                                                         {formatDate(m.startDate)} - {formatDate(m.targetDate)}
@@ -304,9 +304,9 @@ export default function Milestones() {
                         </>
                     ) : (
                         /* -------------------------------- CREATE VIEW -------------------------------- */
-                        <div className="mt-6 rounded-3xl bg-white p-8 shadow-sm">
+                        <div className="mt-6 rounded-3xl bg-white dark:bg-[#151D2E] border border-gray-100 dark:border-slate-800 p-8 shadow-sm">
                             {error && (
-                                <div className="mb-6 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                                <div className="mb-6 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-600 dark:text-red-400">
                                     {error}
                                 </div>
                             )}
@@ -317,7 +317,7 @@ export default function Milestones() {
                                     {/* LEFT COLUMN */}
                                     <div className="space-y-6">
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                 Title <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -326,12 +326,12 @@ export default function Milestones() {
                                                 onChange={handleChange}
                                                 placeholder="Title"
                                                 required
-                                                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-black"
+                                                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-3 outline-none focus:border-[#b03052]"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                 Brief Description <span className="text-red-500">*</span>
                                             </label>
                                             <textarea
@@ -341,19 +341,19 @@ export default function Milestones() {
                                                 placeholder="Write some description about milestone"
                                                 required
                                                 rows={5}
-                                                className="w-full resize-none rounded-lg border px-4 py-3 outline-none focus:border-black"
+                                                className="w-full resize-none rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-3 outline-none focus:border-[#b03052]"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                 Reviewers
                                             </label>
                                             <select
                                                 multiple
                                                 value={form.reviewers}
                                                 onChange={handleReviewersChange}
-                                                className="h-28 w-full rounded-lg border px-4 py-2 outline-none focus:border-black"
+                                                className="h-28 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-2 outline-none focus:border-[#b03052]"
                                             >
                                                 {reviewerOptions.map((r) => (
                                                     <option key={r._id} value={r._id}>
@@ -361,14 +361,14 @@ export default function Milestones() {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <p className="mt-1 text-xs text-gray-400">
+                                            <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
                                                 Hold Ctrl / Cmd to select multiple connections.
                                             </p>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-5">
                                             <div>
-                                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                     Start Date <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -377,11 +377,11 @@ export default function Milestones() {
                                                     value={form.startDate}
                                                     onChange={handleChange}
                                                     required
-                                                    className="w-full rounded-lg border px-4 py-3 outline-none focus:border-black"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-3 outline-none focus:border-[#b03052]"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                     Target Date <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -390,16 +390,16 @@ export default function Milestones() {
                                                     value={form.targetDate}
                                                     onChange={handleChange}
                                                     required
-                                                    className="w-full rounded-lg border px-4 py-3 outline-none focus:border-black"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-3 outline-none focus:border-[#b03052]"
                                                 />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                                 Progress reporting <span className="text-red-500">*</span>
                                             </label>
-                                            <p className="mb-3 text-xs text-gray-400">
+                                            <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
                                                 The platform will share updates on progress as per below
                                                 mentioned frequency.
                                             </p>
@@ -417,7 +417,7 @@ export default function Milestones() {
                                                             onChange={handleChange}
                                                             className="accent-[#b03052]"
                                                         />
-                                                        <span className="text-sm text-gray-700">{freq}</span>
+                                                        <span className="text-sm text-gray-700 dark:text-slate-300">{freq}</span>
                                                     </label>
                                                 ))}
                                             </div>
@@ -427,7 +427,7 @@ export default function Milestones() {
                                             <button
                                                 type="button"
                                                 onClick={resetAndGoToList}
-                                                className="mr-3 rounded-lg border px-6 py-3 hover:bg-gray-100"
+                                                className="mr-3 rounded-lg border border-gray-200 dark:border-slate-700 px-6 py-3 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                                             >
                                                 Cancel
                                             </button>
@@ -442,14 +442,14 @@ export default function Milestones() {
                                     </div>
 
                                     {/* RIGHT COLUMN */}
-                                    <div className="space-y-8 lg:border-l lg:pl-10">
+                                    <div className="space-y-8 lg:border-l lg:border-gray-200 dark:lg:border-slate-800 lg:pl-10">
 
                                         {/* Qualitative Tasks */}
                                         <div>
                                             <h3 className="font-semibold text-[#b03052]">
                                                 Qualitative Tasks <span className="text-red-500">*</span>
                                             </h3>
-                                            <p className="mb-3 text-xs text-gray-400">
+                                            <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
                                                 Eg. Hire a developer to create CRM.
                                             </p>
 
@@ -462,7 +462,7 @@ export default function Milestones() {
                                                                 updateQualitativeTask(index, e.target.value)
                                                             }
                                                             placeholder="Enter text"
-                                                            className="w-full rounded-lg border px-4 py-3 outline-none focus:border-black"
+                                                            className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-4 py-3 outline-none focus:border-[#b03052]"
                                                         />
                                                         {form.qualitativeTasks.length > 1 && (
                                                             <button
@@ -480,7 +480,7 @@ export default function Milestones() {
                                             <button
                                                 type="button"
                                                 onClick={addQualitativeTask}
-                                                className="mt-3 rounded-full border px-5 py-2 text-sm font-medium hover:bg-gray-50"
+                                                className="mt-3 rounded-full border border-gray-200 dark:border-slate-700 px-5 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                                             >
                                                 + Add
                                             </button>
@@ -491,11 +491,11 @@ export default function Milestones() {
                                             <h3 className="font-semibold text-[#b03052]">
                                                 Quantitative Tasks <span className="text-red-500">*</span>
                                             </h3>
-                                            <p className="mb-3 text-xs text-gray-400">
+                                            <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
                                                 Eg. Revenue of 50,00,000 INR
                                             </p>
 
-                                            <div className="mb-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-3 text-sm font-medium text-gray-700">
+                                            <div className="mb-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-3 text-sm font-medium text-gray-700 dark:text-slate-300">
                                                 <span>Parameter</span>
                                                 <span>Quantified value</span>
                                                 <span>Unit</span>
@@ -518,7 +518,7 @@ export default function Milestones() {
                                                                 )
                                                             }
                                                             placeholder="Enter text"
-                                                            className="w-full rounded-lg border px-3 py-3 outline-none focus:border-black"
+                                                            className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-3 py-3 outline-none focus:border-[#b03052]"
                                                         />
                                                         <input
                                                             value={task.quantifiedValue}
@@ -530,7 +530,7 @@ export default function Milestones() {
                                                                 )
                                                             }
                                                             placeholder="eg. 20"
-                                                            className="w-full rounded-lg border px-3 py-3 outline-none focus:border-black"
+                                                            className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-3 py-3 outline-none focus:border-[#b03052]"
                                                         />
                                                         <input
                                                             value={task.unit}
@@ -538,7 +538,7 @@ export default function Milestones() {
                                                                 updateQuantitativeTask(index, "unit", e.target.value)
                                                             }
                                                             placeholder="eg. USD/INR/%"
-                                                            className="w-full rounded-lg border px-3 py-3 outline-none focus:border-black"
+                                                            className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 px-3 py-3 outline-none focus:border-[#b03052]"
                                                         />
                                                         {form.quantitativeTasks.length > 1 && (
                                                             <button
@@ -556,7 +556,7 @@ export default function Milestones() {
                                             <button
                                                 type="button"
                                                 onClick={addQuantitativeTask}
-                                                className="mt-3 rounded-full border px-5 py-2 text-sm font-medium hover:bg-gray-50"
+                                                className="mt-3 rounded-full border border-gray-200 dark:border-slate-700 px-5 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                                             >
                                                 + Add
                                             </button>
@@ -569,7 +569,7 @@ export default function Milestones() {
                 </div>
 
                 {/* FOOTER */}
-                <footer className="flex items-center justify-between border-t bg-white px-8 py-4 text-sm text-gray-500">
+                <footer className="flex items-center justify-between border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-[#151D2E] px-8 py-4 text-sm text-gray-500 dark:text-slate-400">
                     <span>Copyright © {new Date().getFullYear()} ecosystem.firstwingsconnect.com. All rights reserved.</span>
                     <span>
                         Powered by <span className="font-medium text-[#b03052]">Sanchit&Co</span>

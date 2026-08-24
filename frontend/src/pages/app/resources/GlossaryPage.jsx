@@ -11,13 +11,13 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 /* ─── Definition Modal ─── */
 function DefinitionModal({ term, onClose }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 32, maxWidth: 500, width: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, maxWidth: 500, width: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", color: COLORS.ink }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: COLORS.primary }}>{term.title}</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={20} color="#888" /></button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={20} color={COLORS.muted} /></button>
         </div>
-        <p style={{ margin: 0, fontSize: 14.5, color: "#444", lineHeight: 1.7 }}>{term.definition || "No definition provided."}</p>
+        <p style={{ margin: 0, fontSize: 14.5, color: COLORS.textSubtle, lineHeight: 1.7 }}>{term.definition || "No definition provided."}</p>
       </div>
     </div>
   );
@@ -47,9 +47,9 @@ function AddModal({ onClose, onAdded }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: 480, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700 }}>Add Glossary Term</h2>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" }}>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, width: 480, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", color: COLORS.ink }}>
+        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: COLORS.ink }}>Add Glossary Term</h2>
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <input placeholder="Term / Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={inputStyle} />
           <input placeholder="Starting Letter (A-Z) *" maxLength={1} value={form.letter} onChange={(e) => setForm({ ...form, letter: e.target.value.toUpperCase() })} style={inputStyle} />
@@ -64,8 +64,8 @@ function AddModal({ onClose, onAdded }) {
   );
 }
 
-const inputStyle = { padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, outline: "none", fontFamily: "inherit" };
-const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14 };
+const inputStyle = { padding: "10px 14px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-input-bg, #ffffff)", color: "var(--color-text-main, #0f172a)", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" };
+const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-card, #fff)", color: "var(--color-text-main, #0f172a)", cursor: "pointer", fontWeight: 600, fontSize: 14 };
 const submitBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "none", background: COLORS.primary, color: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14 };
 
 export default function GlossaryPage() {
@@ -120,14 +120,14 @@ export default function GlossaryPage() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
       <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#1a1a2e" }}>Glossary</h1>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: COLORS.ink }}>Glossary</h1>
             <div className="relative w-full sm:w-64">
-              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.muted }} />
               <input placeholder="Search for a word..." value={search} onChange={(e) => { setSearch(e.target.value); setSelectedLetter(null); }} style={{ ...inputStyle, paddingLeft: 36, width: "100%", boxSizing: "border-box" }} />
             </div>
           </div>
@@ -144,7 +144,24 @@ export default function GlossaryPage() {
             const hasEntries = availableLetters.includes(l);
             const active = selectedLetter === l;
             return (
-              <button key={l} onClick={() => setSelectedLetter(active ? null : l)} disabled={!hasEntries} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: active ? COLORS.primary : hasEntries ? "#fff" : "#f3f4f6", color: active ? "#fff" : hasEntries ? "#1a1a2e" : "#d1d5db", fontWeight: active ? 700 : 600, fontSize: 12, cursor: hasEntries ? "pointer" : "default", boxShadow: hasEntries && !active ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
+              <button
+                key={l}
+                onClick={() => setSelectedLetter(active ? null : l)}
+                disabled={!hasEntries}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: `1px solid ${active ? COLORS.primary : COLORS.border}`,
+                  background: active ? COLORS.primary : hasEntries ? COLORS.card : "rgba(100, 116, 139, 0.12)",
+                  color: active ? "#fff" : hasEntries ? COLORS.ink : COLORS.muted,
+                  fontWeight: active ? 700 : 600,
+                  fontSize: 12,
+                  cursor: hasEntries ? "pointer" : "default",
+                  boxShadow: hasEntries && !active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
                 {l}
               </button>
             );
@@ -152,14 +169,14 @@ export default function GlossaryPage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>Loading...</div>
         ) : availableLetters.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No terms found.{isAdmin && " Click 'Add Term' to get started."}</div>
+          <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>No terms found.{isAdmin && " Click 'Add Term' to get started."}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {availableLetters.map((letter) => (
-              <div key={letter} style={{ background: "#fff", borderRadius: 14, padding: "20px 22px", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-                <h2 style={{ margin: "0 0 14px", fontSize: 22, fontWeight: 800, color: "#1a1a2e", borderBottom: "2px solid #F0E8E8", paddingBottom: 8 }}>{letter}</h2>
+              <div key={letter} style={{ background: COLORS.card, borderRadius: 14, padding: "20px 22px", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", border: `1px solid ${COLORS.border}` }}>
+                <h2 style={{ margin: "0 0 14px", fontSize: 22, fontWeight: 800, color: COLORS.ink, borderBottom: `2px solid ${COLORS.border}`, paddingBottom: 8 }}>{letter}</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {grouped[letter].map((t) => (
                     <div key={t._id} style={{ display: "flex", alignItems: "center", gap: 6 }}>

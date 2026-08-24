@@ -1,3 +1,4 @@
+@import "./theme.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -7,36 +8,6 @@
     box-sizing: border-box;
   }
 
-  :root {
-    --color-bg: #f8fafc;
-    --color-card: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text-main: #0f172a;
-    --color-text-muted: #64748b;
-    --color-text-subtle: #475569;
-    --color-input-bg: #ffffff;
-    --color-input-border: #cbd5e1;
-    --color-input-text: #0f172a;
-    --color-hover: #f1f5f9;
-    --color-dropdown-bg: #ffffff;
-    color-scheme: light;
-  }
-
-  html.dark {
-    --color-bg: #0f172a;
-    --color-card: #1e293b;
-    --color-border: #334155;
-    --color-text-main: #f8fafc;
-    --color-text-muted: #94a3b8;
-    --color-text-subtle: #cbd5e1;
-    --color-input-bg: #1e293b;
-    --color-input-border: #475569;
-    --color-input-text: #f8fafc;
-    --color-hover: #334155;
-    --color-dropdown-bg: #1e293b;
-    color-scheme: dark;
-  }
-
   html, body {
     width: 100%;
     margin: 0;
@@ -44,7 +15,6 @@
     -webkit-text-size-adjust: 100%;
     background-color: var(--color-bg);
     color: var(--color-text-main);
-    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   body {
@@ -58,76 +28,427 @@
   }
 }
 
-/* ================= DARK THEME GLOBAL OVERRIDES FOR MAIN APP ================= */
-
-html.dark body {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
+/* GPU-Accelerated View Transition Cross-Fade */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: ease-in-out;
 }
 
-/* All Input Fields, Textareas, Select Dropdowns, Options & Search Bars */
-html.dark input,
-html.dark textarea,
-html.dark select {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
+
+
+/* ==========================================================================
+   NORMAL USER DASHBOARD: GLOBAL DYNAMIC THEME ENGINE (LIGHT & DARK MODE)
+   (Driven by frontend/src/theme.css — Scoped so Admin Panel is untouched)
+   ========================================================================== */
+
+/* ================= 1. PRIMARY ACCENT BUTTONS, TEXT & BORDERS ================= */
+
+/* Primary Action Buttons */
+:not(.admin-scope) .bg-\[\#8E1B2E\],
+:not(.admin-scope) .bg-\[\#8B1D2C\],
+:not(.admin-scope) .bg-\[\#9d1d27\],
+:not(.admin-scope) .bg-\[\#B52B2B\],
+:not(.admin-scope) .bg-\[\#6E1524\],
+:not(.admin-scope) .bg-\[\#0F3D4A\],
+:not(.admin-scope) .bg-\[\#1C2340\],
+:not(.admin-scope) .bg-\[\#0B1639\],
+:not(.admin-scope) .bg-red-700,
+:not(.admin-scope) .bg-red-800,
+:not(.admin-scope) .bg-red-600 {
+  background-color: var(--color-primary) !important;
+  color: #FFFFFF !important;
 }
 
-html.dark option {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
+:not(.admin-scope) .hover\:bg-\[\#721724\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#741728\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#821721\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#972222\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#0b313b\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#151A31\]:hover,
+:not(.admin-scope) .hover\:bg-\[\#152352\]:hover,
+:not(.admin-scope) .hover\:bg-red-800:hover,
+:not(.admin-scope) .hover\:bg-red-700:hover {
+  background-color: var(--color-primary-hover, var(--color-primary-dark)) !important;
 }
 
-html.dark ::placeholder {
-  color: #94a3b8 !important;
+/* Primary Accent Text */
+:not(.admin-scope) .text-\[\#8E1B2E\],
+:not(.admin-scope) .text-\[\#8B1D2C\],
+:not(.admin-scope) .text-\[\#9d1d27\],
+:not(.admin-scope) .text-\[\#B52B2B\],
+:not(.admin-scope) .text-\[\#b03052\],
+:not(.admin-scope) .text-\[\#0F3D4A\],
+:not(.admin-scope) .text-red-700,
+:not(.admin-scope) .text-red-600 {
+  color: var(--color-primary) !important;
 }
 
-/* Hardcoded Light Background Overrides in Dark Mode */
-html.dark .bg-white,
-html.dark .bg-stone-50,
-html.dark .bg-slate-50,
-html.dark .bg-gray-50,
-html.dark .bg-gray-100,
-html.dark .bg-slate-100 {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
+/* Primary Accent Borders */
+:not(.admin-scope) .border-\[\#8E1B2E\],
+:not(.admin-scope) .border-\[\#8B1D2C\],
+:not(.admin-scope) .border-\[\#9d1d27\],
+:not(.admin-scope) .border-\[\#B52B2B\],
+:not(.admin-scope) .border-\[\#0F3D4A\],
+:not(.admin-scope) .border-red-700 {
+  border-color: var(--color-primary) !important;
 }
 
-html.dark .border-gray-100,
-html.dark .border-gray-200,
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-slate-300 {
-  border-color: #334155 !important;
+/* Soft Tinted Pill Badges & Highlights */
+:not(.admin-scope) .bg-\[\#F5EDEE\],
+:not(.admin-scope) .bg-\[\#F6E9EB\],
+:not(.admin-scope) .bg-\[\#FFF5F6\],
+:not(.admin-scope) .bg-\[\#FFF4EA\],
+:not(.admin-scope) .bg-\[\#F0F8F9\],
+:not(.admin-scope) .bg-\[\#F2F9FA\],
+:not(.admin-scope) .bg-\[\#ECF9F0\],
+:not(.admin-scope) .bg-\[\#fcf5f6\],
+:not(.admin-scope) .bg-\[\#9d1d27\]\/10,
+:not(.admin-scope) .bg-\[\#9d1d27\]\/20 {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
+  color: var(--color-primary-light, var(--color-primary)) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent) !important;
 }
 
-/* Text Color Clarity in Dark Mode */
-html.dark .text-slate-900,
-html.dark .text-slate-800,
-html.dark .text-slate-700,
-html.dark .text-gray-900,
-html.dark .text-gray-800,
-html.dark .text-gray-700 {
-  color: #f8fafc !important;
+/* Profile Tag Pills & Badges in Dark Mode */
+html.dark:not(.admin-scope) .bg-blue-50 {
+  background-color: var(--color-card-elevated) !important;
+}
+html.dark:not(.admin-scope) .border-blue-100 {
+  border-color: var(--color-border) !important;
+}
+html.dark:not(.admin-scope) .text-blue-900 {
+  color: var(--color-primary) !important;
+}
+html.dark:not(.admin-scope) .bg-green-100 {
+  background-color: color-mix(in srgb, var(--color-success) 18%, transparent) !important;
+  color: var(--color-success) !important;
+}
+html.dark:not(.admin-scope) .text-green-700 {
+  color: var(--color-success) !important;
+}
+html.dark:not(.admin-scope) .bg-\[\#fafbfc\] {
+  background-color: var(--color-card-elevated) !important;
 }
 
-html.dark .text-slate-600,
-html.dark .text-slate-500,
-html.dark .text-gray-600,
-html.dark .text-gray-500,
-html.dark .text-gray-400 {
-  color: #cbd5e1 !important;
+/* Watermarks & Decorative Shapes */
+:not(.admin-scope) .text-\[\#9d1d27\]\/5,
+:not(.admin-scope) .text-\[\#9d1d27\]\/10 {
+  color: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
 }
 
-/* Modals & Overlays in Dark Mode */
-html.dark .bg-white\/95,
-html.dark .bg-white\/90,
-html.dark .bg-white\/80 {
-  background-color: rgba(30, 41, 59, 0.95) !important;
-  color: #f8fafc !important;
+/* ================= 2. PAGE BACKGROUNDS & SURFACES ================= */
+
+:not(.admin-scope) .bg-\[\#F8FAFC\],
+:not(.admin-scope) .bg-\[\#F6F8FC\],
+:not(.admin-scope) .bg-\[\#EEF3F8\],
+:not(.admin-scope) .bg-\[\#F4F6F9\],
+:not(.admin-scope) .bg-\[\#FBFCFF\],
+:not(.admin-scope) .bg-\[\#F4F6FB\],
+:not(.admin-scope) .bg-\[\#f5f7fb\],
+:not(.admin-scope) .bg-\[\#F7F8FA\],
+:not(.admin-scope) .bg-\[\#FAFAFC\],
+:not(.admin-scope) .bg-\[\#F7F7FA\],
+:not(.admin-scope) .bg-\[\#F1F2F6\],
+:not(.admin-scope) .bg-\[\#E9E9EE\],
+:not(.admin-scope) .bg-\[\#F6F7FA\],
+:not(.admin-scope) .bg-\[\#EEF0F5\],
+:not(.admin-scope) .bg-\[\#EBECEF\],
+:not(.admin-scope) .bg-\[\#f8f8f8\],
+html.dark:not(.admin-scope) .dark\:bg-\[\#0B0F19\],
+html.dark:not(.admin-scope) .dark\:bg-\[\#151D2E\],
+html.dark:not(.admin-scope) .dark\:bg-\[\#111827\],
+html.dark:not(.admin-scope) .dark\:bg-slate-900,
+html.dark:not(.admin-scope) .dark\:bg-slate-950 {
+  background-color: var(--color-bg) !important;
 }
 
+/* Card Surfaces */
+html.dark:not(.admin-scope) .bg-white,
+html.dark:not(.admin-scope) .bg-stone-50,
+html.dark:not(.admin-scope) .bg-slate-50,
+html.dark:not(.admin-scope) .bg-gray-50,
+html.dark:not(.admin-scope) .bg-zinc-50,
+html.dark:not(.admin-scope) .bg-neutral-50 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text-main) !important;
+}
+
+/* Elevated Sub-Cards */
+html.dark:not(.admin-scope) .bg-gray-100,
+html.dark:not(.admin-scope) .bg-slate-100,
+html.dark:not(.admin-scope) .bg-zinc-100,
+html.dark:not(.admin-scope) .bg-stone-100,
+html.dark:not(.admin-scope) .bg-slate-200,
+html.dark:not(.admin-scope) .bg-gray-200 {
+  background-color: var(--color-card-elevated) !important;
+  color: var(--color-text-main) !important;
+}
+
+html.dark:not(.admin-scope) .bg-slate-50\/50,
+html.dark:not(.admin-scope) .bg-gray-50\/50,
+html.dark:not(.admin-scope) .bg-gray-50\/60,
+html.dark:not(.admin-scope) .bg-gray-50\/80 {
+  background-color: var(--color-hover) !important;
+}
+
+/* Modals & Backdrop Blur */
+html.dark:not(.admin-scope) .bg-white\/95,
+html.dark:not(.admin-scope) .bg-white\/90,
+html.dark:not(.admin-scope) .bg-white\/80,
+html.dark:not(.admin-scope) .bg-white\/70,
+html.dark:not(.admin-scope) .bg-white\/60,
+html.dark:not(.admin-scope) .dark\:bg-\[\#151D2E\]\/95,
+html.dark:not(.admin-scope) .dark\:bg-slate-900\/95 {
+  background-color: color-mix(in srgb, var(--color-card) 95%, transparent) !important;
+  color: var(--color-text-main) !important;
+}
+
+/* ================= 3. BORDERS & DIVIDERS ================= */
+
+:not(.admin-scope) .border-\[\#E7ECF5\],
+:not(.admin-scope) .border-\[\#E5EAF3\],
+:not(.admin-scope) .border-\[\#E6EBF4\],
+:not(.admin-scope) .border-\[\#EEF2F8\],
+:not(.admin-scope) .border-\[\#E3E8F2\],
+:not(.admin-scope) .border-\[\#E4E9F1\],
+:not(.admin-scope) .border-\[\#E7E7EC\],
+:not(.admin-scope) .border-\[\#E2E8F2\],
+:not(.admin-scope) .border-\[\#F0F2F7\],
+:not(.admin-scope) .border-\[\#EEF1F6\],
+:not(.admin-scope) .border-\[\#E8ECF4\],
+:not(.admin-scope) .border-\[\#ABB1C5\],
+html.dark:not(.admin-scope) .border-gray-100,
+html.dark:not(.admin-scope) .border-gray-200,
+html.dark:not(.admin-scope) .border-gray-300,
+html.dark:not(.admin-scope) .border-slate-100,
+html.dark:not(.admin-scope) .border-slate-200,
+html.dark:not(.admin-scope) .border-slate-300,
+html.dark:not(.admin-scope) .border-zinc-200,
+html.dark:not(.admin-scope) .border-stone-200,
+html.dark:not(.admin-scope) .dark\:border-slate-800,
+html.dark:not(.admin-scope) .dark\:border-slate-700 {
+  border-color: var(--color-border) !important;
+}
+
+/* Divide borders */
+html.dark:not(.admin-scope) .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark:not(.admin-scope) .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+html.dark:not(.admin-scope) .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark:not(.admin-scope) .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark:not(.admin-scope) .divide-\[\#E8ECF4\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--color-border) !important;
+}
+
+/* ================= 4. FORM CONTROLS & INPUT FIELDS ================= */
+
+/* Text, Search, Email, Password, URL, Tel Inputs & Textarea */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+input:not([type]),
+textarea {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input:not([type]):focus,
+textarea:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+}
+
+/* Number Inputs */
+input[type="number"] {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+input[type="number"]:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+}
+
+/* Date & Time Inputs */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark input[type="time"]::-webkit-calendar-picker-indicator,
+html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) brightness(1.2);
+  cursor: pointer;
+}
+
+/* File Upload Inputs */
+input[type="file"] {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-text-muted) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 6px 14px !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  cursor: pointer !important;
+  margin-right: 12px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+input[type="file"]::file-selector-button:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: linear-gradient(135deg, var(--color-primary-light, var(--color-primary)), var(--color-primary)) !important;
+  transform: translateY(-1px);
+}
+
+/* Select Dropdowns & Options */
+select {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+select:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+}
+
+select option,
+select optgroup {
+  background-color: var(--color-card) !important;
+  color: var(--color-input-text) !important;
+}
+
+/* Checkboxes & Radios */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary) !important;
+}
+
+/* Range Sliders */
+input[type="range"] {
+  accent-color: var(--color-primary) !important;
+}
+
+/* Disabled Form Controls */
+input:disabled,
+textarea:disabled,
+select:disabled,
+button:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* ================= 5. TEXT COLOR CLARITY & CONTRAST ================= */
+
+/* Main Headings & Titles in Dark Mode */
+html.dark:not(.admin-scope) .text-slate-900,
+html.dark:not(.admin-scope) .text-slate-800,
+html.dark:not(.admin-scope) .text-slate-700,
+html.dark:not(.admin-scope) .text-gray-900,
+html.dark:not(.admin-scope) .text-gray-800,
+html.dark:not(.admin-scope) .text-gray-700,
+html.dark:not(.admin-scope) .text-zinc-900,
+html.dark:not(.admin-scope) .text-zinc-800,
+html.dark:not(.admin-scope) .text-\[\#18213A\],
+html.dark:not(.admin-scope) .text-\[\#172033\],
+html.dark:not(.admin-scope) .text-\[\#152033\],
+html.dark:not(.admin-scope) .text-\[\#142036\],
+html.dark:not(.admin-scope) .text-\[\#1D2940\],
+html.dark:not(.admin-scope) .text-\[\#1C2740\],
+html.dark:not(.admin-scope) .text-\[\#132034\],
+html.dark:not(.admin-scope) .text-\[\#111827\],
+html.dark:not(.admin-scope) .dark\:text-slate-100,
+html.dark:not(.admin-scope) .dark\:text-white {
+  color: var(--color-text-main) !important;
+}
+
+/* Secondary Descriptions & Metadata in Dark Mode */
+html.dark:not(.admin-scope) .text-slate-600,
+html.dark:not(.admin-scope) .text-slate-500,
+html.dark:not(.admin-scope) .text-gray-600,
+html.dark:not(.admin-scope) .text-gray-500,
+html.dark:not(.admin-scope) .text-gray-400,
+html.dark:not(.admin-scope) .text-zinc-500,
+html.dark:not(.admin-scope) .text-\[\#3E4A62\],
+html.dark:not(.admin-scope) .text-\[\#40506A\],
+html.dark:not(.admin-scope) .text-\[\#70819B\],
+html.dark:not(.admin-scope) .text-\[\#6E7B92\],
+html.dark:not(.admin-scope) .text-\[\#525E7A\],
+html.dark:not(.admin-scope) .text-\[\#3B4660\],
+html.dark:not(.admin-scope) .text-\[\#536075\],
+html.dark:not(.admin-scope) .text-\[\#6A6F8D\],
+html.dark:not(.admin-scope) .text-\[\#8390AA\],
+html.dark:not(.admin-scope) .text-\[\#8891A7\],
+html.dark:not(.admin-scope) .text-\[\#9AA2B6\],
+html.dark:not(.admin-scope) .text-\[\#9AA2B8\],
+html.dark:not(.admin-scope) .text-\[\#9DA4B8\],
+html.dark:not(.admin-scope) .text-\[\#A1A8BD\],
+html.dark:not(.admin-scope) .text-\[\#A4A9BA\],
+html.dark:not(.admin-scope) .text-\[\#A4AABB\],
+html.dark:not(.admin-scope) .text-\[\#7A849A\],
+html.dark:not(.admin-scope) .text-\[\#8A95AB\],
+html.dark:not(.admin-scope) .text-\[\#93A0B8\],
+html.dark:not(.admin-scope) .text-\[\#607086\],
+html.dark:not(.admin-scope) .text-\[\#3A3A46\],
+html.dark:not(.admin-scope) .text-\[\#5B5B68\],
+html.dark:not(.admin-scope) .text-\[\#555\],
+html.dark:not(.admin-scope) .text-\[\#666\],
+html.dark:not(.admin-scope) .text-\[\#888\],
+html.dark:not(.admin-scope) .text-\[\#4A4A5A\],
+html.dark:not(.admin-scope) .dark\:text-slate-400,
+html.dark:not(.admin-scope) .dark\:text-slate-300 {
+  color: var(--color-text-muted) !important;
+}
+
+/* ================= 6. TABLES, CHIPS & BADGES ================= */
+
+html.dark:not(.admin-scope) table {
+  color: var(--color-text-main) !important;
+}
+
+html.dark:not(.admin-scope) thead tr {
+  border-color: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+}
+
+html.dark:not(.admin-scope) tbody tr {
+  border-color: var(--color-border) !important;
+}
+
+html.dark:not(.admin-scope) tbody tr:hover {
+  background-color: var(--color-hover) !important;
+}
+
+/* Scrollbar Utility */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
@@ -136,9 +457,36 @@ html.dark .bg-white\/80 {
   scrollbar-width: none;
 }
 
-/* ================= BEAUTIFUL SIDEBAR SCROLLBAR (DESKTOP ONLY) ================= */
+/* ================= 7. REFINED SCROLLBAR STYLING ================= */
 
-/* Mobile (< 1024px): Clean touch scrolling without visible scrollbar */
+/* Global Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-border) 80%, white);
+}
+
+/* Mobile (< 1024px) Sidebar Scroll */
 @media (max-width: 1023px) {
   .sidebar-desktop-scroll::-webkit-scrollbar {
     display: none;
@@ -149,7 +497,7 @@ html.dark .bg-white\/80 {
   }
 }
 
-/* Desktop (>= 1024px): Sleek, refined modern scrollbar */
+/* Desktop (>= 1024px) Sidebar Scroll */
 @media (min-width: 1024px) {
   .sidebar-desktop-scroll {
     scrollbar-width: thin;
@@ -157,7 +505,7 @@ html.dark .bg-white\/80 {
   }
 
   html.dark .sidebar-desktop-scroll {
-    scrollbar-color: #334155 transparent;
+    scrollbar-color: var(--color-border) transparent;
   }
 
   .sidebar-desktop-scroll::-webkit-scrollbar {
@@ -181,19 +529,19 @@ html.dark .bg-white\/80 {
   }
 
   .sidebar-desktop-scroll::-webkit-scrollbar-thumb:active {
-    background: #8E1B2E;
+    background: var(--color-primary);
   }
 
-  /* Dark theme styling */
+  /* Dark theme sidebar scrollbar */
   html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--color-border);
   }
 
   html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: color-mix(in srgb, var(--color-border) 80%, white);
   }
 
   html.dark .sidebar-desktop-scroll::-webkit-scrollbar-thumb:active {
-    background: #8E1B2E;
+    background: var(--color-primary);
   }
 }

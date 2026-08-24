@@ -450,8 +450,8 @@ export default function AdminTeams() {
             ) : teams.length === 0 ? (
               <div style={styles.emptyState}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏢</div>
-                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#cbd5e1' }}>No teams created yet</div>
-                <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Create teams like HR, Cashier, Manager, Doctor, Receptionist to manage access permissions.</p>
+                <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>No teams created yet</div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted, #475569)' }}>Create teams like HR, Cashier, Manager, Doctor, Receptionist to manage access permissions.</p>
                 <button onClick={() => handleOpenTeamModal('create')} style={styles.primaryBtn}>
                   Create First Team
                 </button>
@@ -466,14 +466,14 @@ export default function AdminTeams() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#f1f5f9', margin: 0 }}>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--admin-text-primary, #0f172a)', margin: 0 }}>
                               {team.name}
                             </h3>
                             <span style={styles.departmentBadge}>
                               {team.department || 'Operations'}
                             </span>
                           </div>
-                          <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-subtle, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             Team Slug: {team.slug || team.name.toLowerCase()}
                           </span>
                         </div>
@@ -481,7 +481,7 @@ export default function AdminTeams() {
                           style={{
                             ...styles.statusBadge,
                             background: team.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                            color: team.status === 'active' ? '#34d399' : '#f87171',
+                            color: team.status === 'active' ? '#059669' : '#dc2626',
                             border: team.status === 'active' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)',
                           }}
                         >
@@ -489,13 +489,13 @@ export default function AdminTeams() {
                         </span>
                       </div>
 
-                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', minHeight: '32px', margin: '0 0 0.8rem', lineHeight: '1.4' }}>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted, #475569)', minHeight: '32px', margin: '0 0 0.8rem', lineHeight: '1.4' }}>
                         {team.description || 'No description provided for this team.'}
                       </p>
 
                       {/* Permissions Tags Preview */}
                       <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.68rem', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', marginBottom: '5px' }}>
+                        <div style={{ fontSize: '0.68rem', fontWeight: '600', color: 'var(--admin-text-subtle, #64748b)', textTransform: 'uppercase', marginBottom: '5px' }}>
                           Team Permissions ({permCount})
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '60px', overflowY: 'hidden' }}>
@@ -509,17 +509,17 @@ export default function AdminTeams() {
                             ))
                           )}
                           {!isWildcard && team.permissions?.length > 4 && (
-                            <span style={{ ...styles.permPill, color: '#818cf8', background: 'rgba(99,102,241,0.1)' }}>
+                            <span style={{ ...styles.permPill, color: 'var(--custom-primary-color, #4f46e5)', background: 'rgba(99,102,241,0.12)' }}>
                               +{team.permissions.length - 4} more
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', paddingTop: '0.75rem', fontSize: '0.75rem', color: '#64748b' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--admin-border-subtle, #e2e8f0)', paddingTop: '0.75rem', fontSize: '0.75rem', color: 'var(--admin-text-subtle, #64748b)' }}>
                         <span
                           onClick={() => handleViewTeamMembers(team)}
-                          style={{ color: '#818cf8', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          style={{ color: 'var(--custom-primary-color, #4f46e5)', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                         >
                           👥 {team.memberCount || 0} Member{team.memberCount === 1 ? '' : 's'} →
                         </span>
@@ -533,7 +533,7 @@ export default function AdminTeams() {
                           </button>
                           <button
                             onClick={() => handleInitiateDeleteTeam(team)}
-                            style={{ ...styles.actionIconBtn, color: '#f87171' }}
+                            style={{ ...styles.actionIconBtn, color: '#dc2626' }}
                             title="Delete Team"
                           >
                             🗑️
@@ -577,8 +577,8 @@ export default function AdminTeams() {
             ) : filteredUsers.length === 0 ? (
               <div style={styles.emptyState}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👥</div>
-                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#cbd5e1' }}>No users match your filters</div>
-                <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Invite verified new members to assign them to a team.</p>
+                <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>No users match your filters</div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted, #475569)' }}>Invite verified new members to assign them to a team.</p>
                 <button onClick={() => setInviteModal({ open: true })} style={styles.primaryBtn}>
                   Invite First User to Team
                 </button>
@@ -607,10 +607,10 @@ export default function AdminTeams() {
                                 {u.name ? u.name.slice(0, 2).toUpperCase() : 'AD'}
                               </div>
                               <div>
-                                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f1f5f9' }}>
-                                  {u.name} {isSelf ? <span style={{ fontSize: '0.68rem', color: '#818cf8' }}>(You)</span> : ''}
+                                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
+                                  {u.name} {isSelf ? <span style={{ fontSize: '0.68rem', color: 'var(--custom-primary-color, #4f46e5)' }}>(You)</span> : ''}
                                 </div>
-                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted, #475569)' }}>
                                   {u.email}
                                 </div>
                               </div>
@@ -622,7 +622,7 @@ export default function AdminTeams() {
                             ) : u.team?.name ? (
                               <span style={styles.teamTag}>🏢 {u.team.name} Team</span>
                             ) : (
-                              <span style={{ color: '#64748b', fontSize: '0.75rem' }}>— Unassigned —</span>
+                              <span style={{ color: 'var(--admin-text-subtle, #64748b)', fontSize: '0.75rem' }}>— Unassigned —</span>
                             )}
                           </td>
                           <td style={styles.td}>
@@ -630,14 +630,14 @@ export default function AdminTeams() {
                               style={{
                                 ...styles.statusBadge,
                                 background: u.accountStatus === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                                color: u.accountStatus === 'active' ? '#34d399' : '#f87171',
+                                color: u.accountStatus === 'active' ? '#059669' : '#dc2626',
                                 border: u.accountStatus === 'active' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)',
                               }}
                             >
                               {u.accountStatus === 'active' ? 'Active' : 'Disabled'}
                             </span>
                           </td>
-                          <td style={{ ...styles.td, fontSize: '0.75rem', color: '#64748b' }}>
+                          <td style={{ ...styles.td, fontSize: '0.75rem', color: 'var(--admin-text-subtle, #64748b)' }}>
                             {new Date(u.createdAt).toLocaleDateString()}
                           </td>
                           <td style={{ ...styles.td, textAlign: 'right' }}>
@@ -655,7 +655,7 @@ export default function AdminTeams() {
                                     onClick={() => handleToggleUserStatus(u)}
                                     style={{
                                       ...styles.btnSmall,
-                                      color: u.accountStatus === 'active' ? '#f87171' : '#34d399',
+                                      color: u.accountStatus === 'active' ? '#dc2626' : '#059669',
                                     }}
                                     title={u.accountStatus === 'active' ? 'Disable User' : 'Enable User'}
                                   >
@@ -667,7 +667,7 @@ export default function AdminTeams() {
                                       style={{
                                         ...styles.btnSmall,
                                         background: 'rgba(239, 68, 68, 0.1)',
-                                        color: '#f87171',
+                                        color: '#dc2626',
                                         border: '1px solid rgba(239, 68, 68, 0.25)',
                                       }}
                                       title="Permanently Delete Staff Member"
@@ -689,60 +689,69 @@ export default function AdminTeams() {
           </div>
         )}
 
-        {/* ======================= MODAL: CREATE / EDIT TEAM & PERMISSIONS ======================= */}
+        {/* ======================= MODAL: CREATE / EDIT TEAM ======================= */}
         {teamModal.open && (
           <div style={styles.modalOverlay}>
-            <div style={{ ...styles.modalContent, maxWidth: '750px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...styles.modalContent, maxWidth: '780px' }}>
               <div style={styles.modalHeader}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f1f5f9' }}>
-                    {teamModal.mode === 'create' ? 'Create Team & Configure Permissions' : `Edit Team: ${teamModal.data?.name}`}
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
+                    {teamModal.mode === 'create' ? 'Create Organization Team' : `Edit Team: ${teamForm.name}`}
                   </h3>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-                    Define the team (e.g. HR, Cashier, Manager, Doctor) and choose which admin modules members can access.
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--admin-text-muted, #475569)' }}>
+                    Configure team name, functional department, and granular platform access permissions.
                   </p>
                 </div>
                 <button onClick={() => setTeamModal({ open: false, mode: 'create', data: null })} style={styles.closeBtn}>✕</button>
               </div>
 
-              <form onSubmit={handleSaveTeam} style={{ padding: '1.25rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <form onSubmit={handleSaveTeam} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem', maxHeight: '75vh', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                   <div>
                     <label style={styles.label}>Team Name *</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. HR, Cashier, Manager, Doctor, Receptionist"
+                      placeholder="e.g. Finance & Cashier"
                       value={teamForm.name}
                       onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
                       style={styles.input}
                     />
                   </div>
+
                   <div>
                     <label style={styles.label}>Department</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Human Resources, Finance, Operations"
+                    <select
                       value={teamForm.department}
                       onChange={(e) => setTeamForm({ ...teamForm, department: e.target.value })}
                       style={styles.input}
-                    />
+                    >
+                      <option value="Operations">Operations</option>
+                      <option value="Finance & Accounts">Finance & Accounts</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Medical & Advisory">Medical & Advisory</option>
+                      <option value="Front Desk & Reception">Front Desk & Reception</option>
+                      <option value="Administration">Administration</option>
+                      <option value="Legal & Governance">Legal & Governance</option>
+                      <option value="Technology">Technology</option>
+                    </select>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                   <div>
                     <label style={styles.label}>Description</label>
                     <input
                       type="text"
-                      placeholder="Team purpose and responsibilities..."
+                      placeholder="Brief purpose of this team..."
                       value={teamForm.description}
                       onChange={(e) => setTeamForm({ ...teamForm, description: e.target.value })}
                       style={styles.input}
                     />
                   </div>
+
                   <div>
-                    <label style={styles.label}>Status</label>
+                    <label style={styles.label}>Team Status</label>
                     <select
                       value={teamForm.status}
                       onChange={(e) => setTeamForm({ ...teamForm, status: e.target.value })}
@@ -755,13 +764,13 @@ export default function AdminTeams() {
                 </div>
 
                 {/* Permissions Section */}
-                <div style={{ borderTop: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))', paddingTop: '1rem' }}>
+                <div style={{ borderTop: '1px solid var(--admin-border-subtle, #e2e8f0)', paddingTop: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#f1f5f9' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
                         Team Access Permissions ({teamForm.permissions.length} Selected)
                       </h4>
-                      <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--admin-text-subtle, #64748b)' }}>
                         Members invited to this team will inherit exactly these permissions.
                       </p>
                     </div>
@@ -793,8 +802,8 @@ export default function AdminTeams() {
                         <div
                           key={mod.module}
                           style={{
-                            background: isAnyModChecked ? 'rgba(99,102,241,0.04)' : 'var(--admin-input-bg, rgba(255,255,255,0.02))',
-                            border: isAnyModChecked ? '1px solid rgba(99,102,241,0.2)' : '1px solid var(--admin-border-subtle, rgba(255,255,255,0.05))',
+                            background: isAnyModChecked ? 'rgba(99,102,241,0.06)' : 'var(--admin-input-bg, #ffffff)',
+                            border: isAnyModChecked ? '1px solid rgba(99,102,241,0.25)' : '1px solid var(--admin-border-subtle, #e2e8f0)',
                             borderRadius: '8px',
                             padding: '0.75rem',
                           }}
@@ -802,8 +811,8 @@ export default function AdminTeams() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ fontSize: 18 }}>{mod.icon}</span>
-                              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f1f5f9' }}>{mod.name}</span>
-                              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>— {mod.description}</span>
+                              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>{mod.name}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-subtle, #64748b)' }}>— {mod.description}</span>
                             </div>
                             <button
                               type="button"
@@ -811,7 +820,7 @@ export default function AdminTeams() {
                               style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: isAllModChecked ? '#818cf8' : '#64748b',
+                                color: isAllModChecked ? 'var(--custom-primary-color, #4f46e5)' : 'var(--admin-text-subtle, #64748b)',
                                 fontSize: '0.72rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
@@ -846,7 +855,7 @@ export default function AdminTeams() {
                                     style={{ accentColor: '#6366f1', cursor: 'pointer' }}
                                   />
                                   <div>
-                                    <div style={{ fontSize: '0.75rem', fontWeight: isChecked ? '600' : '400', color: isChecked ? '#e0e7ff' : '#94a3b8' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: isChecked ? '600' : '400', color: isChecked ? 'var(--admin-text-primary, #0f172a)' : 'var(--admin-text-muted, #475569)' }}>
                                       {perm.label}
                                     </div>
                                   </div>
@@ -860,7 +869,7 @@ export default function AdminTeams() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', borderTop: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))', paddingTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', borderTop: '1px solid var(--admin-border-subtle, #e2e8f0)', paddingTop: '1rem' }}>
                   <button
                     type="button"
                     onClick={() => setTeamModal({ open: false, mode: 'create', data: null })}
@@ -883,10 +892,10 @@ export default function AdminTeams() {
             <div style={styles.modalContent}>
               <div style={styles.modalHeader}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f1f5f9' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
                     Invite & Verify User to Team
                   </h3>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--admin-text-muted, #475569)' }}>
                     Verify member email with OTP before provisioning their staff account and team permissions.
                   </p>
                 </div>
@@ -924,7 +933,7 @@ export default function AdminTeams() {
                       style={{
                         ...styles.btnSecondary,
                         background: otpSent ? 'rgba(16,185,129,0.15)' : '#6366f1',
-                        color: otpSent ? '#34d399' : '#fff',
+                        color: otpSent ? '#059669' : '#fff',
                         borderColor: otpSent ? 'rgba(16,185,129,0.3)' : '#6366f1',
                         whiteSpace: 'nowrap',
                       }}
@@ -933,7 +942,7 @@ export default function AdminTeams() {
                     </button>
                   </div>
                   {otpSent && (
-                    <div style={{ fontSize: '0.72rem', color: '#34d399', marginTop: '4px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#059669', marginTop: '4px' }}>
                       ✓ 6-digit confirmation code was sent to {inviteForm.email}
                     </div>
                   )}
@@ -941,7 +950,7 @@ export default function AdminTeams() {
 
                 {/* OTP Verification Input */}
                 <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', padding: '0.75rem', borderRadius: '8px' }}>
-                  <label style={{ ...styles.label, color: '#a5b4fc' }}>Enter 6-Digit Email Verification OTP *</label>
+                  <label style={{ ...styles.label, color: 'var(--custom-primary-color, #4f46e5)' }}>Enter 6-Digit Email Verification OTP *</label>
                   <input
                     type="text"
                     required
@@ -955,10 +964,9 @@ export default function AdminTeams() {
                       letterSpacing: '0.2em',
                       fontWeight: '800',
                       textAlign: 'center',
-                      background: 'rgba(0,0,0,0.3)',
                     }}
                   />
-                  <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '4px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted, #475569)', marginTop: '4px', textAlign: 'center' }}>
                     Verifies that the member's email address is genuine and reachable before account activation.
                   </div>
                 </div>
@@ -983,7 +991,7 @@ export default function AdminTeams() {
                 <div>
                   <label style={styles.label}>Initial Password Setting</label>
                   <div style={{ display: 'flex', gap: '1rem', marginTop: '4px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--admin-text-primary, #0f172a)', cursor: 'pointer' }}>
                       <input
                         type="radio"
                         name="pwdMode"
@@ -993,7 +1001,7 @@ export default function AdminTeams() {
                       />
                       Auto-generate secure temporary password
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--admin-text-primary, #0f172a)', cursor: 'pointer' }}>
                       <input
                         type="radio"
                         name="pwdMode"
@@ -1016,7 +1024,7 @@ export default function AdminTeams() {
                 </div>
 
                 <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', padding: '0.75rem', borderRadius: '6px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#e0e7ff', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--admin-text-primary, #0f172a)', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={inviteForm.sendInviteEmail}
@@ -1049,7 +1057,7 @@ export default function AdminTeams() {
           <div style={styles.modalOverlay}>
             <div style={styles.modalContent}>
               <div style={styles.modalHeader}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f1f5f9' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
                   Change Team: {assignModal.user?.name}
                 </h3>
                 <button onClick={() => setAssignModal({ open: false, user: null })} style={styles.closeBtn}>✕</button>
@@ -1105,10 +1113,10 @@ export default function AdminTeams() {
             <div style={{ ...styles.modalContent, maxWidth: '650px' }}>
               <div style={styles.modalHeader}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f1f5f9' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>
                     🏢 {membersModal.team?.name} Team — Members
                   </h3>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--admin-text-muted, #475569)' }}>
                     {membersModal.members?.length} staff members in this team.
                   </p>
                 </div>
@@ -1117,7 +1125,7 @@ export default function AdminTeams() {
 
               <div style={{ padding: '1.25rem', maxHeight: '60vh', overflowY: 'auto' }}>
                 {membersModal.members?.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--admin-text-subtle, #64748b)' }}>
                     No members are currently in this team. Click "Invite User to Team" to add members.
                   </div>
                 ) : (
@@ -1130,20 +1138,20 @@ export default function AdminTeams() {
                           justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '0.75rem',
-                          background: 'var(--admin-input-bg, rgba(255,255,255,0.03))',
-                          border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))',
+                          background: 'var(--admin-input-bg, #ffffff)',
+                          border: '1px solid var(--admin-border-subtle, #e2e8f0)',
                           borderRadius: '8px',
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f1f5f9' }}>{m.name}</div>
-                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{m.email}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--admin-text-primary, #0f172a)' }}>{m.name}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted, #475569)' }}>{m.email}</div>
                         </div>
                         <span
                           style={{
                             ...styles.statusBadge,
                             background: m.accountStatus === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                            color: m.accountStatus === 'active' ? '#34d399' : '#f87171',
+                            color: m.accountStatus === 'active' ? '#059669' : '#dc2626',
                           }}
                         >
                           {m.accountStatus}
@@ -1162,14 +1170,14 @@ export default function AdminTeams() {
           <div style={styles.modalOverlay}>
             <div style={styles.modalContent}>
               <div style={styles.modalHeader}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f87171' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#dc2626' }}>
                   Reassign Members Before Deleting Team
                 </h3>
                 <button onClick={() => setDeleteTeamModal({ open: false, team: null, reassignTo: '' })} style={styles.closeBtn}>✕</button>
               </div>
 
               <div style={{ padding: '1.25rem' }}>
-                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 1rem' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--admin-text-primary, #0f172a)', lineHeight: '1.5', margin: '0 0 1rem' }}>
                   The team <strong>"{deleteTeamModal.team?.name}"</strong> currently has{' '}
                   <strong>{deleteTeamModal.team?.memberCount} active member(s)</strong>. Please select another team to move them to before deleting.
                 </p>
@@ -1227,16 +1235,16 @@ const styles = {
     background: 'transparent',
     border: 'none',
     borderBottom: '2px solid transparent',
-    color: 'var(--admin-text-subtle, #94a3b8)',
+    color: 'var(--admin-text-muted, #94a3b8)',
     fontSize: '0.85rem',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   tabBtnActive: {
-    color: '#818cf8',
-    borderBottom: '2px solid #818cf8',
-    background: 'rgba(99,102,241,0.06)',
+    color: 'var(--custom-primary-color, #4f46e5)',
+    borderBottom: '2px solid var(--custom-primary-color, #4f46e5)',
+    background: 'rgba(99,102,241,0.08)',
     borderRadius: '6px 6px 0 0',
   },
   grid: {
@@ -1252,7 +1260,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+    boxShadow: 'var(--admin-box-shadow, 0 4px 15px rgba(0,0,0,0.06))',
     transition: 'border-color 0.2s',
   },
   primaryBtn: {
@@ -1300,7 +1308,7 @@ const styles = {
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    color: '#818cf8',
+    color: '#4f46e5',
     background: 'rgba(99,102,241,0.12)',
     padding: '2px 7px',
     borderRadius: '4px',
@@ -1318,9 +1326,9 @@ const styles = {
     fontWeight: '500',
     padding: '2px 6px',
     borderRadius: '4px',
-    background: 'rgba(16,185,129,0.1)',
-    color: '#34d399',
-    border: '1px solid rgba(16,185,129,0.2)',
+    background: 'rgba(16,185,129,0.12)',
+    color: '#059669',
+    border: '1px solid rgba(16,185,129,0.25)',
   },
   tableCard: {
     background: 'var(--admin-card-bg, #11141f)',
@@ -1337,11 +1345,11 @@ const styles = {
     padding: '0.75rem 1rem',
     fontSize: '0.72rem',
     fontWeight: '700',
-    color: '#64748b',
+    color: 'var(--admin-table-header-color, #64748b)',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     borderBottom: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))',
-    background: 'rgba(0,0,0,0.15)',
+    background: 'var(--admin-topbar-bg, rgba(0,0,0,0.03))',
   },
   td: {
     padding: '0.75rem 1rem',
@@ -1367,7 +1375,7 @@ const styles = {
   superBadge: {
     fontSize: '0.68rem',
     fontWeight: '700',
-    color: '#fbbf24',
+    color: '#b45309',
     background: 'rgba(245,158,11,0.15)',
     border: '1px solid rgba(245,158,11,0.3)',
     padding: '2px 7px',
@@ -1376,7 +1384,7 @@ const styles = {
   teamTag: {
     fontSize: '0.72rem',
     fontWeight: '600',
-    color: '#38bdf8',
+    color: '#0284c7',
     background: 'rgba(56,189,248,0.15)',
     border: '1px solid rgba(56,189,248,0.3)',
     padding: '2px 7px',
@@ -1388,7 +1396,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0,0,0,0.75)',
+    background: 'var(--admin-backdrop, rgba(0,0,0,0.6))',
     backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
@@ -1403,7 +1411,7 @@ const styles = {
     width: '100%',
     maxWidth: '540px',
     overflow: 'hidden',
-    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+    boxShadow: 'var(--admin-box-shadow, 0 20px 50px rgba(0,0,0,0.2))',
   },
   modalHeader: {
     padding: '1rem 1.25rem',
@@ -1411,7 +1419,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: 'rgba(0,0,0,0.15)',
+    background: 'var(--admin-topbar-bg, rgba(0,0,0,0.03))',
   },
   closeBtn: {
     background: 'transparent',

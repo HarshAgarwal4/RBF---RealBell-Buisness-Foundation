@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useLayoutEffect, useState } from "react";
 
 const ThemeContext = createContext();
 
@@ -7,7 +7,7 @@ export function ThemeProvider({ children }) {
     return localStorage.getItem("rbf_app_theme") || "light";
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -20,7 +20,29 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    const updateTheme = () => {
+      setTheme((prev) => {
+        const next = prev === "light" ? "dark" : "light";
+        const root = document.documentElement;
+        if (next === "dark") {
+          root.classList.add("dark");
+          root.setAttribute("data-theme", "dark");
+        } else {
+          root.classList.remove("dark");
+          root.setAttribute("data-theme", "light");
+        }
+        localStorage.setItem("rbf_app_theme", next);
+        return next;
+      });
+    };
+
+    if (typeof document !== "undefined" && document.startViewTransition) {
+      document.startViewTransition(() => {
+        updateTheme();
+      });
+    } else {
+      updateTheme();
+    }
   };
 
   return (

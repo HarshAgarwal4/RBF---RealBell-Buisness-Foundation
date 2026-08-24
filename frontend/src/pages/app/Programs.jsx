@@ -18,15 +18,15 @@ import {
 } from "lucide-react";
 
 const statusColors = {
-  published: { bg: "#E8F5E9", color: "#2E7D32", label: "Open" },
-  closed: { bg: "#FFEBEE", color: "#C62828", label: "Closed" },
-  draft: { bg: "#FFF3E0", color: "#E65100", label: "Draft" },
+  published: { bg: "rgba(46, 125, 50, 0.2)", color: "#4ade80", label: "Open" },
+  closed: { bg: "rgba(198, 40, 40, 0.2)", color: "#f87171", label: "Closed" },
+  draft: { bg: "rgba(230, 81, 0, 0.2)", color: "#fb923c", label: "Draft" },
 };
 
 const appStatusConfig = {
-  pending: { icon: Hourglass, color: "#E65100", bg: "#FFF3E0", label: "Pending Review" },
-  approved: { icon: CheckCircle, color: "#2E7D32", bg: "#E8F5E9", label: "Approved" },
-  rejected: { icon: XCircle, color: "#C62828", bg: "#FFEBEE", label: "Rejected" },
+  pending: { icon: Hourglass, color: "#fb923c", bg: "rgba(230, 81, 0, 0.2)", label: "Pending Review" },
+  approved: { icon: CheckCircle, color: "#4ade80", bg: "rgba(46, 125, 50, 0.2)", label: "Approved" },
+  rejected: { icon: XCircle, color: "#f87171", bg: "rgba(198, 40, 40, 0.2)", label: "Rejected" },
 };
 
 function ProgramCard({ program, myApplication, onClick }) {
@@ -42,7 +42,7 @@ function ProgramCard({ program, myApplication, onClick }) {
     <div
       onClick={onClick}
       style={{
-        background: "#fff",
+        background: COLORS.card,
         borderRadius: 16,
         overflow: "hidden",
         border: `1px solid ${COLORS.border}`,
@@ -53,7 +53,7 @@ function ProgramCard({ program, myApplication, onClick }) {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-3px)";
-        e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.10)";
+        e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.18)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
@@ -97,8 +97,8 @@ function ProgramCard({ program, myApplication, onClick }) {
               width: 42,
               height: 42,
               borderRadius: 10,
-              border: "2.5px solid #fff",
-              background: "#fff",
+              border: `2.5px solid ${COLORS.border}`,
+              background: COLORS.card,
               overflow: "hidden",
               boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
             }}
@@ -142,7 +142,7 @@ function ProgramCard({ program, myApplication, onClick }) {
               <span
                 key={t}
                 style={{
-                  background: `${COLORS.primary}12`,
+                  background: `${COLORS.primary}15`,
                   color: COLORS.primary,
                   fontSize: 11,
                   fontWeight: 600,
@@ -250,7 +250,7 @@ export default function Programs() {
     myApplications.find((a) => a.program?._id === programId || a.program === programId);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
       <main
         className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen"
@@ -259,9 +259,9 @@ export default function Programs() {
         }}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="sticky top-0 z-10 bg-white dark:bg-[#151D2E] border-b border-gray-200 dark:border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
               Incubation Programs
             </h1>
             <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 3 }}>
@@ -273,7 +273,7 @@ export default function Programs() {
             className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer self-start sm:self-auto"
             style={{
               border: `1.5px solid ${showMyApps ? COLORS.primary : COLORS.border}`,
-              background: showMyApps ? COLORS.primary : "#fff",
+              background: showMyApps ? COLORS.primary : COLORS.card,
               color: showMyApps ? "#fff" : COLORS.ink,
             }}
           >
@@ -301,7 +301,7 @@ export default function Programs() {
           {showMyApps && (
             <div
               style={{
-                background: "#fff",
+                background: COLORS.card,
                 borderRadius: 16,
                 border: `1px solid ${COLORS.border}`,
                 padding: 24,
@@ -345,7 +345,7 @@ export default function Programs() {
                           cursor: "pointer",
                           transition: "background 0.12s",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(142, 27, 46, 0.12)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                       >
                         {app.program?.banner_image ? (
@@ -402,7 +402,7 @@ export default function Programs() {
           )}
 
           {/* Search */}
-          <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 mb-6 max-w-md">
+          <div className="flex items-center gap-2.5 bg-white dark:bg-[#1E293B] border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 mb-6 max-w-md">
             <Search size={16} color={COLORS.muted} className="shrink-0" />
             <input
               value={search}
@@ -438,8 +438,8 @@ export default function Programs() {
               }}
             >
               <Award size={40} color={COLORS.border} />
-              <div style={{ fontWeight: 600, fontSize: 16 }}>No programs found</div>
-              <div style={{ fontSize: 14 }}>Check back later for new opportunities.</div>
+              <div style={{ fontWeight: 600, fontSize: 16, color: COLORS.ink }}>No programs found</div>
+              <div style={{ fontSize: 14, color: COLORS.muted }}>Check back later for new opportunities.</div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

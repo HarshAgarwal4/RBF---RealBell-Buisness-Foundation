@@ -153,8 +153,8 @@ function TabButton({ active, children, onClick }) {
       onClick={onClick}
       className={`rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition shrink-0 cursor-pointer ${
         active
-          ? "bg-white text-[#B52B2B] shadow-xs border border-gray-200"
-          : "text-[#6A6F8D] hover:bg-white/60"
+          ? "bg-white dark:bg-slate-800 text-[#B52B2B] dark:text-red-400 shadow-xs border border-gray-200 dark:border-slate-700"
+          : "text-[#6A6F8D] dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60"
       }`}
     >
       {children}
@@ -166,12 +166,12 @@ function EmptyState({ icon, title, description }) {
   const Icon = icon;
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center text-[#A1A8BD]">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#ABB1C5] text-[#A4A9BA]">
+    <div className="flex flex-col items-center justify-center py-16 text-center text-[#A1A8BD] dark:text-slate-500">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#ABB1C5] dark:border-slate-700 text-[#A4A9BA] dark:text-slate-500">
         <Icon size={40} strokeWidth={2.4} />
       </div>
-      <p className="mt-8 text-[22px] font-medium text-[#A1A8BD]">{title}</p>
-      {description ? <p className="mt-2 text-[15px]">{description}</p> : null}
+      <p className="mt-8 text-[22px] font-medium text-[#A1A8BD] dark:text-slate-400">{title}</p>
+      {description ? <p className="mt-2 text-[15px] text-gray-500 dark:text-slate-400">{description}</p> : null}
     </div>
   );
 }
@@ -181,7 +181,7 @@ function MiniConnectionRow({ connection, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl border border-[#EEF1F6] bg-white px-3 py-3 text-left transition hover:bg-[#FBFCFF]"
+      className="flex w-full items-center gap-3 rounded-2xl border border-[#EEF1F6] dark:border-slate-800 bg-white dark:bg-[#151D2E] px-3 py-3 text-left transition hover:bg-[#FBFCFF] dark:hover:bg-slate-800/80 cursor-pointer"
     >
       <img
         src={avatarFor(connection)}
@@ -189,15 +189,15 @@ function MiniConnectionRow({ connection, onClick }) {
         className="h-12 w-12 rounded-2xl object-cover"
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-semibold text-[#18213A]">
+        <div className="truncate text-[15px] font-semibold text-[#18213A] dark:text-slate-100">
           {connectionName(connection)}
         </div>
-        <div className="truncate text-sm text-[#8390AA]">{connectionMeta(connection)}</div>
+        <div className="truncate text-sm text-[#8390AA] dark:text-slate-400">{connectionMeta(connection)}</div>
       </div>
       {connection?.is_online ? (
         <span className="h-2.5 w-2.5 rounded-full bg-[#34C759]" />
       ) : (
-        <span className="text-xs font-semibold text-[#9AA2B8]">Away</span>
+        <span className="text-xs font-semibold text-[#9AA2B8] dark:text-slate-500">Away</span>
       )}
     </button>
   );
@@ -219,15 +219,15 @@ function ConnectionCard({
   const isBusy = (key) => busyKey === `${connection.profile._id}:${key}`;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white shadow-xs">
-      <div className="flex items-center justify-between border-b border-[#F0F2F7] px-3.5 py-2.5">
-        <span className="rounded-full bg-[#F7F8FB] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#8A93AA] truncate max-w-[180px]">
+    <article className="overflow-hidden rounded-2xl border border-[#EEF1F6] dark:border-slate-800 bg-white dark:bg-[#151D2E] shadow-xs">
+      <div className="flex items-center justify-between border-b border-[#F0F2F7] dark:border-slate-800 px-3.5 py-2.5">
+        <span className="rounded-full bg-[#F7F8FB] dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#8A93AA] dark:text-slate-400 truncate max-w-[180px]">
           {formatTypeLabel(connection?.profile?.company_name || connection?.profile?.company_type)}
         </span>
         <button
           type="button"
           onClick={() => onViewProfile(connection)}
-          className="rounded-full p-1 text-[#9DA4B8] transition hover:bg-[#F5F7FB] hover:text-[#0F3D4A] cursor-pointer"
+          className="rounded-full p-1 text-[#9DA4B8] dark:text-slate-400 transition hover:bg-[#F5F7FB] dark:hover:bg-slate-800 hover:text-[#0F3D4A] dark:hover:text-white cursor-pointer"
           aria-label={`View ${connectionName(connection)}`}
         >
           <MoreVertical size={16} />
@@ -239,15 +239,15 @@ function ConnectionCard({
           <img
             src={avatarFor(connection)}
             alt={connectionName(connection)}
-            className="h-14 w-14 rounded-full border border-[#E5EAF3] object-cover"
+            className="h-14 w-14 rounded-full border border-[#E5EAF3] dark:border-slate-700 object-cover"
           />
-          <h3 className="mt-2.5 text-base sm:text-lg font-bold tracking-tight text-[#18213A] truncate max-w-full">
+          <h3 className="mt-2.5 text-base sm:text-lg font-bold tracking-tight text-[#18213A] dark:text-slate-100 truncate max-w-full">
             {connectionName(connection)}
           </h3>
-          <p className="mt-0.5 text-xs text-[#525E7A] truncate max-w-full">{connectionMeta(connection)}</p>
+          <p className="mt-0.5 text-xs text-[#525E7A] dark:text-slate-400 truncate max-w-full">{connectionMeta(connection)}</p>
 
           <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-2.5 py-0.5 text-[11px] font-semibold text-[#667089]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#667089] dark:text-slate-300">
               {connection.status === "accepted" ? (
                 <CheckCircle2 size={13} className="text-[#1F9D55]" />
               ) : connection.status === "pending" ? (
@@ -273,11 +273,11 @@ function ConnectionCard({
           </div>
 
           {variant === "active" ? (
-            <div className="mt-4 grid w-full grid-cols-3 divide-x divide-[#E8ECF4] overflow-hidden rounded-xl border border-[#EEF1F6]">
+            <div className="mt-4 grid w-full grid-cols-3 divide-x divide-[#E8ECF4] dark:divide-slate-700 overflow-hidden rounded-xl border border-[#EEF1F6] dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => onChat(connection)}
-                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 cursor-pointer"
               >
                 <MessageCircle size={14} />
                 Chat
@@ -285,7 +285,7 @@ function ConnectionCard({
               <button
                 type="button"
                 onClick={() => onVideoCall && onVideoCall(connection)}
-                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#179B4B] transition hover:bg-[#F2FAF4] cursor-pointer"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#179B4B] dark:text-emerald-400 transition hover:bg-[#F2FAF4] dark:hover:bg-slate-800 cursor-pointer"
               >
                 <Video size={14} />
                 Call
@@ -293,29 +293,29 @@ function ConnectionCard({
               <button
                 type="button"
                 onClick={() => onSchedule(connection)}
-                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
+                className="inline-flex items-center justify-center gap-1 px-1.5 py-2.5 text-xs font-semibold text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 cursor-pointer"
               >
                 <CalendarDays size={14} />
                 Meet
               </button>
             </div>
           ) : variant === "pending" ? (
-            <div className="mt-4 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] overflow-hidden rounded-xl border border-[#EEF1F6]">
+            <div className="mt-4 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] dark:divide-slate-700 overflow-hidden rounded-xl border border-[#EEF1F6] dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => onViewProfile(connection)}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-[#111827] transition hover:bg-[#FAFBFD] cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 cursor-pointer"
               >
                 <UserRound size={15} />
                 View
               </button>
               {isIncomingPending ? (
-                <div className="grid grid-cols-2 divide-x divide-[#E8ECF4]">
+                <div className="grid grid-cols-2 divide-x divide-[#E8ECF4] dark:divide-slate-700">
                   <button
                     type="button"
                     disabled={isBusy("reject")}
                     onClick={() => onRespond(connection, "reject")}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#B23A3A] transition hover:bg-[#FFF7F7] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#B23A3A] dark:text-red-400 transition hover:bg-[#FFF7F7] dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                   >
                     <XCircle size={18} />
                     Reject
@@ -324,7 +324,7 @@ function ConnectionCard({
                     type="button"
                     disabled={isBusy("accept")}
                     onClick={() => onRespond(connection, "accept")}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                   >
                     <CheckCircle2 size={18} />
                     Accept
@@ -334,7 +334,7 @@ function ConnectionCard({
                 <button
                   type="button"
                   disabled
-                  className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#8891A7] disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#8891A7] dark:text-slate-500 disabled:cursor-not-allowed"
                 >
                   <Clock3 size={18} />
                   Requested
@@ -342,12 +342,12 @@ function ConnectionCard({
               )}
             </div>
           ) : (
-            <div className="mt-5 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6]">
+            <div className="mt-5 grid w-full grid-cols-2 divide-x divide-[#E8ECF4] dark:divide-slate-700 overflow-hidden rounded-b-[18px] border-t border-[#EEF1F6] dark:border-slate-700">
               <button
                 type="button"
                 disabled={isBusy("reconnect")}
                 onClick={() => onReconnect(connection)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 <Users size={18} />
                 Reconnect
@@ -355,7 +355,7 @@ function ConnectionCard({
               <button
                 type="button"
                 onClick={() => onViewProfile(connection)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] transition hover:bg-[#FAFBFD]"
+                className="inline-flex items-center justify-center gap-2 px-4 py-4 text-[16px] font-medium text-[#111827] dark:text-slate-200 transition hover:bg-[#FAFBFD] dark:hover:bg-slate-800 cursor-pointer"
               >
                 <UserRound size={18} />
                 View
@@ -364,7 +364,7 @@ function ConnectionCard({
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-[#F0F2F7] pt-4 text-sm text-[#7A849A]">
+        <div className="mt-4 flex items-center justify-between border-t border-[#F0F2F7] dark:border-slate-800 pt-4 text-sm text-[#7A849A] dark:text-slate-400">
           <span>
             {isOutgoingPending
               ? `Sent ${timeAgo(connection.requestedAt)}`
@@ -395,9 +395,9 @@ function SummaryCard({ title, emptyTitle, emptyDescription, items, onItemClick, 
   const Icon = icon;
 
   return (
-    <div className="rounded-[24px] border border-[#EEF1F6] bg-white px-5 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-      <h3 className="text-[28px] font-bold tracking-tight text-[#172033]">{title}</h3>
-      <div className="mt-5 border-t border-[#EEF2F8]" />
+    <div className="rounded-[24px] border border-[#EEF1F6] dark:border-slate-800 bg-white dark:bg-[#151D2E] px-5 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+      <h3 className="text-[24px] sm:text-[28px] font-bold tracking-tight text-[#172033] dark:text-slate-100">{title}</h3>
+      <div className="mt-5 border-t border-[#EEF2F8] dark:border-slate-800" />
       {items.length === 0 ? (
         <EmptyState icon={Icon} title={emptyTitle} description={emptyDescription} />
       ) : (
@@ -1281,15 +1281,18 @@ export default function ConnectionsPage() {
     loadConnections();
   }, []);
 
-  // Auto-open chat panel when navigated via ?section=chat
+  // Sync chat panel with ?section=chat
   useEffect(() => {
-    if (searchParams.get("section") === "chat" && !loading && !chatConnection) {
-      const firstActive = groups?.active?.[0];
-      if (firstActive) {
+    if (searchParams.get("section") === "chat") {
+      if (!chatConnection) {
+        const firstActive = groups?.active?.[0] || { profile: { _id: "" } };
         setChatConnection(firstActive);
       }
+    } else {
+      // Not in chat mode: immediately close chat section so connections page displays
+      setChatConnection(null);
     }
-  }, [searchParams, loading, groups]);
+  }, [searchParams, groups]);
 
   const currentItems = useMemo(() => {
     const source = groups[tab] || [];
@@ -1300,10 +1303,10 @@ export default function ConnectionsPage() {
       const haystack = [
         connectionName(connection),
         connectionMeta(connection),
-        connection.profile.company_name,
-        connection.profile.name,
-        connection.profile.email,
-        connection.profile.phone,
+        connection.profile?.company_name,
+        connection.profile?.name,
+        connection.profile?.email,
+        connection.profile?.phone,
       ]
         .filter(Boolean)
         .join(" ")
@@ -1338,10 +1341,12 @@ export default function ConnectionsPage() {
 
   const openChat = (connection) => {
     setChatConnection(connection);
+    navigate("/connections?section=chat");
   };
 
   const closeChat = () => {
     setChatConnection(null);
+    navigate("/connections");
   };
 
   const respondToConnection = async (connection, action) => {
@@ -1388,10 +1393,10 @@ export default function ConnectionsPage() {
     <>
       <Sidebar />
 
-      <div className="min-h-screen bg-[linear-gradient(180deg,#F7F9FD_0%,#EEF3F8_100%)] lg:ml-75 pt-16 lg:pt-0">
-        <div className="sticky top-0 z-20 border-b border-[#E4E9F1] bg-white/95 backdrop-blur">
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-gray-800 dark:text-slate-100 lg:ml-75 pt-16 lg:pt-0">
+        <div className="sticky top-0 z-20 border-b border-gray-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#151D2E]/95 backdrop-blur">
           <div className="flex flex-col gap-3 px-4 py-4 sm:px-6 sm:py-5 xl:flex-row xl:items-center xl:justify-between xl:px-10">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
               Connections
             </h1>
 
@@ -1425,34 +1430,34 @@ export default function ConnectionsPage() {
           <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-8 xl:grid-cols-[minmax(0,1fr)_380px] xl:px-10 max-w-full overflow-hidden">
             <main className="space-y-6">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <p className="text-[22px] font-medium tracking-tight text-[#12213D]">
+                <p className="text-[22px] font-medium tracking-tight text-[#12213D] dark:text-slate-200">
                   {pageCountLabel}
                 </p>
 
                 <div className="relative w-full xl:max-w-[490px]">
                   <Search
                     size={20}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC]"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B9CC] dark:text-slate-400"
                   />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search a connection"
-                    className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] bg-white pl-12 pr-4 text-[16px] text-[#1A2540] outline-none placeholder:text-[#A4ADC1] focus:ring-2 focus:ring-[#8E1B2E]/10"
+                    className="h-[54px] w-full rounded-2xl border border-[#DDE4F0] dark:border-slate-700 bg-white dark:bg-[#151D2E] pl-12 pr-4 text-[16px] text-[#1A2540] dark:text-slate-100 outline-none placeholder:text-[#A4ADC1] dark:placeholder:text-slate-400 focus:ring-2 focus:ring-[#8E1B2E]/10"
                   />
                 </div>
               </div>
 
               {loading ? (
-                <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                <div className="rounded-[24px] border border-[#E7ECF5] dark:border-slate-800 bg-white dark:bg-[#151D2E] p-10 text-center text-[#607086] dark:text-slate-400 shadow-xs">
                   Loading connections...
                 </div>
               ) : error ? (
-                <div className="rounded-[24px] border border-red-200 bg-red-50 p-10 text-center text-red-700 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                <div className="rounded-[24px] border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-10 text-center text-red-700 dark:text-red-400 shadow-xs">
                   {error}
                 </div>
               ) : currentItems.length === 0 ? (
-                <div className="rounded-[24px] border border-[#E7ECF5] bg-white p-10 text-center text-[#607086] shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+                <div className="rounded-[24px] border border-[#E7ECF5] dark:border-slate-800 bg-white dark:bg-[#151D2E] p-10 text-center text-[#607086] dark:text-slate-400 shadow-xs">
                   No connections found for this view.
                 </div>
               ) : (

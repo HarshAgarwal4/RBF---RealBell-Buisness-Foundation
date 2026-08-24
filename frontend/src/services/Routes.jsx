@@ -126,6 +126,10 @@ const Routes = createBrowserRouter([
         element: <ProtectedRoute> <EditProfilePage /> </ProtectedRoute>
     },
     {
+        path: '/profile/:id',
+        element: <ProtectedRoute> <ViewProfile /> </ProtectedRoute>
+    },
+    {
         path: '/jobs',
         element: <ProtectedRoute> <Job /> </ProtectedRoute>
     },

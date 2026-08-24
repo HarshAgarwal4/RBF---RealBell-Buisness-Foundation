@@ -1399,6 +1399,139 @@ async function getRecentActivity(req, res) {
     }
 }
 
+async function updateUserDetails(req, res) {
+    try {
+        const { id } = req.params;
+        const {
+            name,
+            email,
+            mobile,
+            phone,
+            company_name,
+            company_type,
+            role,
+            teamId,
+            approvalStatus,
+            accountStatus,
+            isEmailVerified,
+            isMobileVerified,
+            password,
+        } = req.body;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ status: 7, msg: "Invalid user ID" });
+        }
+
+        const user = await OrganizationModel.findById(id);
+        if (!user) {
+            return res.status(404).json({ status: 9, msg: "User not found" });
+        }
+
+        const isSelf = String(req.user._id) === String(id);
+
+        if (isSelf) {
+            if (role && role !== req.user.role) {
+                return res.status(400).json({ status: 7, msg: "You cannot change your own system role" });
+            }
+            if (accountStatus === "disabled") {
+                return res.status(400).json({ status: 7, msg: "You cannot disable your own account" });
+            }
+        }
+
+        if (name) user.name = name.trim();
+        if (company_name) user.company_name = company_name.trim();
+        if (company_type) user.company_type = company_type.trim();
+        if (mobile !== undefined) user.mobile = String(mobile).trim();
+        if (phone !== undefined) user.mobile = String(phone).trim();
+
+        if (email && email.trim().toLowerCase() !== user.email) {
+            const newEmail = email.trim().toLowerCase();
+            const existing = await OrganizationModel.findOne({ email: newEmail, _id: { $ne: id } });
+            if (existing) {
+                return res.status(400).json({ status: 3, msg: "This email address is already registered by another account" });
+            }
+            user.email = newEmail;
+        }
+
+        if (role !== undefined) {
+            if (["normal", "admin", "super_admin"].includes(role)) {
+                user.role = role;
+                if (role === "admin" || role === "super_admin") {
+                    user.approvalStatus = "Approved";
+                }
+            }
+        }
+
+        if (teamId !== undefined) {
+            if (!teamId || teamId === "" || teamId === "unassigned") {
+                user.team = null;
+            } else {
+                const team = await TeamModel.findById(teamId);
+                if (team) {
+                    user.team = team._id;
+                }
+            }
+        }
+
+        if (approvalStatus !== undefined) {
+            if (["Pending", "Approved", "Rejected", "Changes Requested"].includes(approvalStatus)) {
+                user.approvalStatus = approvalStatus;
+            }
+        }
+
+        if (accountStatus !== undefined) {
+            if (["active", "invited", "disabled", "pending"].includes(accountStatus)) {
+                user.accountStatus = accountStatus;
+                if (accountStatus === "disabled") {
+                    user.sessions = [];
+                }
+            }
+        }
+
+        if (isEmailVerified !== undefined) {
+            user.isEmailVerified = Boolean(isEmailVerified);
+        }
+        if (isMobileVerified !== undefined) {
+            user.isMobileVerified = Boolean(isMobileVerified);
+        }
+
+        if (password && String(password).trim().length >= 6) {
+            user.password = await hashPassword(password.trim());
+        }
+
+        await user.save();
+
+        await logAudit({
+            action: "USER_UPDATED",
+            performedBy: req.user,
+            targetType: "User",
+            targetId: user._id,
+            details: {
+                userId: user._id,
+                userName: user.name,
+                userEmail: user.email,
+                company_type: user.company_type,
+                role: user.role,
+                accountStatus: user.accountStatus,
+            },
+            ipAddress: req.ip || req.headers["x-forwarded-for"],
+        });
+
+        const populatedUser = await OrganizationModel.findById(user._id)
+            .select("-password -sessions")
+            .populate("team", "name department permissions status");
+
+        return res.json({
+            status: 1,
+            msg: `User "${user.name}" updated successfully`,
+            user: populatedUser,
+        });
+    } catch (err) {
+        console.error("updateUserDetails error:", err);
+        return res.status(500).json({ status: 0, msg: "Failed to update user details" });
+    }
+}
+
 export {
     getDashboardStats,
     getAllUsers,
@@ -1421,5 +1554,6 @@ export {
     sendInviteMemberOTP,
     inviteOrAddAdminUser,
     updateUserRoleAndTeam,
+    updateUserDetails,
     toggleUserStatus,
 };

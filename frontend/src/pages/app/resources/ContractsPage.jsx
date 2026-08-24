@@ -24,25 +24,25 @@ function ContractCard({ item, isAdmin, onDelete, onDownload }) {
         gap: 14,
         padding: "16px 18px",
         borderRadius: 12,
-        border: "1px solid #F0E8E8",
-        background: "#fff",
+        border: `1px solid ${COLORS.border}`,
+        background: COLORS.card,
         transition: "box-shadow 0.15s",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(185,28,28,0.10)")}
       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
     >
-      <div style={{ width: 44, height: 44, borderRadius: 8, background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <FileText size={22} color="#B91C1C" />
+      <div style={{ width: 44, height: 44, borderRadius: 8, background: "rgba(185,28,28,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <FileText size={22} color="#F43F5E" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-        {item.fileName && <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{item.fileName}</div>}
+        <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
+        {item.fileName && <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{item.fileName}</div>}
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        <button onClick={() => onDownload(item)} title="Download" style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: 6, color: "#B91C1C" }}>
+        <button onClick={() => onDownload(item)} title="Download" style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: 6, color: COLORS.primary }}>
           <Download size={18} />
         </button>
-        <span style={{ fontSize: 11, color: "#aaa" }}>{item.downloadCount || 0}</span>
+        <span style={{ fontSize: 11, color: COLORS.muted }}>{item.downloadCount || 0}</span>
       </div>
       {isAdmin && (
         <button onClick={() => onDelete(item._id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4 }} title="Delete">
@@ -86,26 +86,26 @@ function AddModal({ tab, onClose, onAdded }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: 480, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700 }}>Add Contract — {tab}</h2>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" }}>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, width: 480, maxWidth: "95vw", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", color: COLORS.ink }}>
+        <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: COLORS.ink }}>Add Contract — {tab}</h2>
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <input placeholder="Title *" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 13, color: "#555", fontWeight: 600 }}>Upload File (PDF / DOC) *</span>
+            <span style={{ fontSize: 13, color: COLORS.muted, fontWeight: 600 }}>Upload File (PDF / DOC) *</span>
             <div
               style={{
-                border: "2px dashed #e5e7eb",
+                border: `2px dashed ${COLORS.border}`,
                 borderRadius: 10,
                 padding: "18px 14px",
                 textAlign: "center",
                 cursor: "pointer",
-                background: file ? "#F0FFF4" : "#FAFAFA",
+                background: "rgba(142, 27, 46, 0.08)",
                 position: "relative",
               }}
             >
               <Upload size={22} color={file ? "#16a34a" : "#aaa"} style={{ marginBottom: 6 }} />
-              <div style={{ fontSize: 13, color: file ? "#16a34a" : "#aaa" }}>
+              <div style={{ fontSize: 13, color: file ? "#16a34a" : COLORS.muted }}>
                 {file ? file.name : "Click to choose file"}
               </div>
               <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => setFile(e.target.files[0] || null)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
@@ -123,8 +123,8 @@ function AddModal({ tab, onClose, onAdded }) {
   );
 }
 
-const inputStyle = { padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, outline: "none", fontFamily: "inherit" };
-const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14 };
+const inputStyle = { padding: "10px 14px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-input-bg, #ffffff)", color: "var(--color-text-main, #0f172a)", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" };
+const cancelBtnStyle = { padding: "9px 22px", borderRadius: 8, border: `1px solid var(--color-border, #e5e7eb)`, background: "var(--color-card, #fff)", color: "var(--color-text-main, #0f172a)", cursor: "pointer", fontWeight: 600, fontSize: 14 };
 const submitBtnStyle = { padding: "9px 22px", borderRadius: 8, border: "none", background: COLORS.primary, color: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14 };
 
 /* ─── Page ─── */
@@ -171,22 +171,22 @@ export default function ContractsPage() {
   const filtered = (data[activeTab] || []).filter((x) => !search || x.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
       <main className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-10 pb-10 min-h-screen">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#1a1a2e" }}>Contracts &amp; Legal Templates</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: COLORS.ink }}>Contracts &amp; Legal Templates</h1>
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="relative w-full sm:w-52">
-              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa" }} />
+              <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.muted }} />
               <input placeholder="Search templates..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ ...inputStyle, paddingLeft: 36, width: "100%" }} />
             </div>
             <div className="relative w-full sm:w-48 flex items-center">
-              <Filter size={14} style={{ position: "absolute", left: 12, color: "#aaa" }} />
+              <Filter size={14} style={{ position: "absolute", left: 12, color: COLORS.muted }} />
               <select
                 value={activeTab}
                 onChange={(e) => setActiveTab(e.target.value)}
-                style={{ padding: "9px 14px 9px 34px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13.5, outline: "none", background: "#fff", cursor: "pointer", appearance: "none", width: "100%" }}
+                style={{ ...inputStyle, padding: "9px 14px 9px 34px", fontSize: 13.5, cursor: "pointer", appearance: "none", width: "100%" }}
               >
                 {TABS.map((tab) => (
                   <option key={tab} value={tab}>{tab}</option>
@@ -201,12 +201,12 @@ export default function ContractsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-7 shadow-xs">
-          <h2 style={{ margin: "0 0 20px", fontSize: 20, fontWeight: 700, color: "#1a1a2e" }}>{activeTab}</h2>
+        <div className="bg-white dark:bg-[#151D2E] border border-gray-100 dark:border-slate-800 rounded-2xl p-4 sm:p-7 shadow-xs">
+          <h2 style={{ margin: "0 0 20px", fontSize: 20, fontWeight: 700, color: COLORS.ink }}>{activeTab}</h2>
           {loading ? (
-            <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>Loading...</div>
+            <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>Loading...</div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 60, color: "#bbb" }}>No templates found.{isAdmin && " Click 'Add Template' to upload one."}</div>
+            <div style={{ textAlign: "center", padding: 60, color: COLORS.muted }}>No templates found.{isAdmin && " Click 'Add Template' to upload one."}</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((item) => (

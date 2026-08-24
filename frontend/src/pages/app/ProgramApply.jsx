@@ -23,7 +23,7 @@ function StepIndicator({ currentStep, steps }) {
         alignItems: "center",
         gap: 0,
         marginBottom: 28,
-        background: "#fff",
+        background: COLORS.card,
         borderRadius: 12,
         border: `1px solid ${COLORS.border}`,
         overflow: "hidden",
@@ -41,7 +41,7 @@ function StepIndicator({ currentStep, steps }) {
               alignItems: "center",
               gap: 10,
               padding: "14px 20px",
-              background: active ? COLORS.primary : done ? `${COLORS.primary}12` : "#fff",
+              background: active ? COLORS.primary : done ? `${COLORS.primary}18` : COLORS.card,
               borderRight: idx < steps.length - 1 ? `1px solid ${COLORS.border}` : "none",
               transition: "background 0.2s",
             }}
@@ -102,10 +102,10 @@ function FieldRenderer({ field, value, onChange }) {
     border: `1.5px solid ${COLORS.border}`,
     borderRadius: 8,
     fontSize: 14,
-    color: COLORS.ink,
+    color: "var(--color-text-main, #0f172a)",
     fontFamily: "inherit",
     outline: "none",
-    background: "#fff",
+    background: "var(--color-input-bg, #ffffff)",
     boxSizing: "border-box",
     transition: "border-color 0.15s",
   };
@@ -388,7 +388,7 @@ export default function ProgramApply() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
         <Sidebar />
         <main style={{ marginLeft: 300, flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ color: COLORS.muted }}>Loading…</div>
@@ -398,7 +398,7 @@ export default function ProgramApply() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7F8FA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg }}>
       <Sidebar />
       <main
         className="ml-0 lg:ml-[300px] flex-1 pt-16 lg:pt-0 min-w-0 pb-16"
@@ -409,7 +409,7 @@ export default function ProgramApply() {
         {/* Topbar */}
         <div
           style={{
-            background: "#fff",
+            background: COLORS.card,
             borderBottom: `1px solid ${COLORS.border}`,
             padding: "13px 36px",
             display: "flex",
@@ -439,8 +439,8 @@ export default function ProgramApply() {
           </div>
           <span
             style={{
-              background: "#FFF3E0",
-              color: "#E65100",
+              background: "rgba(230, 81, 0, 0.2)",
+              color: "#fb923c",
               fontSize: 12,
               fontWeight: 700,
               padding: "5px 12px",
@@ -465,14 +465,14 @@ export default function ProgramApply() {
                 width: 72,
                 height: 72,
                 borderRadius: "50%",
-                background: "#E8F5E9",
+                background: "rgba(46, 125, 50, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 20px",
               }}
             >
-              <CheckCircle size={36} color="#2E7D32" />
+              <CheckCircle size={36} color="#4ade80" />
             </div>
             <h2 style={{ fontWeight: 800, fontSize: 24, color: COLORS.ink, margin: "0 0 10px" }}>
               Application Submitted!
@@ -507,7 +507,7 @@ export default function ProgramApply() {
             {step === 0 && (
               <div
                 style={{
-                  background: "#fff",
+                  background: COLORS.card,
                   borderRadius: 16,
                   border: `1px solid ${COLORS.border}`,
                   padding: "26px 28px",
@@ -560,7 +560,7 @@ export default function ProgramApply() {
                   style={{
                     marginTop: 16,
                     padding: "12px 14px",
-                    background: "#F7F8FA",
+                    background: "rgba(100, 116, 139, 0.08)",
                     borderRadius: 8,
                     fontSize: 12.5,
                     color: COLORS.muted,
@@ -583,7 +583,7 @@ export default function ProgramApply() {
             {step === 1 && (
               <div
                 style={{
-                  background: "#fff",
+                  background: COLORS.card,
                   borderRadius: 16,
                   border: `1px solid ${COLORS.border}`,
                   padding: "26px 28px",
@@ -638,9 +638,9 @@ export default function ProgramApply() {
               <button
                 onClick={() => (step === 0 ? navigate(`/programs/${id}`) : setStep(0))}
                 style={{
-                  background: COLORS.ink,
-                  color: "#fff",
-                  border: "none",
+                  background: COLORS.card,
+                  color: COLORS.ink,
+                  border: `1px solid ${COLORS.border}`,
                   borderRadius: 10,
                   padding: "12px 22px",
                   fontWeight: 700,
