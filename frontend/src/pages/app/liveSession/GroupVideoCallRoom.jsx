@@ -45,10 +45,49 @@ import {
   FileText,
   Image as ImageIcon,
   File as FileIcon,
+  Tv,
+  Film,
+  Play,
+  Pause,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useStore } from "../../../zustand/store";
+
+const parseVideoSource = (url, currentTime = 0) => {
+  if (!url) return { type: "direct", src: "", embedUrl: "" };
+  const trimmed = url.trim();
+  const startSec = Math.floor(currentTime || 0);
+
+  // YouTube match
+  const ytMatch = trimmed.match(
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+  );
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: "youtube",
+      videoId: ytMatch[1],
+      embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&enablejsapi=1&rel=0${startSec > 0 ? `&start=${startSec}` : ""}`,
+    };
+  }
+
+  // Vimeo match
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return {
+      type: "vimeo",
+      videoId: vimeoMatch[1],
+      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1#t=${startSec}s`,
+    };
+  }
+
+  // Direct video link or Data URL
+  return {
+    type: "direct",
+    src: trimmed,
+    embedUrl: trimmed,
+  };
+};
 
 export default function GroupVideoCallRoom({ session, socket, onLeave }) {
   const navigate = useNavigate();
@@ -123,7 +162,32 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
   const roomContainerRef = useRef(null);
   const chatBottomRef = useRef(null);
   const fileInputRef = useRef(null);
+  const sharedVideoRef = useRef(null);
+  const iframeVideoRef = useRef(null);
   const [attachedFile, setAttachedFile] = useState(null);
+
+  // Video Broadcast (Shared Video Player without screen sharing)
+  const [showVideoBroadcastModal, setShowVideoBroadcastModal] = useState(false);
+  const [videoBroadcastUrl, setVideoBroadcastUrl] = useState("");
+  const [activeVideoBroadcast, setActiveVideoBroadcast] = useState(null);
+
+  const setLocalVideoRef = useCallback((el) => {
+    localVideoRef.current = el;
+    const activeStream = screenStreamRef.current || localStreamRef.current;
+    if (el && activeStream) {
+      el.srcObject = activeStream;
+      el.play().catch(() => {});
+    }
+  }, []);
+
+  // Re-bind local stream to localVideoRef DOM element whenever layout, view mode, or video broadcast state changes
+  useEffect(() => {
+    const activeStream = screenStreamRef.current || localStreamRef.current;
+    if (localVideoRef.current && activeStream) {
+      localVideoRef.current.srcObject = activeStream;
+      localVideoRef.current.play().catch(() => {});
+    }
+  }, [activeVideoBroadcast, viewMode, isVideoOff, isScreenSharing]);
 
   const ICE_CONFIG = {
     iceServers: [
@@ -664,6 +728,72 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
       }
     };
 
+    // Video Broadcast State Updates
+    const handleVideoShareState = (data) => {
+      if (!data) return;
+      if (data.action === "stop") {
+        setActiveVideoBroadcast(null);
+        toast.info(`🎬 Video broadcast ended by ${data.senderName || "Host"}`);
+      } else if (data.action === "start") {
+        setActiveVideoBroadcast(data);
+        toast.info(`🎬 ${data.senderName || "Host"} started a video broadcast`);
+      } else if (data.action === "sync" || data.action === "start") {
+        setActiveVideoBroadcast((prev) => (prev ? { ...prev, ...data } : data));
+
+        // 1. Direct HTML5 Video Seeking
+        if (sharedVideoRef.current) {
+          if (data.currentTime !== undefined) {
+            try {
+              const diff = Math.abs(sharedVideoRef.current.currentTime - data.currentTime);
+              if (diff > 0.4) {
+                sharedVideoRef.current.currentTime = data.currentTime;
+              }
+            } catch (e) {
+              console.warn("HTML5 Video Seek Error:", e);
+            }
+          }
+          if (data.isPlaying && sharedVideoRef.current.paused) {
+            sharedVideoRef.current.play().catch(() => {});
+          } else if (!data.isPlaying && !sharedVideoRef.current.paused) {
+            sharedVideoRef.current.pause();
+          }
+          if (data.isMuted !== undefined) {
+            sharedVideoRef.current.muted = data.isMuted;
+          }
+          if (data.volume !== undefined) {
+            sharedVideoRef.current.volume = data.volume;
+          }
+        }
+
+        // 2. YouTube / Vimeo iframe postMessage Seeking
+        if (iframeVideoRef.current && iframeVideoRef.current.contentWindow && data.currentTime !== undefined) {
+          try {
+            iframeVideoRef.current.contentWindow.postMessage(
+              JSON.stringify({
+                event: "command",
+                func: "seekTo",
+                args: [data.currentTime, true],
+              }),
+              "*"
+            );
+            if (data.isPlaying) {
+              iframeVideoRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+                "*"
+              );
+            } else if (data.isPlaying === false) {
+              iframeVideoRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+                "*"
+              );
+            }
+          } catch (e) {
+            console.warn("Iframe postMessage seek error:", e);
+          }
+        }
+      }
+    };
+
     socket.on("live-session:group:lobby-updated", handleLobbyUpdated);
     socket.on("live-session:group:admitted", handleAdmitted);
     socket.on("live-session:group:denied", handleDenied);
@@ -678,6 +808,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
     socket.on("live-session:group:force-mute", handleForceMute);
     socket.on("live-session:group:force-stop-video", handleForceStopVideo);
     socket.on("live-session:group:signal", handleSignal);
+    socket.on("live-session:group:video-share-state", handleVideoShareState);
 
     // Host periodic lobby & active peers sync
     let syncInterval;
@@ -725,6 +856,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
       socket.off("live-session:group:force-mute", handleForceMute);
       socket.off("live-session:group:force-stop-video", handleForceStopVideo);
       socket.off("live-session:group:signal", handleSignal);
+      socket.off("live-session:group:video-share-state", handleVideoShareState);
 
       if (isHost || hasRequestedJoin) {
         socket.emit("live-session:group:leave", { sessionId: session._id });
@@ -986,6 +1118,88 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
     setShowReactions(false);
   };
 
+  // Video Broadcast Actions (Host)
+  const handleStartVideoBroadcast = (e) => {
+    if (e) e.preventDefault();
+    if (!videoBroadcastUrl.trim()) {
+      toast.error("Please enter a valid video link or select a file.");
+      return;
+    }
+
+    if (socket && session?._id) {
+      socket.emit("live-session:group:video-share", {
+        sessionId: session._id,
+        action: "start",
+        url: videoBroadcastUrl.trim(),
+        currentTime: 0,
+        isPlaying: true,
+      });
+    }
+
+    setShowVideoBroadcastModal(false);
+  };
+
+  const handleStopVideoBroadcast = () => {
+    if (socket && session?._id) {
+      socket.emit("live-session:group:video-share", {
+        sessionId: session._id,
+        action: "stop",
+      });
+    }
+    setActiveVideoBroadcast(null);
+    setShowVideoBroadcastModal(false);
+  };
+
+  const handleSyncVideoPlayback = (actionType, time, playing, muted, volume) => {
+    if (!isHost || !socket || !session?._id) return;
+    socket.emit("live-session:group:video-share", {
+      sessionId: session._id,
+      action: "sync",
+      url: activeVideoBroadcast?.url,
+      currentTime: time,
+      isPlaying: playing,
+      isMuted: muted !== undefined ? muted : (sharedVideoRef.current?.muted ?? false),
+      volume: volume !== undefined ? volume : (sharedVideoRef.current?.volume ?? 1),
+    });
+  };
+
+  const handleHostSeekDelta = (deltaSeconds) => {
+    if (!isHost) return;
+    const current = activeVideoBroadcast?.currentTime || sharedVideoRef.current?.currentTime || 0;
+    const nextTime = Math.max(0, current + deltaSeconds);
+    if (sharedVideoRef.current) {
+      try {
+        sharedVideoRef.current.currentTime = nextTime;
+      } catch (err) {
+        console.warn("Direct seek error:", err);
+      }
+    }
+    handleSyncVideoPlayback(
+      "sync",
+      nextTime,
+      activeVideoBroadcast?.isPlaying ?? true,
+      sharedVideoRef.current?.muted ?? false,
+      sharedVideoRef.current?.volume ?? 1
+    );
+  };
+
+  const handleHostTogglePlay = () => {
+    if (!isHost) return;
+    const nextPlaying = !(activeVideoBroadcast?.isPlaying ?? true);
+    const currentTime = activeVideoBroadcast?.currentTime || sharedVideoRef.current?.currentTime || 0;
+    if (sharedVideoRef.current) {
+      if (nextPlaying) sharedVideoRef.current.play().catch(() => {});
+      else sharedVideoRef.current.pause();
+    }
+    handleSyncVideoPlayback(
+      "sync",
+      currentTime,
+      nextPlaying,
+      sharedVideoRef.current?.muted ?? false,
+      sharedVideoRef.current?.volume ?? 1
+    );
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1171,7 +1385,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
           {/* Camera / Mic test preview */}
           <div className="relative w-full aspect-video bg-black/60 rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center group shadow-inner">
             <video
-              ref={localVideoRef}
+              ref={setLocalVideoRef}
               autoPlay
               playsInline
               muted
@@ -1412,7 +1626,152 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
 
         {/* ── VIDEO CANVAS ── */}
         <main className="flex-1 p-3 sm:p-4 overflow-y-auto flex flex-col items-center justify-center bg-[#070A10]">
-          {viewMode === "grid" ? (
+          {activeVideoBroadcast ? (
+            /* ── ACTIVE VIDEO BROADCAST STAGE ── */
+            <div className="w-full h-full max-w-6xl mx-auto flex flex-col gap-4">
+              {/* Broadcast Player Banner Header */}
+              <div className="bg-[#111723] border border-white/10 rounded-2xl p-3 px-4 flex items-center justify-between gap-3 shadow-lg flex-wrap">
+                <div className="flex items-center gap-2.5 text-xs text-white font-bold truncate">
+                  <Tv size={18} className="text-purple-400 shrink-0" />
+                  <span className="truncate">
+                    Broadcasting Video (Shared by {activeVideoBroadcast.senderName || "Host"})
+                  </span>
+                  {!isHost && (
+                    <span className="text-[10px] bg-purple-600/30 border border-purple-400/40 text-purple-200 px-2 py-0.5 rounded-md font-bold shrink-0">
+                      Controlled by Host
+                    </span>
+                  )}
+                </div>
+
+                {isHost && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Quick Seek Backward 10s */}
+                    <button
+                      onClick={() => handleHostSeekDelta(-10)}
+                      title="Seek Backward 10 Seconds"
+                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                    >
+                      ⏪ -10s
+                    </button>
+
+                    {/* Play/Pause Toggle */}
+                    <button
+                      onClick={handleHostTogglePlay}
+                      title={activeVideoBroadcast?.isPlaying ? "Pause Video" : "Play Video"}
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    >
+                      {activeVideoBroadcast?.isPlaying ? <Pause size={14} /> : <Play size={14} />}
+                      <span>{activeVideoBroadcast?.isPlaying ? "Pause" : "Play"}</span>
+                    </button>
+
+                    {/* Quick Seek Forward 10s */}
+                    <button
+                      onClick={() => handleHostSeekDelta(10)}
+                      title="Seek Forward 10 Seconds"
+                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                    >
+                      ⏩ +10s
+                    </button>
+
+                    {/* Stop Broadcast Video */}
+                    <button
+                      onClick={handleStopVideoBroadcast}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <X size={14} /> Stop Video
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Video Player Display Container */}
+              <div className="flex-1 min-h-[300px] sm:min-h-[460px] bg-black rounded-2xl overflow-hidden border border-white/10 relative flex items-center justify-center shadow-2xl">
+                {(() => {
+                  const source = parseVideoSource(activeVideoBroadcast.url, activeVideoBroadcast.currentTime);
+                  if (source.type === "youtube" || source.type === "vimeo") {
+                    return (
+                      <div className={`w-full h-full ${!isHost ? "pointer-events-none select-none" : ""}`}>
+                        <iframe
+                          ref={iframeVideoRef}
+                          src={source.embedUrl}
+                          title="Broadcast Video"
+                          className="w-full h-full border-0 rounded-2xl min-h-[300px] sm:min-h-[460px]"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    );
+                  }
+                  return (
+                    <video
+                      ref={sharedVideoRef}
+                      src={source.src}
+                      controls={isHost}
+                      autoPlay
+                      playsInline
+                      className={`w-full h-full object-contain max-h-[70vh] rounded-2xl ${!isHost ? "pointer-events-none select-none" : ""}`}
+                      onPlay={() => {
+                        if (isHost && sharedVideoRef.current) {
+                          handleSyncVideoPlayback("sync", sharedVideoRef.current.currentTime, true, sharedVideoRef.current.muted, sharedVideoRef.current.volume);
+                        }
+                      }}
+                      onPause={() => {
+                        if (isHost && sharedVideoRef.current) {
+                          handleSyncVideoPlayback("sync", sharedVideoRef.current.currentTime, false, sharedVideoRef.current.muted, sharedVideoRef.current.volume);
+                        }
+                      }}
+                      onSeeked={() => {
+                        if (isHost && sharedVideoRef.current) {
+                          handleSyncVideoPlayback("sync", sharedVideoRef.current.currentTime, !sharedVideoRef.current.paused, sharedVideoRef.current.muted, sharedVideoRef.current.volume);
+                        }
+                      }}
+                      onVolumeChange={() => {
+                        if (isHost && sharedVideoRef.current) {
+                          handleSyncVideoPlayback("sync", sharedVideoRef.current.currentTime, !sharedVideoRef.current.paused, sharedVideoRef.current.muted, sharedVideoRef.current.volume);
+                        }
+                      }}
+                    />
+                  );
+                })()}
+              </div>
+
+              {/* Participants Strip Below Broadcasted Video */}
+              <div className="flex items-center gap-3 overflow-x-auto p-2 bg-[#111723]/60 backdrop-blur-md rounded-2xl border border-white/10">
+                {/* Local Video Tile */}
+                <div className="w-36 sm:w-44 h-24 sm:h-28 bg-slate-900 rounded-xl overflow-hidden shrink-0 border border-white/10 relative shadow-xs">
+                  {isVideoOff ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
+                      <VideoOff size={18} />
+                      <span className="text-[10px] mt-1 font-bold">You (Off)</span>
+                    </div>
+                  ) : (
+                    <video
+                      ref={setLocalVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover rounded-xl -scale-x-100"
+                    />
+                  )}
+                  <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded text-[9px] font-bold text-white">
+                    You {isHost ? "(Host)" : ""}
+                  </div>
+                </div>
+
+                {/* Peer Video Tiles */}
+                {peers.map((peer) => {
+                  const pStream = remoteStreams[String(peer._id)];
+                  return (
+                    <GroupPeerThumbnail
+                      key={peer._id}
+                      peer={peer}
+                      stream={pStream}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ) : viewMode === "grid" ? (
             /* ── GRID VIEW ── */
             <div
               className={`w-full h-full grid gap-3 sm:gap-4 max-w-7xl mx-auto items-center justify-center ${
@@ -1430,7 +1789,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
               {/* Tile: Self (Local) */}
               <div className="relative w-full h-full min-h-[180px] max-h-[70vh] aspect-video bg-[#161D2B] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-xl group flex items-center justify-center">
                 <video
-                  ref={localVideoRef}
+                  ref={setLocalVideoRef}
                   autoPlay
                   playsInline
                   muted
@@ -1484,7 +1843,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
               {/* Main Spotlight Video */}
               <div className="flex-1 w-full bg-[#161D2B] rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative flex items-center justify-center">
                 <video
-                  ref={localVideoRef}
+                  ref={setLocalVideoRef}
                   autoPlay
                   playsInline
                   muted
@@ -2071,6 +2430,24 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
             </span>
           </button>
 
+          {/* Broadcast Video (Host Only) */}
+          {isHost && (
+            <button
+              onClick={() => setShowVideoBroadcastModal(true)}
+              title="Broadcast Video to Meeting (Without Screen Share)"
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition cursor-pointer ${
+                activeVideoBroadcast
+                  ? "bg-purple-700 text-white animate-pulse"
+                  : "text-slate-300 hover:bg-white/10"
+              }`}
+            >
+              <Tv size={18} />
+              <span className="text-[10px] font-bold hidden md:inline">
+                {activeVideoBroadcast ? "Video Playing" : "Play Video"}
+              </span>
+            </button>
+          )}
+
           {/* Raise Hand */}
           <button
             onClick={toggleRaiseHand}
@@ -2174,6 +2551,97 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
                 className="w-full py-2.5 rounded-xl text-slate-400 hover:text-white font-semibold text-xs transition cursor-pointer"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BROADCAST VIDEO MODAL (HOST ONLY) ── */}
+      {showVideoBroadcastModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#111723] border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-slide-in">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                <Tv size={20} className="text-purple-400" />
+                Broadcast Video to Meeting
+              </h3>
+              <button
+                onClick={() => setShowVideoBroadcastModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Enter a video link (YouTube URL, MP4, WebM, Vimeo) or attach a video file. The video will be shown directly to all participants on the main stage in sync without sharing your screen.
+              </p>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-200 block">Video URL / Link:</label>
+                <input
+                  type="url"
+                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://example.com/video.mp4"
+                  value={videoBroadcastUrl}
+                  onChange={(e) => setVideoBroadcastUrl(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-purple-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px bg-white/10 flex-1" />
+                <span className="text-[10px] text-slate-400 font-bold uppercase">OR Select Local File</span>
+                <div className="h-px bg-white/10 flex-1" />
+              </div>
+
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setVideoBroadcastUrl(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
+                />
+              </div>
+
+              {activeVideoBroadcast && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between">
+                  <span>A video is currently playing in this meeting.</span>
+                  <button
+                    type="button"
+                    onClick={handleStopVideoBroadcast}
+                    className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-700 transition cursor-pointer"
+                  >
+                    Stop Video
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setShowVideoBroadcastModal(false)}
+                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleStartVideoBroadcast}
+                disabled={!videoBroadcastUrl.trim()}
+                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-xs font-extrabold transition cursor-pointer shadow-lg flex items-center gap-2"
+              >
+                <Tv size={16} /> Start Broadcast
               </button>
             </div>
           </div>

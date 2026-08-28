@@ -929,6 +929,22 @@ export function registerSocketServer(httpServer, app) {
         });
     });
 
+    // Group Call: Video Broadcast (Shared Video Player without screen share)
+    socket.on("live-session:group:video-share", ({ sessionId, action, url, currentTime, isPlaying, isMuted, volume }) => {
+      if (!sessionId) return;
+      io.to(`live_session:group:${sessionId}`).emit("live-session:group:video-share-state", {
+        senderId: String(userId),
+        senderName: socket.data.user?.name || "Host",
+        action, // "start" | "sync" | "stop"
+        url,
+        currentTime: currentTime !== undefined ? currentTime : 0,
+        isPlaying: isPlaying !== undefined ? Boolean(isPlaying) : true,
+        isMuted: isMuted !== undefined ? Boolean(isMuted) : false,
+        volume: volume !== undefined ? Number(volume) : 1,
+        timestamp: Date.now(),
+      });
+    });
+
     // Group Call: Host Mutes a Participant
     socket.on("live-session:group:host-mute-peer", async ({ sessionId, targetUserId }) => {
       try {
