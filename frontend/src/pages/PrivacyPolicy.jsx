@@ -72,6 +72,17 @@ export default function PrivacyPolicy() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = "Privacy Policy | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Read the official Privacy Policy of RealBell Business Foundation (RBF). Learn how we protect founder data, cap tables, and platform telemetry."
+    );
     if (storeData) {
       setData(storeData);
     }

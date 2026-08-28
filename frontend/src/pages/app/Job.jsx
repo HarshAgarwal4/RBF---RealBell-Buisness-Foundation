@@ -76,6 +76,20 @@ export default function Job() {
         expiry_date: "",
     });
 
+    useEffect(() => {
+        document.title = "Job Opportunities & Careers | RealBell Business Foundation";
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "Discover startup job openings, tech roles, and career opportunities within the RealBell Business Foundation ecosystem."
+        );
+    }, []);
+
     // Skill & Location Tag Inputs
     const [locationInput, setLocationInput] = useState("");
     const [reqSkillInput, setReqSkillInput] = useState("");
@@ -1107,7 +1121,7 @@ export default function Job() {
                                 {/* Meeting Link */}
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                        Meeting URL (Google Meet / Zoom)
+                                        Meeting URL (Google Meet / Video Call)
                                     </label>
                                     <input
                                         type="url"

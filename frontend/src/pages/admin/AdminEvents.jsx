@@ -559,7 +559,7 @@ function EventModal({ event, onClose, onSaved }) {
               </div>
               <div>
                 <label style={s.label}>Venue Address / Meeting Link</label>
-                <input value={form.venue} onChange={(e) => set("venue", e.target.value)} style={s.input} placeholder="Zoom link or venue address" />
+                <input value={form.venue} onChange={(e) => set("venue", e.target.value)} style={s.input} placeholder="Virtual meeting link or venue address" />
               </div>
             </div>
 

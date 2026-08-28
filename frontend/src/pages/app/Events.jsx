@@ -29,6 +29,20 @@ export default function Events() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    document.title = "Events, Workshops & Demo Days | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Participate in angel demo days, pitch workshops, founder roundtables, and ecosystem masterclasses hosted by RealBell Business Foundation."
+    );
+  }, []);
+
+  useEffect(() => {
     // Initialize date to current real date if valid
     const now = new Date();
     setCurrentDate(now);

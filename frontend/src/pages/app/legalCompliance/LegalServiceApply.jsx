@@ -67,6 +67,21 @@ export default function LegalServiceApply() {
 
   const fileInputRefs = useRef({});
 
+  useEffect(() => {
+    const title = service?.title ? `Apply: ${service.title}` : "Legal Compliance Application";
+    document.title = `${title} | RealBell Business Foundation`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      `Apply for ${service?.title || "legal compliance services, trademark registration, or DPIIT recognition"} on RealBell Business Foundation.`
+    );
+  }, [service]);
+
   // Fetch Service Details
   useEffect(() => {
     async function fetchService() {

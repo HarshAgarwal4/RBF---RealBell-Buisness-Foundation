@@ -164,6 +164,19 @@ function TopBar({ step, back, showBackToHome }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "Member Login | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Log in to RealBell Business Foundation (RBF) to access your startup dashboard, deal flow, mentorship schedules, and legal compliance tools."
+    );
+  }, []);
   const fetchUser = useStore((state) => state.fetchUser);
   const user = useStore((state) => state.user);
   const sendOtp = useStore((state) => state.sendOtp);

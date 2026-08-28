@@ -1216,8 +1216,20 @@ function ChatWorkspace({
 }
 
 export default function ConnectionsPage() {
-  const navigate = useNavigate();
   const { user } = useStore();
+  useEffect(() => {
+    document.title = "My Connections | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Manage your active startup connections, connection requests, direct messaging, and video calls on RealBell Business Foundation."
+    );
+  }, []);
   const { initiateCall } = useVideoCall();
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");

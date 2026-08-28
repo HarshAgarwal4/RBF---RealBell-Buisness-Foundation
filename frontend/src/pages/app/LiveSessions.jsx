@@ -62,6 +62,20 @@ export default function LiveSessions() {
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joining, setJoining] = useState(false);
 
+  useEffect(() => {
+    document.title = "Live Sessions & Meetings | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Join expert live consultation queues, team video calls, and one-to-one breakout sessions on RealBell Business Foundation."
+    );
+  }, []);
+
   // Fetch live sessions
   const fetchSessions = async () => {
     try {
@@ -238,7 +252,7 @@ export default function LiveSessions() {
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#132034] dark:text-white tracking-tight flex items-center gap-3">
                 <span className="inline-block w-3 h-3 rounded-full bg-[#E11D48] animate-pulse" />
-                Live Sessions & Waiting Queues
+                Live Sessions & Meetings
               </h1>
               <p className="text-xs sm:text-sm text-[#64748B] dark:text-slate-400 mt-1">
                 Join expert live consultation queues, team video calls, and one-to-one breakout sessions.

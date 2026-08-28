@@ -126,6 +126,20 @@ export default function ReportsPage() {
   const { user } = useStore();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
+  useEffect(() => {
+    document.title = "Industry Reports & Research | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Access market research reports, venture capital insights, and industry sector intelligence on RealBell Business Foundation."
+    );
+  }, []);
+
   const [reports, setReports] = useState([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");

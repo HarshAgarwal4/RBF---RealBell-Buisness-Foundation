@@ -239,6 +239,21 @@ export default function ProgramDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const title = program?.title || "Incubation Program";
+    document.title = `${title} | RealBell Business Foundation`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      `${program?.description || "Apply for cohort incubation and grant opportunities on RealBell Business Foundation."}`.slice(0, 160)
+    );
+  }, [program]);
+
+  useEffect(() => {
     fetchProgram();
   }, [id]);
 

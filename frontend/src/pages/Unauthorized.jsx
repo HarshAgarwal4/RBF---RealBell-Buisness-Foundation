@@ -1,7 +1,22 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Unauthorized() {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = "403 Access Denied | RealBell Business Foundation";
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "Access restricted. You do not have authorization to view this page on RealBell Business Foundation."
+        );
+    }, []);
 
     return (
         <div style={{

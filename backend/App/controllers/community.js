@@ -1,5 +1,5 @@
 import CommunityPostModel from "../models/community.js";
-import { uploadFileToCloud } from "../../services/upload.js";
+import { uploadFileToCloud, deleteImageByPublicId } from "../../services/upload.js";
 
 function normalizePollOptions(options = []) {
   if (!Array.isArray(options)) return [];
@@ -79,6 +79,27 @@ function serializePost(post, currentUserId) {
     (comment) => String(comment.user) === String(currentUserId)
   );
 
+  let attachment = null;
+  if (post.attachment?.url) {
+    attachment = {
+      url: post.attachment.url,
+      public_id: post.attachment.public_id || "",
+      file_type: post.attachment.file_type || "other",
+      original_name: post.attachment.original_name || "",
+      mime_type: post.attachment.mime_type || "",
+      size: post.attachment.size || 0,
+    };
+  } else if (post.image?.url) {
+    attachment = {
+      url: post.image.url,
+      public_id: post.image.public_id || "",
+      file_type: "image",
+      original_name: "Attachment Image",
+      mime_type: "image/jpeg",
+      size: 0,
+    };
+  }
+
   return {
     _id: post._id,
     author: buildAuthor(post.author),
@@ -88,7 +109,13 @@ function serializePost(post, currentUserId) {
           url: post.image.url,
           public_id: post.image.public_id || "",
         }
+      : attachment?.file_type === "image"
+      ? {
+          url: attachment.url,
+          public_id: attachment.public_id || "",
+        }
       : null,
+    attachment,
     post_type: post.post_type,
     poll: post.poll
       ? {
@@ -138,7 +165,6 @@ async function fetchCommunityPosts(req, res) {
 async function createCommunityPost(req, res) {
   try {
     const content = String(req.body?.content || "").trim();
-    const post_type = req.body?.post_type === "poll" ? "poll" : "text";
     const poll_question = String(req.body?.poll_question || "").trim();
     const poll_options = normalizePollOptions(
       normalizeListField(req.body?.poll_options || [])
@@ -148,21 +174,72 @@ async function createCommunityPost(req, res) {
       .filter(Boolean);
 
     let image = null;
+    let attachment = null;
+
     if (req.file) {
+      const mime = req.file.mimetype || "";
+      const ext = (req.file.originalname || "").split(".").pop().toLowerCase();
+
+      let file_type = "other";
+      let resourceType = "auto";
+
+      if (mime.startsWith("image/")) {
+        file_type = "image";
+        resourceType = "image";
+      } else if (mime.startsWith("video/")) {
+        file_type = "video";
+        resourceType = "video";
+      } else if (mime === "application/pdf" || ext === "pdf") {
+        file_type = "pdf";
+        resourceType = "image"; // Uploading PDFs as 'image' resource type forces inline delivery in Cloudinary (no download popups)
+      } else {
+        file_type = "document";
+        resourceType = "auto";
+      }
+
       const uploaded = await uploadFileToCloud(
         req.file.buffer,
-        req.file.originalname
+        req.file.originalname,
+        {
+          folder: "RBF/community_wall",
+          resourceType,
+        }
       );
-      image = {
+      console.log(uploaded.secure_url)
+      attachment = {
         url: uploaded.secure_url,
         public_id: uploaded.public_id || "",
+        file_type,
+        original_name: req.file.originalname || `attachment.${ext}`,
+        mime_type: mime,
+        size: req.file.size || 0,
       };
+
+      if (file_type === "image") {
+        image = {
+          url: uploaded.secure_url,
+          public_id: uploaded.public_id || "",
+        };
+      }
     }
 
-    if (!content && !image) {
+    let post_type = req.body?.post_type || "text";
+    if (post_type !== "poll") {
+      if (attachment) {
+        if (attachment.file_type === "image" || attachment.file_type === "video") {
+          post_type = "media";
+        } else {
+          post_type = "document";
+        }
+      } else {
+        post_type = "text";
+      }
+    }
+
+    if (!content && !attachment && !image && post_type !== "poll") {
       return res.send({
         status: 7,
-        msg: "Post content or an image is required",
+        msg: "Post content or an attachment is required",
       });
     }
 
@@ -173,11 +250,12 @@ async function createCommunityPost(req, res) {
       });
     }
 
-    const post = await CommunityPostModel.create({
+    const newPost = await CommunityPostModel.create({
       author: req.user._id,
       content,
-      image,
       post_type,
+      image,
+      attachment,
       poll:
         post_type === "poll"
           ? {
@@ -191,7 +269,7 @@ async function createCommunityPost(req, res) {
       tags,
     });
 
-    const populated = await post.populate(
+    const populated = await CommunityPostModel.findById(newPost._id).populate(
       "author",
       "name company_name email company_type account"
     );
@@ -361,9 +439,52 @@ async function voteCommunityPoll(req, res) {
   }
 }
 
+async function deleteCommunityPost(req, res) {
+  try {
+    const { id } = req.params;
+    const post = await CommunityPostModel.findById(id);
+
+    if (!post) {
+      return res.send({
+        status: 0,
+        msg: "Post not found",
+      });
+    }
+
+    // Check ownership: user can only delete their own post
+    if (String(post.author) !== String(req.user._id)) {
+      return res.send({
+        status: 0,
+        msg: "Unauthorized: You can only delete your own posts",
+      });
+    }
+
+    // Delete attachment from Cloudinary if exists
+    if (post.attachment?.public_id) {
+      await deleteImageByPublicId(post.attachment.public_id).catch(() => {});
+    } else if (post.image?.public_id) {
+      await deleteImageByPublicId(post.image.public_id).catch(() => {});
+    }
+
+    await CommunityPostModel.findByIdAndDelete(id);
+
+    return res.send({
+      status: 1,
+      msg: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete post error:", error);
+    return res.send({
+      status: 0,
+      msg: "Unable to delete post",
+    });
+  }
+}
+
 export {
   addCommunityComment,
   createCommunityPost,
+  deleteCommunityPost,
   fetchCommunityPosts,
   toggleCommunityReaction,
   voteCommunityPoll,

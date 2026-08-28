@@ -37,6 +37,19 @@ const ICON_COMPONENTS = {
 
 export default function LegalServices() {
   const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "Legal & Compliance Services | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Access specialized legal compliance services for startups, DPIIT recognition, trademark registration, term sheet drafting, and incorporation."
+    );
+  }, []);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

@@ -152,6 +152,20 @@ export default function Dashboard() {
   const completionPercent = calculateProfileCompletion(user);
 
   useEffect(() => {
+    document.title = "Dashboard | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "RealBell Business Foundation Ecosystem Dashboard - Track startup milestones, connections, incubation programs, and mentorship."
+    );
+  }, []);
+
+  useEffect(() => {
     async function loadDashboardData() {
       try {
         // Fetch connections

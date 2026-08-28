@@ -32,6 +32,19 @@ function loadRazorpayScript() {
 
 export default function Subscription() {
   const { user, setUser } = useStore();
+  useEffect(() => {
+    document.title = "Subscription Plans & Pricing | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Upgrade your startup or ecosystem profile with premium tier incubation access, investor matchmaking, and legal compliance packages."
+    );
+  }, []);
   const [plans, setPlans] = useState([]);
   const [subscription, setSubscription] = useState(null);
   const [transactions, setTransactions] = useState([]);

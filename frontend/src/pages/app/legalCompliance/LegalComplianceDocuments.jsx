@@ -21,6 +21,19 @@ import {
 
 export default function LegalComplianceDocuments() {
   const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "Legal Compliance Documents Vault | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Access and download verified legal agreements, DPIIT certificates, tax approvals, and compliance documents on RealBell Business Foundation."
+    );
+  }, []);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

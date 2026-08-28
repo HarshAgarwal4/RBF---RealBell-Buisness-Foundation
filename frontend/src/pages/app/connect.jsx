@@ -78,6 +78,21 @@ export default function Connect() {
     const [search, setSearch] = useState("");
 
     useEffect(() => {
+        const titleLabel = formatTypeLabel(type);
+        document.title = `Explore ${titleLabel} Directory | RealBell Business Foundation`;
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            `Connect with verified ${titleLabel} leaders, founders, investors, and mentors on RealBell Business Foundation.`
+        );
+    }, [type]);
+
+    useEffect(() => {
         let ignore = false;
 
         async function fetchProfiles() {

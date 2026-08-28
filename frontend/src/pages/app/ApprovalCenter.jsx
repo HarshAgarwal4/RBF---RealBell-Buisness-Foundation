@@ -153,6 +153,20 @@ export default function ApprovalCenter() {
   const user = useStore((state) => state.user);
   const setUser = useStore((state) => state.setUser);
 
+  useEffect(() => {
+    document.title = "Verification & Approval Center | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Ecosystem Verification & Application Status Portal. Track accreditation, KYC verification, and foundation onboarding."
+    );
+  }, []);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);

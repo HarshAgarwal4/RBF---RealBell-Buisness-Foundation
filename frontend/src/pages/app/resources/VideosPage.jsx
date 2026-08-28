@@ -140,6 +140,20 @@ export default function VideosPage() {
   const { user } = useStore();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
+  useEffect(() => {
+    document.title = "Video Library & Masterclasses | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Watch recorded founder masterclasses, expert webinars, pitch presentations, and incubation tutorials on RealBell Business Foundation."
+    );
+  }, []);
+
   const [videos, setVideos] = useState([]);
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("All");

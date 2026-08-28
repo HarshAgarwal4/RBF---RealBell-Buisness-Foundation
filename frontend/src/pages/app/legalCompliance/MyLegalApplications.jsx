@@ -52,6 +52,19 @@ function formatBytes(bytes) {
 
 export default function MyLegalApplications() {
   const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "My Legal Compliance Applications | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Track application status, document review, compliance filings, and approval certificates on RealBell Business Foundation."
+    );
+  }, []);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

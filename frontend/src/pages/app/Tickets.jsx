@@ -77,6 +77,19 @@ function formatFileSize(size) {
 
 export default function Tickets() {
   const [tickets, setTickets] = useState([]);
+  useEffect(() => {
+    document.title = "Support Tickets & Helpdesk | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Raise technical queries, platform bug reports, and incubation support tickets with the RealBell Business Foundation operations team."
+    );
+  }, []);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);

@@ -29,6 +29,20 @@ export default function Milestones() {
     const { user } = useStore();
     const myId = user?._id;
 
+    useEffect(() => {
+        document.title = "Milestone Tracking & Governance | RealBell Business Foundation";
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "Set, track, and verify quantitative & qualitative startup growth milestones with mentors and investors on RealBell Business Foundation."
+        );
+    }, []);
+
     const [view, setView] = useState("list"); // list | create
 
     const [milestones, setMilestones] = useState([]);

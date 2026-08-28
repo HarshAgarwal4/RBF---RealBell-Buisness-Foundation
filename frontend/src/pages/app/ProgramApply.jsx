@@ -309,6 +309,21 @@ export default function ProgramApply() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
+    const title = program?.title ? `Apply: ${program.title}` : "Program Application";
+    document.title = `${title} | RealBell Business Foundation`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      `Submit your startup application for ${program?.title || "incubation and acceleration cohorts"} on RealBell Business Foundation.`
+    );
+  }, [program]);
+
+  useEffect(() => {
     fetchProgram();
   }, [id]);
 

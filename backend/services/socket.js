@@ -879,15 +879,23 @@ export function registerSocketServer(httpServer, app) {
     });
 
     // Group Call: In-Meeting Chat
-    socket.on("live-session:group:chat", ({ sessionId, text }) => {
-      if (!sessionId || !text?.trim()) return;
+    socket.on("live-session:group:chat", ({ sessionId, text, file }) => {
+      if (!sessionId || (!text?.trim() && !file)) return;
       const chatMsg = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         senderId: String(userId),
         senderName: socket.data.user?.name || "Participant",
         senderAvatar: socket.data.user?.account?.image || "",
-        text: text.trim(),
-        timestamp: new Date().toISOString(),
+        text: text ? text.trim() : "",
+        file: file
+          ? {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              dataUrl: file.dataUrl,
+            }
+          : null,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       io.to(`live_session:group:${sessionId}`).emit("live-session:group:chat-message", chatMsg);

@@ -87,6 +87,20 @@ export default function GlossaryPage() {
     } catch {/* silent */} finally { setLoading(false); }
   };
 
+  useEffect(() => {
+    document.title = "Startup & Venture Capital Glossary | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Comprehensive dictionary of startup incubation terms, venture capital terminology, cap table definitions, and DPIIT compliance acronyms."
+    );
+  }, []);
+
   useEffect(() => { fetchTerms(); }, []);
 
   const filtered = useMemo(() => {

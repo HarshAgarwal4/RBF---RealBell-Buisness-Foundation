@@ -331,6 +331,20 @@ export function AccountPage() {
   });
 
   useEffect(() => {
+    document.title = "Account Settings | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Manage your RealBell Business Foundation user account, profile photo, contact preferences, and mentorship availability."
+    );
+  }, []);
+
+  useEffect(() => {
     if (user) {
       setFormData({
         name: user.name || "",

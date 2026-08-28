@@ -6,6 +6,7 @@ import { useStore } from "../zustand/store";
 import { useTheme } from "../context/ThemeProvider";
 import axios from "../services/axios";
 import { DEFAULT_PAGE_FALLBACKS } from "../config/pageFallbacks";
+import udgsCoinImg from "../assets/udgs-coin.png";
 import {
   ArrowRight,
   Briefcase,
@@ -86,110 +87,40 @@ function Hero3DCanvas({ isDark = true, isFocusMode = false }) {
     pointLight.position.set(0, 5, 12);
     scene.add(pointLight);
 
-    // --- 2. GENERATE HIGH-RES COIN TEXTURE WITH ₹ EMBOSSED EMBLEM ---
-    const createCoinTexture = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext("2d");
-
-      // Radial Gold Gradient (Radiant & Warm for both modes, never muddy)
-      const grad = ctx.createRadialGradient(256, 256, 30, 256, 256, 240);
-      if (isDark) {
-        grad.addColorStop(0, "#fffbeb");
-        grad.addColorStop(0.25, "#fde047");
-        grad.addColorStop(0.65, "#eab308");
-        grad.addColorStop(0.9, "#ca8a04");
-        grad.addColorStop(1, "#854d0e");
-      } else {
-        grad.addColorStop(0, "#ffffff");
-        grad.addColorStop(0.25, "#fef08a");
-        grad.addColorStop(0.6, "#fbbf24");
-        grad.addColorStop(0.85, "#f59e0b");
-        grad.addColorStop(1, "#d97706");
-      }
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(256, 256, 240, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Outer Gold Rim Ring
-      ctx.strokeStyle = isDark ? "#fef08a" : "#fffbeb";
-      ctx.lineWidth = 14;
-      ctx.beginPath();
-      ctx.arc(256, 256, 235, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Inner Beveled Border
-      ctx.strokeStyle = isDark ? "#a16207" : "#d97706";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.arc(256, 256, 215, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Dotted Security Rim
-      ctx.strokeStyle = isDark ? "#713f12" : "#b45309";
-      ctx.lineWidth = 4;
-      ctx.setLineDash([8, 10]);
-      ctx.beginPath();
-      ctx.arc(256, 256, 198, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Embossed "REALBELL" Arced Text (Top)
-      ctx.fillStyle = isDark ? "#78350f" : "#92400e";
-      ctx.font = "bold 24px 'Inter', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("• REALBELL BUSINESS FOUNDATION •", 256, 80);
-
-      // Central Rupee Symbol (₹) with 3D drop shadow
-      ctx.shadowColor = isDark ? "rgba(113, 63, 18, 0.6)" : "rgba(217, 119, 6, 0.35)";
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetX = 3;
-      ctx.shadowOffsetY = 5;
-
-      ctx.fillStyle = isDark ? "#713f12" : "#78350f";
-      ctx.font = "900 170px 'Inter', sans-serif";
-      ctx.fillText("₹", 256, 275);
-
-      // Specular highlight on Rupee
-      ctx.shadowColor = "transparent";
-      ctx.fillStyle = isDark ? "#fef9c3" : "#ffffff";
-      ctx.font = "900 170px 'Inter', sans-serif";
-      ctx.fillText("₹", 252, 270);
-
-      return new THREE.CanvasTexture(canvas);
-    };
-
-    const coinTexture = createCoinTexture();
+    // --- 2. LOAD HIGH-RES EXACT UDGS 2026 UNIFIED MUDRA COIN TEXTURE ---
+    const textureLoader = new THREE.TextureLoader();
+    const coinTexture = textureLoader.load(udgsCoinImg);
+    coinTexture.colorSpace = THREE.SRGBColorSpace;
+    coinTexture.generateMipmaps = true;
+    coinTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    coinTexture.magFilter = THREE.LinearFilter;
 
     // --- 3. MATERIALS FOR 3D COIN MESH ---
     const coinGeometry = new THREE.CylinderGeometry(1.25, 1.25, 0.18, isMobile ? 32 : 48);
 
     const faceMaterial = new THREE.MeshStandardMaterial({
       map: coinTexture,
-      metalness: isDark ? 0.88 : 0.28,
-      roughness: isDark ? 0.22 : 0.3,
-      emissive: isDark ? new THREE.Color(0x000000) : new THREE.Color(0xd97706),
-      emissiveIntensity: isDark ? 0 : 0.35,
+      metalness: isDark ? 0.82 : 0.62,
+      roughness: isDark ? 0.22 : 0.28,
+      emissive: isDark ? new THREE.Color(0x000000) : new THREE.Color(0x92400e),
+      emissiveIntensity: isDark ? 0 : 0.08,
       envMapIntensity: 1.5,
     });
 
     const rimMaterial = new THREE.MeshStandardMaterial({
-      color: isDark ? 0xca8a04 : 0xf59e0b,
-      metalness: isDark ? 0.95 : 0.3,
-      roughness: isDark ? 0.18 : 0.25,
-      emissive: isDark ? new THREE.Color(0x000000) : new THREE.Color(0xb45309),
-      emissiveIntensity: isDark ? 0 : 0.25,
+      color: isDark ? 0xb45309 : 0xd97706,
+      metalness: isDark ? 0.92 : 0.65,
+      roughness: isDark ? 0.18 : 0.22,
+      emissive: isDark ? new THREE.Color(0x000000) : new THREE.Color(0x78350f),
+      emissiveIntensity: isDark ? 0 : 0.1,
     });
 
     const coinMaterials = [rimMaterial, faceMaterial, faceMaterial];
 
-    // --- 4. CREATE 3D RAINING COINS CLUSTER (ACROSS FULL VIEWPORT) ---
-    const coinCount = isMobile ? 24 : 46;
+    // --- 4. CREATE 3D RAINING COINS CLUSTER (REDUCED COUNT FOR CLEAN ELEGANT LOOK) ---
+    const coinCount = isMobile ? 8 : 16;
     const coins = [];
-    const spreadX = isMobile ? 22 : 44;
+    const spreadX = isMobile ? 20 : 40;
 
     for (let i = 0; i < coinCount; i++) {
       const coinMesh = new THREE.Mesh(coinGeometry, coinMaterials);
@@ -529,6 +460,20 @@ export default function Home() {
       setCustomHome(storeHomeData);
     }
   }, [storeHomeData]);
+
+  useEffect(() => {
+    document.title = "RealBell Business Foundation | India's Premier Startup Incubation Ecosystem";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "RealBell Business Foundation (RBF) bridges early-stage startups with institutional angel syndicates, CXO mentors, incubation cohorts, and legal frameworks."
+    );
+  }, []);
 
   useEffect(() => {
     if (user) navigate("/dashboard");

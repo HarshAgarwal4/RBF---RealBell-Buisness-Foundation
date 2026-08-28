@@ -23,6 +23,7 @@ import {
   Settings,
   MoreVertical,
   Check,
+  Radio,
   X,
   Copy,
   Share2,
@@ -37,9 +38,13 @@ import {
   Send,
   UserPlus,
   UserX,
-  Radio,
   Eye,
   Camera,
+  Paperclip,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  File as FileIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -117,6 +122,8 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
   const screenStreamRef = useRef(null);
   const roomContainerRef = useRef(null);
   const chatBottomRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [attachedFile, setAttachedFile] = useState(null);
 
   const ICE_CONFIG = {
     iceServers: [
@@ -979,16 +986,48 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
     setShowReactions(false);
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 10 MB max size for in-call ephemeral chat sharing
+    const maxBytes = 10 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error("File is too large. Maximum size for in-call chat sharing is 10 MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachedFile({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        dataUrl: reader.result,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAttachedFile = () => {
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSendChat = (e) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() && !attachedFile) return;
     if (socket && session?._id) {
       socket.emit("live-session:group:chat", {
         sessionId: session._id,
         text: chatInput.trim(),
+        file: attachedFile ? attachedFile : null,
       });
     }
     setChatInput("");
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // Host Actions
@@ -1260,7 +1299,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 2. MAIN ACTIVE GROUP VIDEO CALL ROOM (ZOOM-STYLE)
+  // 2. MAIN ACTIVE GROUP VIDEO CALL ROOM
   // ─────────────────────────────────────────────────────────────
   return (
     <div
@@ -1727,7 +1766,54 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
                           : "bg-white/10 text-slate-100 rounded-tl-xs border border-white/5"
                       }`}
                     >
-                      {msg.text}
+                      {msg.file && (
+                        <div className="mb-2">
+                          {msg.file.type?.startsWith("image/") ? (
+                            <div className="space-y-1">
+                              <img
+                                src={msg.file.dataUrl}
+                                alt={msg.file.name}
+                                className="max-w-full max-h-48 rounded-lg object-cover cursor-pointer border border-white/10 hover:opacity-90 transition"
+                                onClick={() => {
+                                  const win = window.open();
+                                  if (win) win.document.write(`<img src="${msg.file.dataUrl}" style="max-width:100%;"/>`);
+                                }}
+                              />
+                              <div className="flex items-center justify-between gap-2 text-[10px] opacity-85">
+                                <span className="truncate max-w-[140px] font-medium">{msg.file.name}</span>
+                                <a
+                                  href={msg.file.dataUrl}
+                                  download={msg.file.name}
+                                  className="flex items-center gap-1 hover:underline text-white font-semibold cursor-pointer shrink-0"
+                                >
+                                  <Download size={12} /> Save
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-2 rounded-xl bg-black/20 border border-white/10 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 truncate min-w-0">
+                                <FileText size={16} className="shrink-0 text-slate-300" />
+                                <div className="truncate">
+                                  <p className="font-semibold truncate text-[11px]">{msg.file.name}</p>
+                                  <p className="text-[9px] opacity-70">
+                                    {(msg.file.size / 1024).toFixed(1)} KB
+                                  </p>
+                                </div>
+                              </div>
+                              <a
+                                href={msg.file.dataUrl}
+                                download={msg.file.name}
+                                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition shrink-0 cursor-pointer"
+                                title="Download File"
+                              >
+                                <Download size={13} />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {msg.text && <div>{msg.text}</div>}
                     </div>
                   </div>
                 );
@@ -1737,7 +1823,39 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
 
             {/* Input Form */}
             <form onSubmit={handleSendChat} className="p-3 border-t border-white/10 bg-[#0B0F17]">
+              {attachedFile && (
+                <div className="mb-2 p-2 rounded-xl bg-white/10 border border-white/10 flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2 truncate text-slate-200 min-w-0">
+                    <Paperclip size={14} className="text-[#8E1B2E] shrink-0" />
+                    <span className="truncate font-medium text-[11px]">{attachedFile.name}</span>
+                    <span className="text-[10px] text-slate-400 shrink-0">
+                      ({(attachedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveAttachedFile}
+                    className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 shrink-0 cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
               <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file (Ephemeral: not stored on server)"
+                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 transition cursor-pointer"
+                >
+                  <Paperclip size={15} />
+                </button>
                 <input
                   type="text"
                   placeholder="Type a message..."
@@ -1747,7 +1865,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
                 />
                 <button
                   type="submit"
-                  disabled={!chatInput.trim()}
+                  disabled={!chatInput.trim() && !attachedFile}
                   className="p-2.5 rounded-xl bg-[#8E1B2E] hover:bg-[#721524] disabled:opacity-40 text-white transition cursor-pointer"
                 >
                   <Send size={15} />
@@ -1862,7 +1980,7 @@ export default function GroupVideoCallRoom({ session, socket, onLeave }) {
         )}
       </div>
 
-      {/* ── BOTTOM DOCK CONTROLS (ZOOM-STYLE) ── */}
+      {/* ── BOTTOM DOCK CONTROLS ── */}
       <footer className="h-20 bg-[#111723]/95 backdrop-blur-xl border-t border-white/10 px-4 sm:px-8 flex items-center justify-between z-30 shrink-0">
         {/* Left: Audio & Video controls */}
         <div className="flex items-center gap-2 sm:gap-3">

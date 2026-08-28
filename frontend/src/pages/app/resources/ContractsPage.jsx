@@ -132,6 +132,20 @@ export default function ContractsPage() {
   const { user } = useStore();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
+  useEffect(() => {
+    document.title = "Standard Legal Contracts & Templates | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Download standardized founder agreements, NDAs, term sheets, employment contracts, and web policy templates on RealBell Business Foundation."
+    );
+  }, []);
+
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [search, setSearch] = useState("");
   const [data, setData] = useState({});

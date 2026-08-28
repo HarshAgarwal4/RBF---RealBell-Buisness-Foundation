@@ -101,6 +101,20 @@ export default function Meetings() {
     }, []);
 
     useEffect(() => {
+        document.title = "Scheduled Meetings | RealBell Business Foundation";
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "Schedule and manage 1-on-1 startup advisory sessions, investor pitch meetings, and cohort discussions on RealBell Business Foundation."
+        );
+    }, []);
+
+    useEffect(() => {
         fetchMeetings();
     }, [fetchMeetings]);
 

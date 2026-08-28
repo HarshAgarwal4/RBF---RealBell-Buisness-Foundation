@@ -81,7 +81,7 @@ export default function LiveSessionRoom() {
 
   const isHost = String(session.host?._id || session.host) === String(user?._id);
 
-  // Group Call Experience (Zoom-style)
+  // Group Call Experience
   if (session.sessionFormat === "Group Call") {
     return (
       <GroupVideoCallRoom

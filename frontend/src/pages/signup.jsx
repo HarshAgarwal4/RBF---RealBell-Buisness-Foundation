@@ -283,6 +283,19 @@ function TypeCard({ active, label, desc, icon: Icon, onClick }) {
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "Apply For Incubation & Register | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Register on RealBell Business Foundation (RBF). Apply as a Startup Founder, Angel Investor, Expert Mentor, or Incubator partner."
+    );
+  }, []);
   const { sendSignupOtp, user } = useStore();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState(null);

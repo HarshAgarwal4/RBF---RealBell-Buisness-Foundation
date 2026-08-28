@@ -144,6 +144,20 @@ export default function NewsPage() {
   const { user } = useStore();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
+  useEffect(() => {
+    document.title = "Ecosystem News & Updates | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Stay informed with the latest startup press releases, funding announcements, and ecosystem news on RealBell Business Foundation."
+    );
+  }, []);
+
   const [news, setNews] = useState([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");

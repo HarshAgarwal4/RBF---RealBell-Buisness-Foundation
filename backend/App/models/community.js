@@ -60,6 +60,37 @@ const CommunityReactionSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const CommunityAttachmentSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      default: "",
+    },
+    public_id: {
+      type: String,
+      default: "",
+    },
+    file_type: {
+      type: String,
+      enum: ["image", "video", "pdf", "document", "other"],
+      default: "other",
+    },
+    original_name: {
+      type: String,
+      default: "",
+    },
+    mime_type: {
+      type: String,
+      default: "",
+    },
+    size: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
+
 const CommunityPostSchema = new mongoose.Schema(
   {
     author: {
@@ -83,9 +114,13 @@ const CommunityPostSchema = new mongoose.Schema(
         default: "",
       },
     },
+    attachment: {
+      type: CommunityAttachmentSchema,
+      default: null,
+    },
     post_type: {
       type: String,
-      enum: ["text", "poll"],
+      enum: ["text", "poll", "media", "document"],
       default: "text",
     },
     poll: {

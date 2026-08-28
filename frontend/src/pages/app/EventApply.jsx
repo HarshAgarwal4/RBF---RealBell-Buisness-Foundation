@@ -30,6 +30,21 @@ export default function EventApply() {
   const [customResponses, setCustomResponses] = useState({});
 
   useEffect(() => {
+    const title = event?.title ? `Register: ${event.title}` : "Event Registration";
+    document.title = `${title} | RealBell Business Foundation`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      `Register for ${event?.title || "ecosystem workshops and demo days"} on RealBell Business Foundation.`
+    );
+  }, [event]);
+
+  useEffect(() => {
     fetchEvent();
   }, [id]);
 

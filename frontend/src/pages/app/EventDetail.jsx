@@ -222,6 +222,21 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const title = event?.title || "Ecosystem Event";
+    document.title = `${title} | RealBell Business Foundation`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      `${event?.short_description || "Register for angel demo days, pitch workshops, and ecosystem events on RealBell Business Foundation."}`.slice(0, 160)
+    );
+  }, [event]);
+
+  useEffect(() => {
     fetchEvent();
   }, [id]);
 

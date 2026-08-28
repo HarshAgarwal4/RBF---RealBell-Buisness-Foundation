@@ -54,6 +54,17 @@ export default function CodeOfConduct() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = "Community Code of Conduct | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Read the official Community Code of Conduct for RealBell Business Foundation (RBF). Our commitment to ethical standards and mutual respect."
+    );
     if (storeData) {
       setData(storeData);
     }

@@ -51,7 +51,7 @@ const uploadFile = createUploadMiddleware();
 
 async function uploadFileToCloud(fileBuffer, originalName, options = {}) {
   const {
-    folder = "RBF",
+    folder = "RBF/community_wall",
     resourceType = "auto",
     allowedFormats = null, // null allows all formats (PDF, DOC, DOCX, images) via auto detection
   } = options;

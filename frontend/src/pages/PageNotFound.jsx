@@ -6,6 +6,20 @@ import { Home, ArrowLeft, TriangleAlert } from "lucide-react";
 const PageNotFound = () => {
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = "404 Page Not Found | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "The requested page could not be found on RealBell Business Foundation. Return to the homepage or explore available startup programs."
+    );
+  }, []);
+
   return (
     <>
       <Sidebar />

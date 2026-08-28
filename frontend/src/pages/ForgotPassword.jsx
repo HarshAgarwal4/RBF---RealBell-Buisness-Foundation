@@ -130,6 +130,20 @@ export default function ForgotPassword() {
   const otpRefs = useRef([]);
 
   useEffect(() => {
+    document.title = "Reset Password | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Reset your RealBell Business Foundation account password securely via email verification code."
+    );
+  }, []);
+
+  useEffect(() => {
     if (user) navigate("/dashboard");
   }, [user, navigate]);
 

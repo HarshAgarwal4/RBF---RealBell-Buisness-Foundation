@@ -240,6 +240,18 @@ function AdminLayoutContent({ children, title = 'Admin Panel' }) {
         setMobileOpen(false);
     }, [location.pathname]);
 
+    // Dynamic SEO Document Title & Meta Description for all Admin Pages
+    useEffect(() => {
+        document.title = `${title} | RealBell Business Foundation Admin`;
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement('meta');
+            metaDesc.name = 'description';
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', `RealBell Business Foundation Admin Portal - ${title}. Manage ecosystem operations, users, applications, and incubation workflows.`);
+    }, [title]);
+
     // Restore admin sidebar scroll position across renders & page navigation
     useLayoutEffect(() => {
         const restore = () => {

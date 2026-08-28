@@ -222,6 +222,20 @@ export default function Programs() {
   const [showMyApps, setShowMyApps] = useState(false);
 
   useEffect(() => {
+    document.title = "Incubation & Acceleration Programs | RealBell Business Foundation";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute(
+      "content",
+      "Apply for DPIIT-recognized startup incubation programs, cohort acceleration, grants, and pitch competitions on RealBell Business Foundation."
+    );
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, []);
 

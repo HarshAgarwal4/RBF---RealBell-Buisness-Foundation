@@ -239,6 +239,21 @@ export default function ViewProfile() {
     const [connecting, setConnecting] = useState(false);
 
     useEffect(() => {
+        const name = profile?.name || profile?.company_name || "Ecosystem Member";
+        document.title = `${name} | RealBell Business Foundation`;
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.name = "description";
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            `View ${name}'s official profile, portfolio, and accreditation on RealBell Business Foundation.`
+        );
+    }, [profile]);
+
+    useEffect(() => {
         let ignore = false;
 
         async function fetchProfile() {

@@ -134,7 +134,7 @@ export default function Sidebar() {
         children: connectChildren,
       },
       { path: "/community", label: "Community Wall", icon: Users },
-      { path: "/live_sessions", label: "Live Sessions & Queue", icon: Radio },
+      { path: "/live_sessions", label: "Live Sessions & Meetings", icon: Radio },
       {
         key: "legal_compliance",
         label: "Legal Compliance",
@@ -151,7 +151,7 @@ export default function Sidebar() {
         icon: Scissors,
         children: [
           { path: "/connections", label: "My Connections" },
-          { path: "/live_sessions", label: "Live Consultations" },
+          { path: "/live_sessions", label: "Live Sessions & Meetings" },
           { path: "/meetings", label: "Scheduled Meetings" },
           { path: "/mentorship-hours", label: "Mentorship Hours" },
           { path: "/milestones", label: "Milestone Tracking" },
