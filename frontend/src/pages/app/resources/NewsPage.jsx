@@ -229,7 +229,7 @@ export default function NewsPage() {
           )}
         </div>
       </main>
-      {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setNews((prev) => [r, ...prev])} />}
+      {showModal && isAdmin && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setNews((prev) => [r, ...prev])} />}
     </div>
   );
 }

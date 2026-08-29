@@ -29,15 +29,31 @@ const resourceUpload = createUploadMiddleware({
   ],
 });
 
+/* ── Middleware: Strictly enforce that only Admin and Super Admin can perform CRUD ── */
+function isStrictAdminOrSuperAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ status: 0, msg: "Unauthorized: Please log in" });
+  }
+  if (req.user.accountStatus === "disabled") {
+    return res.status(403).json({ status: 0, msg: "Access Forbidden: Your account has been disabled" });
+  }
+  if (req.user.role === "admin" || req.user.role === "super_admin") {
+    return next();
+  }
+  return res.status(403).json({
+    status: 0,
+    msg: "Forbidden: Only Admin and Super Admin can perform CRUD operations on resources.",
+  });
+}
+
 /* ── Public (any logged-in user) ── */
 resourceRouter.get("/", getResources);
 resourceRouter.patch("/:id/download", incrementDownload);
 
-/* ── Admin only with RBAC ── */
+/* ── Admin & Super Admin only for CRUD ── */
 resourceRouter.post(
   "/",
-  isAdmin,
-  authorize("resources.create"),
+  isStrictAdminOrSuperAdmin,
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -47,8 +63,7 @@ resourceRouter.post(
 
 resourceRouter.put(
   "/:id",
-  isAdmin,
-  authorize("resources.update"),
+  isStrictAdminOrSuperAdmin,
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -56,6 +71,6 @@ resourceRouter.put(
   updateResource
 );
 
-resourceRouter.delete("/:id", isAdmin, authorize("resources.delete"), deleteResource);
+resourceRouter.delete("/:id", isStrictAdminOrSuperAdmin, deleteResource);
 
 export default resourceRouter;

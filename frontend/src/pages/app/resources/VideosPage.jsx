@@ -220,7 +220,7 @@ export default function VideosPage() {
           </div>
         )}
       </main>
-      {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setVideos((prev) => [r, ...prev])} />}
+      {showModal && isAdmin && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setVideos((prev) => [r, ...prev])} />}
     </div>
   );
 }

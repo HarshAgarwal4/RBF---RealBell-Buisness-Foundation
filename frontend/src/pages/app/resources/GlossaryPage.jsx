@@ -212,7 +212,7 @@ export default function GlossaryPage() {
       </main>
 
       {selectedTerm && <DefinitionModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />}
-      {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setTerms((prev) => [r, ...prev])} />}
+      {showModal && isAdmin && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setTerms((prev) => [r, ...prev])} />}
     </div>
   );
 }

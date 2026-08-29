@@ -162,6 +162,15 @@ export default function Sidebar() {
       { path: "/resources/news", label: "Industry News", icon: Newspaper },
       { path: "/resources/videos", label: "Knowledge Videos", icon: Video },
       { path: "/jobs", label: "Job Opportunities", icon: Briefcase },
+      {
+        key: "assessments",
+        label: "Assessments",
+        icon: GraduationCap,
+        children: [
+          { path: "/assessments", label: "Browse Tests", icon: GraduationCap },
+          { path: "/my-certificates", label: "My Certificates", icon: Award },
+        ],
+      },
       { path: "/subscription", label: "Membership Plans", icon: DollarSign },
       { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
       {

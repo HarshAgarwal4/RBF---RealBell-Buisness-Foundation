@@ -19,7 +19,7 @@ function isPublicRoute(req) {
   // Root endpoint
   if (path === "/" && method === "GET") return true;
 
-  // Unauthenticated authentication endpoints
+  // Unauthenticated authentication endpoints & public helpers
   if (
     method === "POST" &&
     (path === "/signup" ||
@@ -27,7 +27,8 @@ function isPublicRoute(req) {
       path === "/login" ||
       path === "/sendotp" ||
       path === "/forgot-password/send-otp" ||
-      path === "/forgot-password/reset")
+      path === "/forgot-password/reset" ||
+      path === "/certificates/proxy-image")
   ) {
     return true;
   }
@@ -44,7 +45,9 @@ function isPublicRoute(req) {
       path.startsWith("/resources/public") ||
       path.startsWith("/jobs/public") ||
       path.startsWith("/legal-compliance/services") ||
-      path.startsWith("/legal-compliances/services"))
+      path.startsWith("/legal-compliances/services") ||
+      path.startsWith("/certificates/verify") ||
+      path.startsWith("/tests/public"))
   ) {
     return true;
   }

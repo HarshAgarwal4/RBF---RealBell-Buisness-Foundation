@@ -231,7 +231,7 @@ export default function ContractsPage() {
         </div>
       </main>
 
-      {showModal && (
+      {showModal && isAdmin && (
         <AddModal
           tab={activeTab}
           onClose={() => setShowModal(false)}

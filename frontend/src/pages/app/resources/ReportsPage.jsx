@@ -222,7 +222,7 @@ export default function ReportsPage() {
           </div>
         )}
       </main>
-      {showModal && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setReports((prev) => [r, ...prev])} />}
+      {showModal && isAdmin && <AddModal onClose={() => setShowModal(false)} onAdded={(r) => setReports((prev) => [r, ...prev])} />}
     </div>
   );
 }

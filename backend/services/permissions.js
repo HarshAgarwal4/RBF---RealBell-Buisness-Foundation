@@ -227,6 +227,29 @@ export const PERMISSION_MODULES = [
       { key: "mail.delete", label: "Delete Mail Logs", description: "Delete mail history logs" },
     ],
   },
+  {
+    module: "assessments",
+    name: "Test & Assessments",
+    icon: "📝",
+    description: "Create, manage, and evaluate tests, assessments, question banks, and domains",
+    permissions: [
+      { key: "assessments.view", label: "View Assessments", description: "View tests, questions, domains, question banks, and attempt results" },
+      { key: "assessments.create", label: "Create Assessments", description: "Create tests, questions, domains, question banks, and collaborators" },
+      { key: "assessments.update", label: "Edit Assessments", description: "Edit tests, questions, domains, and manage publishing/archiving" },
+      { key: "assessments.delete", label: "Delete Assessments", description: "Delete or archive tests, questions, domains, and question banks" },
+      { key: "assessments.evaluate", label: "Evaluate Answers", description: "Manually evaluate text/descriptive answers and assign marks" },
+    ],
+  },
+  {
+    module: "certificates",
+    name: "Certificate Management",
+    icon: "🏅",
+    description: "Manage RBF certificates, templates, verification, and revocation",
+    permissions: [
+      { key: "certificates.view", label: "View Certificates", description: "View all issued certificates, search, and audit trails" },
+      { key: "certificates.manage", label: "Manage Certificates", description: "Revoke, restore certificates and manage certificate templates" },
+    ],
+  },
 ];
 
 /**
@@ -262,4 +285,6 @@ export const MODULE_VIEW_PERMISSIONS = {
   "/admin/audit-logs": "audit_logs.view",
   "/admin/notifications": "notifications.view",
   "/admin/mail": "mail.view",
+  "/admin/assessments": "assessments.view",
+  "/admin/certificates": "certificates.view",
 };

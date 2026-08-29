@@ -25,10 +25,14 @@ import liveSessionRouter from './App/routes/liveSession.js';
 import notificationRouter from './App/routes/notification.js';
 import pageContentRouter from './App/routes/pageContent.js';
 import approvalRouter from './App/routes/approval.js';
+import assessmentRouter from './App/routes/assessment.js';
+import testTakingRouter from './App/routes/testTaking.js';
+import certificateRouter from './App/routes/certificateVerification.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { seedDefaultTeams } from './App/controllers/teamController.js';
 import { seedDefaultPages } from './App/controllers/frontendCustomizerController.js';
+import { seedDefaultCertificateTemplates } from './App/controllers/certificateController.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 import LiveSessionModel from './App/models/liveSession.js';
@@ -69,6 +73,9 @@ app.use('/live_sessions', liveSessionRouter)
 app.use('/notifications', notificationRouter)
 app.use('/page-content', pageContentRouter)
 app.use('/approvals', approvalRouter)
+app.use('/assessments', assessmentRouter)
+app.use('/tests', testTakingRouter)
+app.use('/certificates', certificateRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {
@@ -105,6 +112,7 @@ mongoose.connect(process.env.DB_URL, {
     seedDefaultPlans();
     seedDefaultTeams();
     seedDefaultPages();
+    seedDefaultCertificateTemplates();
     LiveSessionModel.syncIndexes().catch((err) => {
         console.warn("LiveSessionModel syncIndexes warning:", err.message);
     });

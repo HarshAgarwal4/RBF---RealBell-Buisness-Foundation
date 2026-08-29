@@ -64,6 +64,24 @@ import PrivacyPolicy from '../pages/PrivacyPolicy.jsx';
 import TermsOfService from '../pages/TermsOfService.jsx';
 import CodeOfConduct from '../pages/CodeOfConduct.jsx';
 
+// Assessment & Certification - Admin
+import AdminAssessments from '../pages/admin/AdminAssessments.jsx';
+import AdminTestBuilder from '../pages/admin/AdminTestBuilder.jsx';
+import AdminQuestionBank from '../pages/admin/AdminQuestionBank.jsx';
+import AdminCollaborators from '../pages/admin/AdminCollaborators.jsx';
+import AdminTestAttempts from '../pages/admin/AdminTestAttempts.jsx';
+import AdminCertificates from '../pages/admin/AdminCertificates.jsx';
+import AdminCertificateTemplates from '../pages/admin/AdminCertificateTemplates.jsx';
+import AdminAssessmentAnalytics from '../pages/admin/AdminAssessmentAnalytics.jsx';
+
+// Assessment & Certification - User
+import Assessments from '../pages/app/Assessments.jsx';
+import AssessmentDetail from '../pages/app/AssessmentDetail.jsx';
+import TestTaking from '../pages/app/TestTaking.jsx';
+import TestResult from '../pages/app/TestResult.jsx';
+import MyCertificates from '../pages/app/MyCertificates.jsx';
+import CertificateVerification from '../pages/CertificateVerification.jsx';
+
 const Routes = createBrowserRouter([
     {
         path: '/',
@@ -480,6 +498,146 @@ const Routes = createBrowserRouter([
                 </PermissionRoute>
             </ProtectedRoute>
         )
+    },
+
+    /* ── Assessment & Certification - Admin ── */
+    {
+        path: '/admin/assessments',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.view" moduleName="Test & Assessments">
+                    <AdminAssessments />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/create',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.create" moduleName="Test & Assessments">
+                    <AdminTestBuilder />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/:id/edit',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.update" moduleName="Test & Assessments">
+                    <AdminTestBuilder />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/questions',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.view" moduleName="Test & Assessments">
+                    <AdminQuestionBank />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/collaborators',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.view" moduleName="Test & Assessments">
+                    <AdminCollaborators />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/:id/attempts',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.view" moduleName="Test & Assessments">
+                    <AdminTestAttempts />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/assessments/analytics',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="assessments.view" moduleName="Test & Assessments">
+                    <AdminAssessmentAnalytics />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/certificates',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="certificates.view" moduleName="Certificate Management">
+                    <AdminCertificates />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/certificates/templates',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="certificates.manage" moduleName="Certificate Management">
+                    <AdminCertificateTemplates />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+
+    /* ── Assessment & Certification - User ── */
+    {
+        path: '/assessments',
+        element: <ProtectedRoute><Assessments /></ProtectedRoute>
+    },
+    {
+        path: '/app/assessments',
+        element: <ProtectedRoute><Assessments /></ProtectedRoute>
+    },
+    {
+        path: '/assessments/:id',
+        element: <ProtectedRoute><AssessmentDetail /></ProtectedRoute>
+    },
+    {
+        path: '/app/assessments/:id',
+        element: <ProtectedRoute><AssessmentDetail /></ProtectedRoute>
+    },
+    {
+        path: '/assessments/:id/take',
+        element: <ProtectedRoute><TestTaking /></ProtectedRoute>
+    },
+    {
+        path: '/app/assessments/:id/take',
+        element: <ProtectedRoute><TestTaking /></ProtectedRoute>
+    },
+    {
+        path: '/assessments/attempts/:id/result',
+        element: <ProtectedRoute><TestResult /></ProtectedRoute>
+    },
+    {
+        path: '/app/assessments/attempts/:id/result',
+        element: <ProtectedRoute><TestResult /></ProtectedRoute>
+    },
+    {
+        path: '/my-certificates',
+        element: <ProtectedRoute><MyCertificates /></ProtectedRoute>
+    },
+    {
+        path: '/app/certificates',
+        element: <ProtectedRoute><MyCertificates /></ProtectedRoute>
+    },
+
+    /* ── Public Certificate Verification ── */
+    {
+        path: '/verify/certificate/:certificateId',
+        element: <CertificateVerification />
     },
 
     {
