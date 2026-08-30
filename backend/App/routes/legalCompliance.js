@@ -38,6 +38,8 @@ const complianceUpload = createUploadMiddleware({
   ],
 });
 
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
+
 /* ─────────────────────────────────────────────────────────────
    USER PUBLIC / DISCOVERY ROUTES
 ───────────────────────────────────────────────────────────── */
@@ -47,12 +49,13 @@ legalComplianceRouter.get("/services/detail/:id", getServiceById);
 /* ─────────────────────────────────────────────────────────────
    USER APPLICATION ROUTES
 ───────────────────────────────────────────────────────────── */
-legalComplianceRouter.post("/applications", complianceUpload.any(), createApplication);
-legalComplianceRouter.get("/applications/my", getMyApplications);
-legalComplianceRouter.get("/applications/my/:id", getMyApplicationById);
-legalComplianceRouter.get("/documents/my", getMyComplianceDocuments);
+legalComplianceRouter.post("/applications", requireSubscription("legal_compliance"), complianceUpload.any(), createApplication);
+legalComplianceRouter.get("/applications/my", requireSubscription("legal_compliance"), getMyApplications);
+legalComplianceRouter.get("/applications/my/:id", requireSubscription("legal_compliance"), getMyApplicationById);
+legalComplianceRouter.get("/documents/my", requireSubscription("legal_compliance"), getMyComplianceDocuments);
 legalComplianceRouter.post(
   "/applications/:id/upload-additional",
+  requireSubscription("legal_compliance"),
   complianceUpload.any(),
   uploadAdditionalDocuments
 );

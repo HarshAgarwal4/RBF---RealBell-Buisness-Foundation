@@ -20,9 +20,11 @@ import {
   Send,
   ArrowRight,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import { COLORS } from "./colors";
 import { useStore } from "../zustand/store";
+import { isModuleLocked } from "../config/subscriptionModules.js";
 
 const chipStyle = {
   background: COLORS.hoverBg,
@@ -274,8 +276,19 @@ export default function Dashboard() {
     fetchRecommendationsData();
   }, [tab]);
 
+  // Subscription permission checks
+  const canPostCommunity = !isModuleLocked(user, "community");
+  const canConnect = !isModuleLocked(user, "connect");
+  const canAccessNews = !isModuleLocked(user, "news");
+
   // Handle publishing a new community post directly from Dashboard
   const handlePostSubmit = async () => {
+    if (!canPostCommunity) {
+      toast.error("Publishing posts is restricted on your plan. Please upgrade your subscription.");
+      navigate("/subscription");
+      return;
+    }
+
     if (!postText.trim()) {
       toast.error("Please enter a message to post");
       return;
@@ -300,7 +313,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="ml-0 lg:ml-[300px] pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen transition-all"
+      className="flex-1 w-full min-w-0 ml-0 lg:ml-[300px] pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen transition-all"
       style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         background: COLORS.bg,
@@ -455,13 +468,23 @@ export default function Dashboard() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, display: "flex", alignItems: "center", gap: 6 }}>
                 <Sparkles size={16} color={COLORS.primary} /> Share with the Community
+                {!canPostCommunity && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", background: "rgba(245, 158, 11, 0.15)", padding: "1px 8px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    <Lock size={11} /> Read Only
+                  </span>
+                )}
               </span>
             </div>
 
             <textarea
               value={postText}
-              onChange={(e) => setPostText(e.target.value)}
-              placeholder="What's on your mind today? Announce updates, ask for help, or share insights..."
+              onChange={(e) => canPostCommunity && setPostText(e.target.value)}
+              disabled={!canPostCommunity}
+              placeholder={
+                canPostCommunity
+                  ? "What's on your mind today? Announce updates, ask for help, or share insights..."
+                  : "👀 View-only access: Publishing posts to the Community Wall requires an upgraded subscription plan."
+              }
               rows={3}
               style={{
                 width: "100%",
@@ -472,44 +495,76 @@ export default function Dashboard() {
                 resize: "none",
                 fontSize: 14,
                 color: COLORS.ink,
-                background: COLORS.inputBg,
+                background: canPostCommunity ? COLORS.inputBg : "rgba(255,255,255,0.03)",
                 fontFamily: "inherit",
+                opacity: canPostCommunity ? 1 : 0.75,
+                cursor: canPostCommunity ? "text" : "not-allowed",
               }}
             />
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
               <div style={{ fontSize: 12, color: COLORS.muted }}>
-                Posts are shared directly to the <span style={{ fontWeight: 700, color: COLORS.primary }}>Community Wall</span>.
+                {canPostCommunity ? (
+                  <>Posts are shared directly to the <span style={{ fontWeight: 700, color: COLORS.primary }}>Community Wall</span>.</>
+                ) : (
+                  <span style={{ color: "#f59e0b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Lock size={12} /> Upgraded subscription plan required to publish on the community wall.
+                  </span>
+                )}
               </div>
 
-              <button
-                onClick={handlePostSubmit}
-                disabled={posting}
-                style={{
-                  background: COLORS.primary,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "9px 24px",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  opacity: posting ? 0.6 : 1,
-                }}
-              >
-                {posting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                {posting ? "Publishing..." : "Publish Post"}
-              </button>
+              {canPostCommunity ? (
+                <button
+                  onClick={handlePostSubmit}
+                  disabled={posting}
+                  style={{
+                    background: COLORS.primary,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "9px 24px",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    opacity: posting ? 0.6 : 1,
+                  }}
+                >
+                  {posting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  {posting ? "Publishing..." : "Publish Post"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate("/subscription")}
+                  style={{
+                    background: "rgba(245, 158, 11, 0.15)",
+                    color: "#f59e0b",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    borderRadius: 8,
+                    padding: "8px 18px",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Lock size={13} /> Upgrade to Post
+                </button>
+              )}
             </div>
           </div>
 
           {/* Recommendations Tab */}
           <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Explore & Connect</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink, display: "flex", alignItems: "center", gap: 6 }}>
+                <span>Explore & Connect</span>
+                {!canConnect && <Lock size={14} style={{ color: "#f59e0b" }} title="Matchmaking & Connecting requires an upgraded plan" />}
+              </div>
               <div style={{ display: "flex", gap: 20 }}>
                 {["Investors", "Mentors", "Startups"].map((t) => (
                   <button
@@ -643,19 +698,23 @@ export default function Dashboard() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Latest Ecosystem News</div>
               <button
-                onClick={() => navigate("/resources/news")}
+                onClick={() => (canAccessNews ? navigate("/resources/news") : navigate("/subscription"))}
                 style={{
-                  background: COLORS.primary,
-                  color: "#fff",
-                  border: "none",
+                  background: canAccessNews ? COLORS.primary : "rgba(245, 158, 11, 0.15)",
+                  color: canAccessNews ? "#fff" : "#f59e0b",
+                  border: canAccessNews ? "none" : "1px solid rgba(245, 158, 11, 0.3)",
                   borderRadius: 8,
                   padding: "8px 14px",
                   fontWeight: 700,
                   fontSize: 12.5,
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                Browse All News →
+                {!canAccessNews && <Lock size={13} />}
+                {canAccessNews ? "Browse All News →" : "Upgrade for All News"}
               </button>
             </div>
 

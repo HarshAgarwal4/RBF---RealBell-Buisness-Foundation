@@ -18,7 +18,7 @@ try {
 }
 
 /**
- * Create a Razorpay Order
+ * Create a Razorpay Order with Upgrade Price Adjustment & Downgrade Prevention
  */
 export async function createOrder(req, res) {
   try {
@@ -26,20 +26,67 @@ export async function createOrder(req, res) {
     let plan = null;
 
     if (planId) {
-      plan = await PlanModel.findById(planId);
+      plan = await PlanModel.findOne({ _id: planId, is_deleted: { $ne: true } });
     } else if (planKey) {
-      plan = await PlanModel.findOne({ key: planKey });
+      plan = await PlanModel.findOne({ key: planKey.toLowerCase().trim(), is_deleted: { $ne: true } });
     }
 
     if (!plan) {
-      return res.status(404).json({ status: 0, msg: "Subscription plan not found" });
+      return res.status(404).json({ status: 0, msg: "Subscription plan not found or unavailable" });
     }
 
-    // Free plan handler
-    if (plan.price === 0) {
+    // Fetch user's current subscription
+    const userDoc = await OrganizationModel.findById(req.user._id).select("subscription name email");
+    const currentSub = userDoc?.subscription;
+    const isCurrentActive = currentSub?.status === "active";
+    const currentPlanKey = currentSub?.planKey || "free";
+
+    let currentPlanDoc = null;
+    if (currentPlanKey && currentPlanKey !== "free") {
+      currentPlanDoc = await PlanModel.findOne({ key: currentPlanKey, is_deleted: { $ne: true } });
+    }
+
+    const currentPrice = isCurrentActive && currentPlanDoc ? currentPlanDoc.price : 0;
+    const currentTierRank = isCurrentActive && currentPlanDoc ? currentPlanDoc.tier_rank || 1 : 1;
+    const targetTierRank = plan.tier_rank || 1;
+
+    // Disabled / Legacy plan purchase restriction:
+    // If the plan is disabled, new users cannot purchase it!
+    if (plan.status === "disabled" && (!isCurrentActive || currentPlanKey !== plan.key)) {
+      return res.status(400).json({
+        status: 0,
+        msg: `Plan "${plan.name}" is a legacy plan and is no longer available for new subscriptions.`,
+      });
+    }
+
+    // Downgrade Prevention:
+    // If user is currently on an active paid plan and attempts to pick a lower tier or cheaper plan:
+    if (isCurrentActive && currentPrice > 0) {
+      if (targetTierRank < currentTierRank || (plan.price < currentPrice && targetTierRank <= currentTierRank)) {
+        return res.status(400).json({
+          status: 0,
+          msg: `Downgrading is not permitted on active subscriptions. Your current plan is "${currentPlanDoc?.name || currentPlanKey}". You can only maintain or upgrade your subscription.`,
+        });
+      }
+    }
+
+    // Upgrade Price Difference Calculation:
+    // When upgrading to a higher tier plan, calculate price difference: new_price - current_price
+    let payableAmount = plan.price;
+    let isUpgrade = false;
+    let priceDifference = plan.price;
+
+    if (isCurrentActive && currentPrice > 0 && plan.key !== currentPlanKey) {
+      isUpgrade = true;
+      priceDifference = Math.max(0, plan.price - currentPrice);
+      payableAmount = priceDifference;
+    }
+
+    // If payable amount is 0 (Free plan or 0 price difference):
+    if (payableAmount === 0) {
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setFullYear(endDate.getFullYear() + 10); // 10 years for free
+      endDate.setDate(endDate.getDate() + (plan.interval === "yearly" ? 365 : plan.price === 0 ? 3650 : 30));
 
       await OrganizationModel.findByIdAndUpdate(req.user._id, {
         subscription: {
@@ -48,10 +95,13 @@ export async function createOrder(req, res) {
           status: "active",
           startDate,
           endDate,
-          razorpayPaymentId: "FREE_PLAN",
-          razorpayOrderId: "FREE_PLAN",
+          razorpayPaymentId: isUpgrade ? "UPGRADE_FREE" : "FREE_PLAN",
+          razorpayOrderId: isUpgrade ? "UPGRADE_FREE" : "FREE_PLAN",
         },
       });
+
+      // Increment plan purchase counter
+      await PlanModel.findByIdAndUpdate(plan._id, { $inc: { purchased_count: 1 } });
 
       await TransactionModel.create({
         user: req.user._id,
@@ -59,9 +109,9 @@ export async function createOrder(req, res) {
         planKey: plan.key,
         planName: plan.name,
         amount: 0,
-        currency: "INR",
-        razorpayOrderId: "FREE_PLAN",
-        razorpayPaymentId: "FREE_PLAN",
+        currency: plan.currency || "INR",
+        razorpayOrderId: isUpgrade ? "UPGRADE_FREE" : "FREE_PLAN",
+        razorpayPaymentId: isUpgrade ? "UPGRADE_FREE" : "FREE_PLAN",
         status: "paid",
         startDate,
         endDate,
@@ -70,11 +120,12 @@ export async function createOrder(req, res) {
       return res.json({
         status: 1,
         isFree: true,
-        msg: "Free plan activated successfully!",
+        isUpgrade,
+        msg: isUpgrade ? `Upgraded to ${plan.name} successfully!` : "Free plan activated successfully!",
       });
     }
 
-    const amountInPaise = Math.round(plan.price * 100);
+    const amountInPaise = Math.round(payableAmount * 100);
     const receiptId = `rcpt_${req.user._id.toString().slice(-6)}_${Date.now()}`;
 
     let razorpayOrder = null;
@@ -87,6 +138,9 @@ export async function createOrder(req, res) {
           notes: {
             userId: req.user._id.toString(),
             planKey: plan.key,
+            isUpgrade: isUpgrade ? "true" : "false",
+            previousPlanKey: currentPlanKey,
+            priceDifference: String(payableAmount),
           },
         });
       } catch (err) {
@@ -94,7 +148,7 @@ export async function createOrder(req, res) {
       }
     }
 
-    // Fallback order object if live API key is not configured or fails
+    // Fallback demo order if live API key is absent/test mode
     if (!razorpayOrder) {
       razorpayOrder = {
         id: `order_demo_${Date.now()}`,
@@ -110,7 +164,7 @@ export async function createOrder(req, res) {
       plan: plan._id,
       planKey: plan.key,
       planName: plan.name,
-      amount: plan.price,
+      amount: payableAmount,
       currency: plan.currency || "INR",
       razorpayOrderId: razorpayOrder.id,
       status: "created",
@@ -120,11 +174,17 @@ export async function createOrder(req, res) {
       status: 1,
       order: razorpayOrder,
       key_id: KEY_ID,
+      isUpgrade,
+      priceDifference: payableAmount,
+      originalPrice: plan.price,
+      previousPlanPrice: currentPrice,
       plan: {
         _id: plan._id,
         name: plan.name,
-        price: plan.price,
+        price: payableAmount,
+        originalPrice: plan.price,
         key: plan.key,
+        included_modules: plan.included_modules || [],
       },
     });
   } catch (err) {
@@ -142,9 +202,9 @@ export async function verifyPayment(req, res) {
 
     let plan = null;
     if (planId) {
-      plan = await PlanModel.findById(planId);
+      plan = await PlanModel.findOne({ _id: planId, is_deleted: { $ne: true } });
     } else if (planKey) {
-      plan = await PlanModel.findOne({ key: planKey });
+      plan = await PlanModel.findOne({ key: planKey, is_deleted: { $ne: true } });
     }
 
     if (!razorpay_order_id || !razorpay_payment_id) {
@@ -152,7 +212,7 @@ export async function verifyPayment(req, res) {
     }
 
     // Validate Signature if live secret is present
-    if (process.env.RAZORPAY_KEY_SECRET && razorpay_signature) {
+    if (process.env.RAZORPAY_KEY_SECRET && razorpay_signature && razorpay_signature !== "demo_signature") {
       const generatedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -191,7 +251,12 @@ export async function verifyPayment(req, res) {
       { new: true }
     ).select("-sessions");
 
-    // Update or create transaction record
+    // Increment purchased count on plan
+    if (plan) {
+      await PlanModel.findByIdAndUpdate(plan._id, { $inc: { purchased_count: 1 } });
+    }
+
+    // Update transaction record
     await TransactionModel.findOneAndUpdate(
       { razorpayOrderId: razorpay_order_id },
       {
@@ -211,7 +276,7 @@ export async function verifyPayment(req, res) {
 
     return res.json({
       status: 1,
-      msg: "Payment verified! Subscription activated.",
+      msg: "Payment verified! Subscription activated successfully.",
       subscription: updatedUser.subscription,
     });
   } catch (err) {
@@ -228,12 +293,21 @@ export async function getUserSubscription(req, res) {
     const user = await OrganizationModel.findById(req.user._id).select("subscription name email company_name");
     const transactions = await TransactionModel.find({ user: req.user._id }).sort({ createdAt: -1 });
 
+    const currentPlanKey = user?.subscription?.planKey || "free";
+    const planDoc = await PlanModel.findOne({ key: currentPlanKey, is_deleted: { $ne: true } }).lean();
+
+    const isLegacy = planDoc ? planDoc.status === "disabled" : false;
+
     return res.json({
       status: 1,
-      subscription: user?.subscription || {
-        planKey: "free",
-        planName: "Free Starter",
-        status: "active",
+      subscription: {
+        ...(user?.subscription || {
+          planKey: "free",
+          planName: "Starter Free",
+          status: "active",
+        }),
+        is_legacy: isLegacy,
+        planDetails: planDoc || null,
       },
       transactions,
     });
@@ -270,7 +344,7 @@ export async function getAdminTransactions(req, res) {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / parseInt(limit)),
+        pages: Math.ceil(total / parseInt(limit)) || 1,
       },
     });
   } catch (err) {
@@ -291,7 +365,7 @@ export async function getAdminPaymentStats(req, res) {
       ]),
       OrganizationModel.countDocuments({ "subscription.status": "active", "subscription.planKey": { $ne: "free" } }),
       TransactionModel.countDocuments({ status: "paid" }),
-      PlanModel.countDocuments(),
+      PlanModel.countDocuments({ is_deleted: { $ne: true } }),
     ]);
 
     const totalRevenue = paidAgg[0]?.totalRevenue || 0;
@@ -307,6 +381,186 @@ export async function getAdminPaymentStats(req, res) {
     });
   } catch (err) {
     console.error("getAdminPaymentStats error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+/**
+ * Razorpay Server-to-Server Webhook Handler
+ * Catches payment.captured & order.paid directly from Razorpay
+ * Ensures that if user's browser dropped/closed before /verify callback,
+ * the subscription is STILL activated automatically without failure!
+ */
+export async function handleRazorpayWebhook(req, res) {
+  try {
+    const signature = req.headers["x-razorpay-signature"];
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || KEY_SECRET;
+
+    // Verify webhook signature
+    if (signature && webhookSecret && webhookSecret !== "rzp_test_secret_RBF") {
+      const shasum = crypto.createHmac("sha256", webhookSecret);
+      shasum.update(JSON.stringify(req.body));
+      const digest = shasum.digest("hex");
+
+      if (digest !== signature) {
+        console.warn("Razorpay Webhook: Invalid signature received");
+        return res.status(400).json({ status: 0, msg: "Invalid webhook signature" });
+      }
+    }
+
+    const event = req.body.event;
+    const payload = req.body.payload;
+
+    if (event === "payment.captured" || event === "order.paid") {
+      const paymentEntity = payload.payment?.entity;
+      const orderEntity = payload.order?.entity;
+      const orderId = paymentEntity?.order_id || orderEntity?.id;
+      const paymentId = paymentEntity?.id;
+
+      if (orderId) {
+        const txn = await TransactionModel.findOne({ razorpayOrderId: orderId });
+        if (txn && txn.status !== "paid") {
+          const plan = await PlanModel.findOne({
+            $or: [{ _id: txn.plan }, { key: txn.planKey }],
+            is_deleted: { $ne: true },
+          });
+
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + (plan?.interval === "yearly" ? 365 : 30));
+
+          const pKey = plan?.key || txn.planKey || "pro_growth";
+          const pName = plan?.name || txn.planName || "Pro Growth";
+
+          // Activate user subscription asynchronously
+          await OrganizationModel.findByIdAndUpdate(txn.user, {
+            subscription: {
+              planKey: pKey,
+              planName: pName,
+              status: "active",
+              startDate,
+              endDate,
+              razorpayPaymentId: paymentId || txn.razorpayPaymentId,
+              razorpayOrderId: orderId,
+            },
+          });
+
+          // Mark transaction as paid
+          txn.status = "paid";
+          txn.razorpayPaymentId = paymentId || txn.razorpayPaymentId;
+          txn.razorpaySignature = signature || "webhook_verified";
+          txn.startDate = startDate;
+          txn.endDate = endDate;
+          await txn.save();
+
+          if (plan) {
+            await PlanModel.findByIdAndUpdate(plan._id, { $inc: { purchased_count: 1 } });
+          }
+
+          console.log(`[Razorpay Webhook] Successfully auto-activated subscription for user ${txn.user} on order ${orderId}`);
+        }
+      }
+    } else if (event === "payment.failed") {
+      const paymentEntity = payload.payment?.entity;
+      const orderId = paymentEntity?.order_id;
+      if (orderId) {
+        await TransactionModel.findOneAndUpdate(
+          { razorpayOrderId: orderId, status: { $ne: "paid" } },
+          { status: "failed", razorpayPaymentId: paymentEntity?.id }
+        );
+      }
+    }
+
+    return res.status(200).json({ status: 1, msg: "Webhook processed" });
+  } catch (err) {
+    console.error("Razorpay Webhook error:", err);
+    return res.status(500).json({ status: 0, msg: "Webhook handler error" });
+  }
+}
+
+/**
+ * Self-healing / Sync Payment Status
+ * Allows user to re-check and auto-recover any pending transaction from Razorpay API
+ */
+export async function syncPaymentStatus(req, res) {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ status: 0, msg: "Order ID is required" });
+    }
+
+    const txn = await TransactionModel.findOne({
+      razorpayOrderId: orderId,
+      user: req.user._id,
+    });
+
+    if (!txn) {
+      return res.status(404).json({ status: 0, msg: "Transaction not found" });
+    }
+
+    if (txn.status === "paid") {
+      return res.json({ status: 1, msg: "Payment is already verified and active.", txn });
+    }
+
+    // Attempt to query Razorpay API for live payment status
+    if (razorpayInstance && !orderId.startsWith("order_demo_")) {
+      try {
+        const orderPayments = await razorpayInstance.orders.fetchPayments(orderId);
+        const capturedPayment = orderPayments.items?.find((p) => p.status === "captured");
+
+        if (capturedPayment) {
+          const plan = await PlanModel.findOne({
+            $or: [{ _id: txn.plan }, { key: txn.planKey }],
+            is_deleted: { $ne: true },
+          });
+
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + (plan?.interval === "yearly" ? 365 : 30));
+
+          const pKey = plan?.key || txn.planKey || "pro_growth";
+          const pName = plan?.name || txn.planName || "Pro Growth";
+
+          // Activate subscription
+          await OrganizationModel.findByIdAndUpdate(req.user._id, {
+            subscription: {
+              planKey: pKey,
+              planName: pName,
+              status: "active",
+              startDate,
+              endDate,
+              razorpayPaymentId: capturedPayment.id,
+              razorpayOrderId: orderId,
+            },
+          });
+
+          txn.status = "paid";
+          txn.razorpayPaymentId = capturedPayment.id;
+          txn.startDate = startDate;
+          txn.endDate = endDate;
+          await txn.save();
+
+          if (plan) {
+            await PlanModel.findByIdAndUpdate(plan._id, { $inc: { purchased_count: 1 } });
+          }
+
+          return res.json({
+            status: 1,
+            msg: "Payment recovered and subscription activated successfully!",
+            subscription: { planKey: pKey, planName: pName, status: "active", startDate, endDate },
+          });
+        }
+      } catch (rzpErr) {
+        console.error("Razorpay sync query error:", rzpErr.message);
+      }
+    }
+
+    return res.json({
+      status: 0,
+      msg: "No completed bank payment found for this order. If money was deducted, it will be refunded by your bank within 3-5 working days.",
+    });
+  } catch (err) {
+    console.error("syncPaymentStatus error:", err);
     return res.status(500).json({ status: 0, msg: "Internal server error" });
   }
 }

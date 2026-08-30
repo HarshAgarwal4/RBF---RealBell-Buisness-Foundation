@@ -1,5 +1,6 @@
 import express from "express";
 import { authorize } from "../../middlewares/rbac.js";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getBoosterItems,
@@ -24,8 +25,8 @@ const boosterUpload = createUploadMiddleware({
 boosterRouter.get("/items", getBoosterItems);
 boosterRouter.get("/public", getBoosterItems);
 boosterRouter.get("/items/:id", getBoosterItemById);
-boosterRouter.post("/items/:id/apply", applyBoosterPerk);
-boosterRouter.get("/my-applications", getMyBoosterApplications);
+boosterRouter.post("/items/:id/apply", requireSubscription("booster"), applyBoosterPerk);
+boosterRouter.get("/my-applications", requireSubscription("booster"), getMyBoosterApplications);
 
 /* ── Admin CRUD & Review Routes Protected by RBAC ── */
 boosterRouter.get("/admin/all", authorize("booster.view"), getAdminBoosterItems);

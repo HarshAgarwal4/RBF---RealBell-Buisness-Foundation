@@ -5,6 +5,7 @@ import {
   getAllPlansAdmin,
   createPlan,
   updatePlan,
+  togglePlanStatus,
   deletePlan,
 } from "../controllers/planController.js";
 
@@ -17,6 +18,7 @@ planRouter.get("/", getActivePlans);
 planRouter.get("/admin", isAdmin, authorize("subscriptions.view"), getAllPlansAdmin);
 planRouter.post("/admin", isAdmin, authorize("subscriptions.create"), createPlan);
 planRouter.put("/admin/:id", isAdmin, authorize("subscriptions.update"), updatePlan);
+planRouter.patch("/admin/:id/status", isAdmin, authorize("subscriptions.update"), togglePlanStatus);
 planRouter.delete("/admin/:id", isAdmin, authorize("subscriptions.delete"), deletePlan);
 
 export default planRouter;

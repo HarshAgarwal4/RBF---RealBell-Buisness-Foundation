@@ -6,6 +6,7 @@ import { uploadFileToCloud, deleteImageByUrl } from "../../services/upload.js";
 import { isUserOnline } from "../../services/chat.js";
 import { hashPassword, verifyPassword } from "../../services/encryption.js";
 import ApprovalSubmissionModel from "../models/approvalSubmission.js";
+import PlanModel from "../models/plan.js";
 import { sendMail } from "../../services/mail.js";
 import { getEffectiveLoginMethod } from "./authSettingController.js";
 
@@ -469,6 +470,34 @@ async function fetchUser(req, res) {
         userObj.permissions = permissions;
         if (userObj.role === "super_admin" || userObj.role === "admin") {
             userObj.approvalStatus = "Approved";
+        }
+
+        // Attach populated subscription plan modules & tier rank & handle expiration
+        const hasExpired = Boolean(
+            userObj.subscription?.endDate &&
+            new Date(userObj.subscription.endDate) < new Date()
+        );
+
+        if (hasExpired && userObj.subscription?.status === "active") {
+            userObj.subscription.status = "expired";
+            userObj.subscription.is_expired = true;
+            OrganizationModel.updateOne(
+                { _id: userObj._id },
+                { $set: { "subscription.status": "expired" } }
+            ).catch((err) => console.error("Error setting expired subscription:", err));
+        }
+
+        const isEffectiveActive = userObj.subscription?.status === "active" && !hasExpired;
+        const subPlanKey = isEffectiveActive ? (userObj.subscription?.planKey || "free") : "free";
+        const activePlanDoc = await PlanModel.findOne({ key: subPlanKey, is_deleted: { $ne: true } }).lean();
+        if (activePlanDoc) {
+            userObj.subscription = {
+                ...(userObj.subscription || {}),
+                included_modules: isEffectiveActive ? (activePlanDoc.included_modules || []) : [],
+                tier_rank: isEffectiveActive ? (activePlanDoc.tier_rank || 1) : 1,
+                is_legacy: activePlanDoc.status === "disabled",
+                is_expired: hasExpired,
+            };
         }
 
         return res.send({ status: 1, user: userObj });

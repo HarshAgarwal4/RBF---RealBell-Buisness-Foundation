@@ -1,4 +1,5 @@
 import express from "express";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import {
   getLiveSessions,
   getLiveSessionById,
@@ -15,12 +16,12 @@ const liveSessionRouter = express.Router();
 
 liveSessionRouter.get("/", getLiveSessions);
 liveSessionRouter.get("/:id", getLiveSessionById);
-liveSessionRouter.post("/", createLiveSession);
-liveSessionRouter.delete("/:id", deleteLiveSession);
-liveSessionRouter.post("/:id/join-queue", joinQueue);
-liveSessionRouter.post("/:id/leave-queue", leaveQueue);
-liveSessionRouter.post("/:id/admit", admitParticipant);
-liveSessionRouter.post("/:id/end-consultation", endConsultation);
-liveSessionRouter.post("/:id/pause-queue", togglePauseQueue);
+liveSessionRouter.post("/", requireSubscription("live_sessions"), createLiveSession);
+liveSessionRouter.delete("/:id", requireSubscription("live_sessions"), deleteLiveSession);
+liveSessionRouter.post("/:id/join-queue", requireSubscription("live_sessions"), joinQueue);
+liveSessionRouter.post("/:id/leave-queue", requireSubscription("live_sessions"), leaveQueue);
+liveSessionRouter.post("/:id/admit", requireSubscription("live_sessions"), admitParticipant);
+liveSessionRouter.post("/:id/end-consultation", requireSubscription("live_sessions"), endConsultation);
+liveSessionRouter.post("/:id/pause-queue", requireSubscription("live_sessions"), togglePauseQueue);
 
 export default liveSessionRouter;

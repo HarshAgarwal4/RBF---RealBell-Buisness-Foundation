@@ -1,4 +1,5 @@
 import express from "express";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import {
   getSchedulableConnections,
   createMeeting,
@@ -10,11 +11,11 @@ import {
 
 const meetingRouter = express.Router();
 
-meetingRouter.get("/connections", getSchedulableConnections); // dropdown data (accepted connections only)
-meetingRouter.post("/", createMeeting); // schedule a new meeting
-meetingRouter.get("/", getMyMeetings); // all of my meetings
-meetingRouter.get("/requests", getMeetingRequests); // pending requests I received
-meetingRouter.patch("/:id/respond", respondToMeeting); // accept / decline
-meetingRouter.delete("/:id", cancelMeeting); // cancel (organizer only)
+meetingRouter.get("/connections", requireSubscription("meetings"), getSchedulableConnections);
+meetingRouter.post("/", requireSubscription("meetings"), createMeeting);
+meetingRouter.get("/", requireSubscription("meetings"), getMyMeetings);
+meetingRouter.get("/requests", requireSubscription("meetings"), getMeetingRequests);
+meetingRouter.patch("/:id/respond", requireSubscription("meetings"), respondToMeeting);
+meetingRouter.delete("/:id", requireSubscription("meetings"), cancelMeeting);
 
 export default meetingRouter;

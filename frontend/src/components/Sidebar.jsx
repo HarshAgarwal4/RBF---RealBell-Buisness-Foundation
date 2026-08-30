@@ -46,8 +46,10 @@ import {
   Radio,
   Bell,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { useWebNotifications } from "../hooks/useWebNotifications";
+import { isModuleLocked } from "../config/subscriptionModules.js";
 
 const ICON_MAP = {
   Landmark,
@@ -73,9 +75,9 @@ const ICON_MAP = {
 };
 
 const DEFAULT_CONNECT_CHILDREN = [
-  { path: "/connect/startups", label: "Startups", icon: Rocket },
-  { path: "/connect/investors", label: "Investors", icon: Landmark },
-  { path: "/connect/mentors", label: "Mentors", icon: Handshake },
+  { path: "/connect/startups", label: "Startups", icon: Rocket, moduleKey: "connect" },
+  { path: "/connect/investors", label: "Investors", icon: Landmark, moduleKey: "connect" },
+  { path: "/connect/mentors", label: "Mentors", icon: Handshake, moduleKey: "connect" },
 ];
 
 const pillBtnStyle = {
@@ -116,6 +118,7 @@ export default function Sidebar() {
       return roles.map((r) => ({
         path: `/connect/${r.key || r.label.toLowerCase()}`,
         label: r.label,
+        moduleKey: "connect",
         icon:
           ICON_MAP[r.icon] ||
           (r.key === "investor"
@@ -138,18 +141,20 @@ export default function Sidebar() {
         key: "connect",
         label: "Connect",
         icon: Search,
-        children: connectChildren,
+        moduleKey: "connect",
+        children: connectChildren.map((c) => ({ ...c, moduleKey: "connect" })),
       },
-      { path: "/community", label: "Community Wall", icon: Users },
-      { path: "/live_sessions", label: "Live Sessions & Meetings", icon: Radio },
+      { path: "/community", label: "Community Wall", icon: Users, moduleKey: "community" },
+      { path: "/live_sessions", label: "Live Sessions & Meetings", icon: Radio, moduleKey: "live_sessions" },
       {
         key: "legal_compliance",
         label: "Legal Compliance",
         icon: Scale,
+        moduleKey: "legal_compliance",
         children: [
-          { path: "/legal-compliances", label: "Available Services", icon: Scale },
-          { path: "/legal-compliances/my-applications", label: "My Applications", icon: Layers },
-          { path: "/legal-compliances/documents", label: "Legal Documents", icon: FolderLock },
+          { path: "/legal-compliances", label: "Available Services", icon: Scale, moduleKey: "legal_compliance" },
+          { path: "/legal-compliances/my-applications", label: "My Applications", icon: Layers, moduleKey: "legal_compliance" },
+          { path: "/legal-compliances/documents", label: "Legal Documents", icon: FolderLock, moduleKey: "legal_compliance" },
         ],
       },
       {
@@ -157,39 +162,41 @@ export default function Sidebar() {
         label: "My Workspace",
         icon: Scissors,
         children: [
-          { path: "/connections", label: "My Connections" },
-          { path: "/live_sessions", label: "Live Sessions & Meetings" },
-          { path: "/meetings", label: "Scheduled Meetings" },
-          { path: "/milestones", label: "Milestone Tracking" },
+          { path: "/connections", label: "My Connections", moduleKey: "connections" },
+          { path: "/live_sessions", label: "Live Sessions & Meetings", moduleKey: "live_sessions" },
+          { path: "/meetings", label: "Scheduled Meetings", moduleKey: "meetings" },
+          { path: "/milestones", label: "Milestone Tracking", moduleKey: "milestones" },
         ],
       },
-      { path: "/programs", label: "Programs", icon: HandCoins },
-      { path: "/events", label: "Events & Workshops", icon: Megaphone },
-      { path: "/resources/news", label: "Industry News", icon: Newspaper },
-      { path: "/resources/videos", label: "Knowledge Videos", icon: Video },
-      { path: "/jobs", label: "Job Opportunities", icon: Briefcase },
+      { path: "/programs", label: "Programs", icon: HandCoins, moduleKey: "programs" },
+      { path: "/events", label: "Events & Workshops", icon: Megaphone, moduleKey: "events" },
+      { path: "/resources/news", label: "Industry News", icon: Newspaper, moduleKey: "news" },
+      { path: "/resources/videos", label: "Knowledge Videos", icon: Video, moduleKey: "videos" },
+      { path: "/jobs", label: "Job Opportunities", icon: Briefcase, moduleKey: "jobs" },
       {
         key: "assessments",
         label: "Assessments",
         icon: GraduationCap,
+        moduleKey: "assessments",
         children: [
-          { path: "/assessments", label: "Browse Tests", icon: GraduationCap },
-          { path: "/my-certificates", label: "My Certificates", icon: Award },
+          { path: "/assessments", label: "Browse Tests", icon: GraduationCap, moduleKey: "assessments" },
+          { path: "/my-certificates", label: "My Certificates", icon: Award, moduleKey: "certificates" },
         ],
       },
       { path: "/subscription", label: "Membership Plans", icon: DollarSign },
-      { path: "/booster", label: "Business Booster Kit", icon: Zap },
+      { path: "/booster", label: "Business Booster Kit", icon: Zap, moduleKey: "booster" },
       {
         key: "resources",
         label: "Resource Library",
         icon: BookOpen,
+        moduleKey: "resources",
         children: [
-          { path: "/resources/contracts", label: "Legal & Contract Templates", icon: FileArchive },
-          { path: "/resources/glossary",  label: "Startup Glossary",            icon: BookMarked },
-          { path: "/resources/reports",   label: "Research & Market Reports",   icon: BarChart2  },
+          { path: "/resources/contracts", label: "Legal & Contract Templates", icon: FileArchive, moduleKey: "resources" },
+          { path: "/resources/glossary",  label: "Startup Glossary",            icon: BookMarked, moduleKey: "resources" },
+          { path: "/resources/reports",   label: "Research & Market Reports",   icon: BarChart2, moduleKey: "resources"  },
         ],
       },
-      { path: "/tickets", label: "Support Tickets", icon: Ticket },
+      { path: "/tickets", label: "Support Tickets", icon: Ticket, moduleKey: "tickets" },
       { path: "/account", label: "Account Settings", icon: UserCircle2 },
     ];
   }, [connectChildren, unreadCount]);
@@ -355,68 +362,68 @@ export default function Sidebar() {
                       textAlign: "left",
                       borderLeft: `2px solid ${childActive ? COLORS.primary : COLORS.border}`,
                     }}
-                  >
-                    {ChildIcon && (
-                      <ChildIcon size={14} color={childActive ? "#fff" : COLORS.muted} style={{ flexShrink: 0 }} />
-                    ) }
-                    <span style={{ flex: 1 }}>{child.label}</span>
-                  </button>
-                );
-              })}
+                    >
+                      {ChildIcon && (
+                        <ChildIcon size={14} color={childActive ? "#fff" : COLORS.muted} style={{ flexShrink: 0 }} />
+                      ) }
+                      <span style={{ flex: 1 }}>{child.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    // Plain (non-expandable) item
-    const active =
-      location.pathname === item.path ||
-      (item.path === "/live_sessions" && location.pathname === "/live-sessions");
-    return (
-      <button
-        type="button"
-        key={item.path}
-        onClick={() => handleNavigate(item.path)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 12px",
-          marginBottom: 2,
-          borderRadius: 10,
-          border: "none",
-          cursor: "pointer",
-          background: active ? COLORS.primary : "transparent",
-          color: active ? "#fff" : COLORS.ink,
-          fontWeight: active ? 700 : 500,
-          fontSize: 14.5,
-          textAlign: "left",
-          transition: "background 0.15s",
-        }}
-      >
-        <Icon size={17} color={active ? "#fff" : COLORS.primary} style={{ opacity: active ? 1 : 0.85, flexShrink: 0 }} />
-        <span style={{ flex: 1 }}>{item.label}</span>
-        {item.badge !== undefined && item.badge > 0 && (
-          <span
-            style={{
-              fontSize: 10.5,
-              fontWeight: 800,
-              background: active ? "#fff" : COLORS.primary,
-              color: active ? COLORS.primary : "#fff",
-              padding: "1px 7px",
-              borderRadius: 99,
-              lineHeight: "16px",
-              flexShrink: 0,
-            }}
-          >
-            {item.badge}
-          </span>
-        )}
-      </button>
-    );
-  };
+      // Plain (non-expandable) item
+      const active =
+        location.pathname === item.path ||
+        (item.path === "/live_sessions" && location.pathname === "/live-sessions");
+      return (
+        <button
+          type="button"
+          key={item.path}
+          onClick={() => handleNavigate(item.path)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "12px 12px",
+            marginBottom: 2,
+            borderRadius: 10,
+            border: "none",
+            cursor: "pointer",
+            background: active ? COLORS.primary : "transparent",
+            color: active ? "#fff" : COLORS.ink,
+            fontWeight: active ? 700 : 500,
+            fontSize: 14.5,
+            textAlign: "left",
+            transition: "background 0.15s",
+          }}
+        >
+          <Icon size={17} color={active ? "#fff" : COLORS.primary} style={{ opacity: active ? 1 : 0.85, flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{item.label}</span>
+          {item.badge !== undefined && item.badge > 0 && (
+            <span
+              style={{
+                fontSize: 10.5,
+                fontWeight: 800,
+                background: active ? "#fff" : COLORS.primary,
+                color: active ? COLORS.primary : "#fff",
+                padding: "1px 7px",
+                borderRadius: 99,
+                lineHeight: "16px",
+                flexShrink: 0,
+              }}
+            >
+              {item.badge}
+            </span>
+          )}
+        </button>
+      );
+    };
 
   return (
     <>
@@ -713,8 +720,51 @@ export default function Sidebar() {
         {navItems.map((item) => renderNavItem(item))}
       </nav>
 
-      {/* Logout */}
-      <div style={{ padding: 16 }}>
+      {/* Logout & Pro Upgrade Card */}
+      <div style={{ padding: "12px 16px 16px" }}>
+        {(!user?.role || user.role === "user") &&
+          (user?.subscription?.planKey === "free" ||
+            !user?.subscription?.status ||
+            user?.subscription?.status !== "active") && (
+            <div
+              onClick={() => navigate("/subscription")}
+              style={{
+                borderRadius: 14,
+                background: "linear-gradient(135deg, rgba(139, 29, 44, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%)",
+                border: "1px solid rgba(139, 29, 44, 0.2)",
+                padding: "12px 14px",
+                marginBottom: 12,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(139, 29, 44, 0.45)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(139, 29, 44, 0.2)")}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.primary }}>
+                  <Sparkles size={14} color="#f59e0b" />
+                  <span>Ecosystem Pro</span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    padding: "2px 7px",
+                    borderRadius: 99,
+                    background: "rgba(139, 29, 44, 0.15)",
+                    color: COLORS.primary,
+                    letterSpacing: 0.4,
+                  }}
+                >
+                  UPGRADE
+                </span>
+              </div>
+              <p style={{ fontSize: 11, color: COLORS.muted, margin: 0, lineHeight: 1.35 }}>
+                Unlock Booster Kit, Meetings, Live Sessions & Full Matchmaking.
+              </p>
+            </div>
+          )}
+
         <button
           onClick={handleLogout}
           style={{

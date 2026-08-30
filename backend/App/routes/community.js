@@ -1,5 +1,6 @@
 import express from "express";
 import { uploadFile } from "../../services/upload.js";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import {
   addCommunityComment,
   createCommunityPost,
@@ -35,11 +36,14 @@ const handleCommunityUpload = (req, res, next) => {
   });
 };
 
+/* View posts (public/member reading) */
 communityRoutes.get("/", fetchCommunityPosts);
-communityRoutes.post("/", handleCommunityUpload, createCommunityPost);
-communityRoutes.delete("/:id", deleteCommunityPost);
-communityRoutes.post("/:id/comments", addCommunityComment);
-communityRoutes.post("/:id/reactions", toggleCommunityReaction);
-communityRoutes.post("/:id/vote", voteCommunityPoll);
+
+/* Interactive actions (strictly protected by backend subscription guard) */
+communityRoutes.post("/", requireSubscription("community"), handleCommunityUpload, createCommunityPost);
+communityRoutes.delete("/:id", requireSubscription("community"), deleteCommunityPost);
+communityRoutes.post("/:id/comments", requireSubscription("community"), addCommunityComment);
+communityRoutes.post("/:id/reactions", requireSubscription("community"), toggleCommunityReaction);
+communityRoutes.post("/:id/vote", requireSubscription("community"), voteCommunityPoll);
 
 export { communityRoutes };

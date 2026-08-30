@@ -1,5 +1,6 @@
 import express from "express";
 import { isAdmin, authorize } from "../../middlewares/admin.js";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getAllProgramsPublic,
@@ -27,8 +28,8 @@ const programUpload = createUploadMiddleware({
 /* ── Public / User Routes ── */
 programsRouter.get("/public", getAllProgramsPublic);
 programsRouter.get("/public/:id", getProgramByIdPublic);
-programsRouter.post("/apply/:id", applyToProgram);
-programsRouter.get("/my-applications", getMyApplications);
+programsRouter.post("/apply/:id", requireSubscription("programs"), applyToProgram);
+programsRouter.get("/my-applications", requireSubscription("programs"), getMyApplications);
 
 /* ── Admin Routes ── */
 programsRouter.get("/admin", isAdmin, authorize("programs.view"), getAllProgramsAdmin);

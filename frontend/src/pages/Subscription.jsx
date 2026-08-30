@@ -14,8 +14,17 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  ArrowUpRight,
+  Lock,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Receipt,
+  Crown,
+  Building2,
+  Check,
+  TrendingUp,
 } from "lucide-react";
-import { COLORS } from "../components/colors";
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -32,8 +41,9 @@ function loadRazorpayScript() {
 
 export default function Subscription() {
   const { user, setUser } = useStore();
+
   useEffect(() => {
-    document.title = "Subscription Plans & Pricing | RealBell Business Foundation";
+    document.title = "Subscription Plans & Invoices | RealBell Business Foundation";
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement("meta");
@@ -42,95 +52,130 @@ export default function Subscription() {
     }
     metaDesc.setAttribute(
       "content",
-      "Upgrade your startup or ecosystem profile with premium tier incubation access, investor matchmaking, and legal compliance packages."
+      "Upgrade your startup or ecosystem profile with premium tier incubation access, partner cloud credits, and legal compliance packages."
     );
   }, []);
+
+  const [activeTab, setActiveTab] = useState("plans"); // 'plans' | 'billing'
+  const [expandedPlans, setExpandedPlans] = useState({}); // { [planId]: boolean }
   const [plans, setPlans] = useState([]);
+  const [legacyPlan, setLegacyPlan] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [payingKey, setPayingKey] = useState("");
+  const [syncingOrderId, setSyncingOrderId] = useState("");
+
+  const handleSyncPayment = async (orderId) => {
+    if (!orderId || syncingOrderId) return;
+    setSyncingOrderId(orderId);
+    try {
+      const res = await axios.post("/payment/sync-status", { orderId });
+      if (res.data.status === 1) {
+        toast.success(res.data.msg || "Payment verified & subscription activated!");
+        await fetchData();
+      } else {
+        toast.info(res.data.msg || "No completed payment found for this order.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error checking payment status.");
+    } finally {
+      setSyncingOrderId("");
+    }
+  };
+
+  const togglePlanExpansion = (planId) => {
+    setExpandedPlans((prev) => ({
+      ...prev,
+      [planId]: !prev[planId],
+    }));
+  };
+
+  const fetchData = async () => {
+    try {
+      const [plansRes, subRes] = await Promise.all([
+        axios.get("/plans"),
+        axios.get("/payment/my-subscription"),
+      ]);
+
+      if (plansRes.data.status === 1) {
+        setPlans(plansRes.data.plans || []);
+        if (plansRes.data.userLegacyPlan) {
+          setLegacyPlan(plansRes.data.userLegacyPlan);
+        }
+      }
+
+      if (subRes.data.status === 1) {
+        setSubscription(subRes.data.subscription);
+        setTransactions(subRes.data.transactions || []);
+      }
+    } catch (err) {
+      console.error("Error loading subscription data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [plansRes, subRes] = await Promise.all([
-          axios.get("/plans"),
-          axios.get("/payment/my-subscription"),
-        ]);
-
-        if (plansRes.data.status === 1) {
-          setPlans(plansRes.data.plans || []);
-        }
-
-        if (subRes.data.status === 1) {
-          setSubscription(subRes.data.subscription);
-          setTransactions(subRes.data.transactions || []);
-        }
-      } catch (err) {
-        console.error("Error loading subscription data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchData();
   }, []);
+
+  // Compute user current plan details
+  const currentPlanKey = subscription?.planKey || "free";
+  const currentPlanDoc =
+    legacyPlan?.key === currentPlanKey
+      ? legacyPlan
+      : plans.find((p) => p.key === currentPlanKey) || subscription?.planDetails;
+
+  const currentPrice = currentPlanDoc?.price || 0;
+  const currentTierRank = currentPlanDoc?.tier_rank || 1;
+  const isCurrentActive = subscription?.status === "active";
+
+  const totalSpent = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
 
   const handleSubscribe = async (plan) => {
     if (payingKey) return;
     setPayingKey(plan.key);
 
     try {
-      // 1. Create order on backend
-      const orderRes = await axios.post("/payment/create-order", { planId: plan._id, planKey: plan.key });
+      // 1. Create order on backend (handles upgrade price difference)
+      const orderRes = await axios.post("/payment/create-order", {
+        planId: plan._id,
+        planKey: plan.key,
+      });
 
       if (orderRes.data.status !== 1) {
-        toast.error(orderRes.data.msg || "Failed to initiate payment");
+        toast.error(orderRes.data.msg || "Failed to initiate subscription");
         setPayingKey("");
         return;
       }
 
-      // Free plan instant activation
+      // Free plan / zero price difference activation
       if (orderRes.data.isFree) {
-        toast.success("Starter Free plan activated!");
-        const refreshSub = await axios.get("/payment/my-subscription");
-        if (refreshSub.data.status === 1) {
-          setSubscription(refreshSub.data.subscription);
-          setTransactions(refreshSub.data.transactions || []);
-        }
+        toast.success(orderRes.data.msg || "Plan activated successfully!");
+        await fetchData();
         setPayingKey("");
         return;
       }
 
-      const { order, key_id } = orderRes.data;
-
-      // 2. Load Razorpay script
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        toast.error("Razorpay SDK failed to load. Please check your internet connection.");
+      // 2. Load Razorpay checkout
+      const razorpayLoaded = await loadRazorpayScript();
+      if (!razorpayLoaded) {
+        toast.error("Razorpay SDK failed to load. Please check your network.");
         setPayingKey("");
         return;
       }
 
-      // 3. Open Razorpay Checkout Modal
       const options = {
-        key: key_id,
-        amount: order.amount,
-        currency: order.currency || "INR",
+        key: orderRes.data.key_id,
+        amount: orderRes.data.order.amount,
+        currency: orderRes.data.order.currency || "INR",
         name: "RealBell Business Foundation",
-        description: `Upgrade to ${plan.name} Subscription`,
-        order_id: order.id,
-        prefill: {
-          name: user?.name || "",
-          email: user?.email || "",
-          contact: user?.phone || "",
-        },
-        theme: {
-          color: plan.accentColor || COLORS.primary,
-        },
-        // Suppress Razorpay's own built-in success screen so we control messaging
-        "modal.backdropclose": false,
+        description: orderRes.data.isUpgrade
+          ? `Upgrade to ${plan.name} (Price Difference Adjustment)`
+          : `${plan.name} Subscription Plan`,
+        order_id: orderRes.data.order.id,
         handler: async function (response) {
           try {
             const verifyRes = await axios.post("/payment/verify", {
@@ -142,25 +187,28 @@ export default function Subscription() {
             });
 
             if (verifyRes.data.status === 1) {
-              toast.success("🎉 Subscription activated successfully!");
-              setSubscription(verifyRes.data.subscription);
-              const subRefresh = await axios.get("/payment/my-subscription");
-              if (subRefresh.data.status === 1) {
-                setTransactions(subRefresh.data.transactions || []);
-              }
+              toast.success("Subscription activated successfully!");
+              await fetchData();
             } else {
-              toast.error(verifyRes.data.msg || "Payment verification failed");
+              toast.error(verifyRes.data.msg || "Payment verification failed.");
             }
-          } catch (e) {
-            console.error(e);
-            toast.error("Error verifying payment");
+          } catch (vErr) {
+            toast.error("Payment verification error.");
+            console.error(vErr);
           } finally {
             setPayingKey("");
           }
         },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+          contact: user?.phone || "",
+        },
+        theme: {
+          color: plan.accentColor || "#8B1D2C",
+        },
         modal: {
           ondismiss: function () {
-            toast.info("Payment cancelled");
             setPayingKey("");
           },
         },
@@ -169,290 +217,441 @@ export default function Subscription() {
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
     } catch (err) {
-      console.error("Subscription payment error:", err);
-      toast.error(err?.response?.data?.msg || "Unable to initiate payment");
+      console.error("Subscription purchase error:", err);
+      toast.error(err.response?.data?.msg || "Error processing payment request");
       setPayingKey("");
     }
   };
 
-  const calculateDaysLeft = (endDateStr) => {
-    if (!endDateStr) return null;
-    const end = new Date(endDateStr);
-    const now = new Date();
-    const diffTime = end - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-  };
-
-  const currentPlanKey = subscription?.planKey || "free";
-  const [mobileTab, setMobileTab] = useState("plans");
-  const daysLeft = calculateDaysLeft(subscription?.endDate);
-
   return (
-    <div style={{ display: "flex" }}>
+    <>
       <Sidebar />
+      <div className="ml-0 lg:ml-75 pt-20 lg:pt-8 min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] p-4 sm:p-8 font-sans antialiased text-gray-800 dark:text-slate-200">
+        <div className="max-w-[1200px] mx-auto space-y-6">
 
-      <div
-        className="ml-0 lg:ml-[300px] flex-1 pt-20 lg:pt-6 px-3 sm:px-6 lg:px-8 pb-10 min-h-screen max-w-full overflow-hidden"
-        style={{
-          background: COLORS.bg,
-          fontFamily: "'Inter', system-ui, sans-serif",
-        }}
-      >
-        {/* Page Header */}
-        <div className="mb-4 sm:mb-6">
-          <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#8E1B2E]">
-            Billing & Membership
-          </div>
-          <h1 className="text-xl sm:text-3xl font-extrabold mt-0.5 text-[#152033]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-            Subscription Plans
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-2xl">
-            Upgrade your membership to unlock unlimited connections, direct messaging, and priority ecosystem access.
-          </p>
-        </div>
+          {/* Header Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C2340] via-[#151D2E] to-[#0D141B] border border-slate-800 p-6 sm:p-8 text-white shadow-xl">
+            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#8B1D2C]/25 blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl pointer-events-none" />
 
-        {/* Mobile View Switcher Tabs */}
-        <div className="flex sm:hidden items-center p-1 bg-gray-200/80 rounded-xl mb-4">
-          <button
-            type="button"
-            onClick={() => setMobileTab("plans")}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-              mobileTab === "plans" ? "bg-white text-[#152033] shadow-xs" : "text-gray-600"
-            }`}
-          >
-            Membership Plans
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("history")}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-              mobileTab === "history" ? "bg-white text-[#152033] shadow-xs" : "text-gray-600"
-            }`}
-          >
-            Billing History ({transactions.length})
-          </button>
-        </div>
-
-        {loading ? (
-          <div style={{ padding: "60px 0", textAlign: "center", color: COLORS.muted }}>
-            <Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 12px" }} />
-            <div>Loading subscription plans...</div>
-          </div>
-        ) : (
-          <>
-            {/* Active Subscription Banner */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div
-                  className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl flex items-center justify-center text-white shrink-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
-                  }}
-                >
-                  <CreditCard size={22} className="sm:w-6 sm:h-6" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/30 text-amber-300 mb-2.5">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>RealBell Ecosystem Membership</span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base sm:text-lg font-extrabold text-gray-900">
-                      {subscription?.planName || "Free Starter"}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        subscription?.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {subscription?.status || "active"}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {subscription?.startDate ? (
-                      <>
-                        Active since {new Date(subscription.startDate).toLocaleDateString("en-IN")} · Expires on{" "}
-                        <strong className="text-gray-800">{new Date(subscription.endDate).toLocaleDateString("en-IN")}</strong>
-                      </>
-                    ) : (
-                      "Default Free Tier Membership"
-                    )}
-                  </div>
-                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1.5">
+                  Subscription & Billing Hub
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Manage your ecosystem membership tier, upgrade benefits, and review invoice history.
+                </p>
               </div>
 
-              {daysLeft !== null && (
-                <div className="bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-2.5 self-start sm:self-auto">
-                  <Clock size={16} color={COLORS.primary} className="shrink-0" />
-                  <div>
-                    <div className="text-xs sm:text-sm font-extrabold text-gray-900">{daysLeft} Days</div>
-                    <div className="text-[10px] text-gray-500 font-medium">Remaining in cycle</div>
+              {/* Active Plan Pill */}
+              <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-4 self-start md:self-auto shrink-0 flex items-center gap-3.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#8B1D2C]/20 border border-[#8B1D2C]/40 text-[#f87171]">
+                  <Crown className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Tier</div>
+                  <div className="text-base font-extrabold text-white flex items-center gap-2 mt-0.5">
+                    <span>{subscription?.is_expired ? "Starter Free" : (subscription?.planName || "Starter Free")}</span>
+                    {subscription?.is_legacy && (
+                      <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        Legacy
+                      </span>
+                    )}
+                    {subscription?.is_expired && (
+                      <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        Expired
+                      </span>
+                    )}
+                  </div>
+                  {subscription?.endDate && (
+                    <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400 inline" />
+                      <span>
+                        {subscription.is_expired ? "Expired on " : "Valid until "}
+                        {new Date(subscription.endDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              TOP SECTION NAVIGATION TABS
+             ═══════════════════════════════════════════════════════════════════════ */}
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-800 pb-2">
+            <button
+              onClick={() => setActiveTab("plans")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                activeTab === "plans"
+                  ? "bg-[#8B1D2C] text-white shadow-md shadow-[#8B1D2C]/20"
+                  : "bg-white dark:bg-[#151D2E] text-gray-600 dark:text-slate-400 border border-gray-200/80 dark:border-slate-800/80 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Membership Plans</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("billing")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                activeTab === "billing"
+                  ? "bg-[#8B1D2C] text-white shadow-md shadow-[#8B1D2C]/20"
+                  : "bg-white dark:bg-[#151D2E] text-gray-600 dark:text-slate-400 border border-gray-200/80 dark:border-slate-800/80 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Receipt className="w-4 h-4" />
+              <span>Payment & Invoice History</span>
+              {transactions.length > 0 && (
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                  activeTab === "billing" ? "bg-white/20 text-white" : "bg-[#8B1D2C]/10 text-[#8B1D2C] dark:text-rose-400"
+                }`}>
+                  {transactions.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              TAB 1: MEMBERSHIP PLANS VIEW
+             ═══════════════════════════════════════════════════════════════════════ */}
+          {activeTab === "plans" && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Legacy Plan Notice */}
+              {subscription?.is_legacy && legacyPlan && (
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 sm:p-5 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-bold">
+                        You are subscribed to the {legacyPlan.name} (Legacy Subscription)
+                      </h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-0.5">
+                        This plan is no longer offered to new users, but your account retains full access to all its included services. You may keep this subscription or upgrade to an active tier below anytime.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Plans Grid (Shown when mobileTab === 'plans' or on tablet/desktop) */}
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 max-w-full ${mobileTab === "plans" ? "block" : "hidden sm:grid"}`}>
-              {plans.map((plan) => {
-                const isCurrent = currentPlanKey === plan.key;
-                const isPaying = payingKey === plan.key;
-
-                return (
-                  <div
-                    key={plan._id}
-                    className="bg-white rounded-2xl flex flex-col relative transition-all overflow-hidden"
-                    style={{
-                      border: isCurrent ? `2px solid ${plan.accentColor || COLORS.primary}` : `1px solid ${COLORS.border}`,
-                      boxShadow: isCurrent ? "0 8px 24px rgba(99,102,241,0.12)" : "0 2px 10px rgba(0,0,0,0.03)",
-                    }}
-                  >
-                    {plan.badge && (
-                      <div
-                        className="absolute top-3 right-3 text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider text-white"
-                        style={{
-                          background: plan.accentColor || COLORS.primary,
-                        }}
-                      >
-                        {plan.badge}
-                      </div>
-                    )}
-
-                    <div className="p-4 sm:p-5 border-b border-gray-100">
-                      <div className="text-base sm:text-xl font-extrabold text-gray-900">{plan.name}</div>
-                      <div className="text-xs text-gray-500 mt-1 min-h-[32px] leading-relaxed">
-                        {plan.description}
-                      </div>
-
-                      <div className="mt-2.5 flex items-baseline gap-1">
-                        <span className="text-xl sm:text-3xl font-extrabold text-gray-900">
-                          ₹{plan.price.toLocaleString("en-IN")}
-                        </span>
-                        <span className="text-xs text-gray-500 font-semibold">
-                          /{plan.interval === "yearly" ? "year" : plan.interval === "one_time" ? "lifetime" : "month"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col">
-                      <div className="text-[10px] sm:text-[11px] font-bold text-gray-800 uppercase tracking-wider mb-2.5">
-                        Plan Features
-                      </div>
-
-                      <div className="flex flex-col gap-2 flex-1 mb-4">
-                        {plan.features?.map((feat, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-700">
-                            <CheckCircle2 size={14} color={plan.accentColor || COLORS.primary} className="shrink-0 mt-0.5" />
-                            <span>{feat}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={() => handleSubscribe(plan)}
-                        disabled={isCurrent || isPaying}
-                        className="w-full h-10 sm:h-11 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-                        style={{
-                          background: isCurrent ? "#F1F5F9" : plan.accentColor || COLORS.primary,
-                          color: isCurrent ? COLORS.muted : "#fff",
-                        }}
-                      >
-                        {isPaying ? (
-                          <>
-                            <Loader2 size={15} className="animate-spin" /> Initiating...
-                          </>
-                        ) : isCurrent ? (
-                          "Current Active Plan"
-                        ) : (
-                          <>
-                            <Zap size={15} /> Subscribe Now
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Billing History Section (Shown when mobileTab === 'history' or on tablet/desktop) */}
-            <div className={`bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-5 max-w-full overflow-hidden ${mobileTab === "history" ? "block" : "hidden sm:block"}`}>
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <FileText size={18} color={COLORS.primary} />
-                <h3 className="text-sm sm:text-lg font-extrabold text-gray-900">Billing & Invoices History</h3>
-              </div>
-
-              {transactions.length === 0 ? (
-                <div className="py-6 text-center text-gray-500 text-xs sm:text-sm">
-                  No payment transactions found.
+              {loading ? (
+                <div className="bg-white dark:bg-[#151D2E] rounded-3xl p-16 text-center border border-gray-100 dark:border-slate-800 shadow-xs">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#8B1D2C] mx-auto mb-3" />
+                  <p className="text-sm font-medium text-gray-500 dark:text-slate-400">
+                    Loading subscription plans & access tiers...
+                  </p>
                 </div>
               ) : (
-                <>
-                  {/* Mobile Cards View for Transactions */}
-                  <div className="block sm:hidden space-y-2.5">
-                    {transactions.map((tx) => (
-                      <div key={tx._id} className="p-3 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-gray-900">{tx.planName}</span>
-                          <span
-                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                              tx.status === "paid" ? "bg-green-100 text-green-800" : tx.status === "failed" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"
-                            }`}
-                          >
-                            {tx.status}
-                          </span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+                  {plans.map((plan) => {
+                    const isCurrent = plan.key === currentPlanKey;
+                    const isFree = plan.price === 0;
+                    const planTier = plan.tier_rank || 1;
+
+                    // Upgrade / Downgrade Logic
+                    const isHigherTier = planTier > currentTierRank || plan.price > currentPrice;
+                    const isLowerTier = planTier < currentTierRank || (plan.price < currentPrice && planTier <= currentTierRank);
+
+                    // Calculate Upgrade Price Difference
+                    const priceDelta = isHigherTier ? Math.max(0, plan.price - currentPrice) : plan.price;
+
+                    const includedMods = plan.included_modules || [];
+                    const customFeats = plan.custom_features || [];
+                    const allFeatures = [
+                      ...includedMods.map((m) => m.access_line),
+                      ...customFeats,
+                    ];
+
+                    const isExpanded = Boolean(expandedPlans[plan._id]);
+                    const previewCount = 3;
+                    const displayedFeatures = isExpanded ? allFeatures : allFeatures.slice(0, previewCount);
+                    const remainingCount = Math.max(0, allFeatures.length - previewCount);
+
+                    return (
+                      <div
+                        key={plan._id}
+                        className={`relative flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 ${
+                          isCurrent
+                            ? "bg-white dark:bg-[#151D2E] border-2 border-[#8B1D2C] shadow-lg shadow-[#8B1D2C]/10"
+                            : "bg-white dark:bg-[#151D2E] border border-gray-200/80 dark:border-slate-800/80 hover:shadow-md shadow-xs"
+                        }`}
+                      >
+                        <div>
+                          {/* Top Badge & Current Tag */}
+                          <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <span
+                              className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+                              style={{
+                                backgroundColor: `${plan.accentColor || "#8B1D2C"}18`,
+                                color: plan.accentColor || "#8B1D2C",
+                                border: `1px solid ${plan.accentColor || "#8B1D2C"}30`,
+                              }}
+                            >
+                              {plan.badge || (isFree ? "Starter" : "Pro Tier")}
+                            </span>
+
+                            {isCurrent && (
+                              <span className="flex items-center gap-1 text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Current Plan</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-1">
+                            {plan.name}
+                          </h3>
+
+                          <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mb-4 line-clamp-2 min-h-[32px]">
+                            {plan.description}
+                          </p>
+
+                          {/* Compact Price Display */}
+                          <div className="flex items-baseline gap-1.5 pb-4 border-b border-gray-100 dark:border-slate-800 mb-4">
+                            <span className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">
+                              {isFree ? "₹0" : `₹${plan.price?.toLocaleString("en-IN")}`}
+                            </span>
+                            {!isFree && (
+                              <span className="text-xs font-semibold text-gray-400 dark:text-slate-500">
+                                / {plan.interval}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Compact Features Checklist */}
+                          <div className="space-y-2 mb-4">
+                            <div className="text-[10.5px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider">
+                              Included Features ({allFeatures.length})
+                            </div>
+
+                            {displayedFeatures.map((featText, idx) => (
+                              <div key={idx} className="flex items-start gap-2 text-xs text-gray-700 dark:text-slate-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                <span className="leading-snug text-[11.5px]">{featText}</span>
+                              </div>
+                            ))}
+
+                            {allFeatures.length === 0 && (
+                              <div className="text-xs text-gray-400 italic">
+                                Standard ecosystem access included.
+                              </div>
+                            )}
+
+                            {/* Expand / Collapse Button */}
+                            {allFeatures.length > previewCount && (
+                              <button
+                                type="button"
+                                onClick={() => togglePlanExpansion(plan._id)}
+                                className="w-full flex items-center justify-center gap-1.5 py-1.5 mt-2 rounded-lg text-xs font-bold text-[#8B1D2C] dark:text-rose-400 hover:bg-[#8B1D2C]/5 transition cursor-pointer"
+                              >
+                                <span>{isExpanded ? "Show Less" : `View All ${allFeatures.length} Features (+${remainingCount})`}</span>
+                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-gray-600">
-                          <span>{new Date(tx.createdAt).toLocaleDateString("en-IN")}</span>
-                          <span className="font-extrabold text-gray-900">₹{tx.amount?.toLocaleString("en-IN")}</span>
-                        </div>
-                        <div className="text-[10px] text-gray-400 font-mono truncate">
-                          ID: {tx.razorpayPaymentId || tx.razorpayOrderId}
+
+                        {/* Card Button Actions with Upgrade Price Delta */}
+                        <div className="pt-3.5 border-t border-gray-100 dark:border-slate-800 mt-2">
+                          {isCurrent ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 py-2.5 text-xs font-bold cursor-default"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Active Plan</span>
+                            </button>
+                          ) : isLowerTier && isCurrentActive && currentPrice > 0 ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 py-2.5 text-xs font-bold cursor-not-allowed"
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Downgrade Unavailable</span>
+                            </button>
+                          ) : isHigherTier && isCurrentActive && currentPrice > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSubscribe(plan)}
+                              disabled={payingKey === plan.key}
+                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#8B1D2C] hover:bg-[#721724] text-white py-2.5 text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                              {payingKey === plan.key ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <ArrowUpRight className="w-4 h-4" />
+                                  <span>
+                                    Upgrade • Pay ₹{priceDelta.toLocaleString("en-IN")} Difference
+                                  </span>
+                                </>
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSubscribe(plan)}
+                              disabled={payingKey === plan.key}
+                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#8B1D2C] hover:bg-[#721724] text-white py-2.5 text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                              {payingKey === plan.key ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Sparkles className="w-4 h-4 text-amber-300" />
+                                  <span>{isFree ? "Select Free Plan" : `Subscribe for ₹${plan.price?.toLocaleString("en-IN")}`}</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-                  {/* Desktop / Tablet Table View for Transactions */}
-                  <div className="hidden sm:block overflow-x-auto max-w-full">
-                    <table className="w-full border-collapse text-left text-xs sm:text-sm min-w-[500px]">
+          {/* ═══════════════════════════════════════════════════════════════════════
+              TAB 2: DEDICATED BILLING & PAYMENT HISTORY SECTION
+             ═══════════════════════════════════════════════════════════════════════ */}
+          {activeTab === "billing" && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Billing Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-5 rounded-2xl bg-white dark:bg-[#151D2E] border border-gray-200/80 dark:border-slate-800/80 shadow-xs">
+                  <div className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Active Membership
+                  </div>
+                  <div className="text-xl font-extrabold text-gray-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>{subscription?.planName || "Starter Free"}</span>
+                  </div>
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                    Status: {subscription?.status || "Active"}
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white dark:bg-[#151D2E] border border-gray-200/80 dark:border-slate-800/80 shadow-xs">
+                  <div className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Total Transactions
+                  </div>
+                  <div className="text-xl font-extrabold text-gray-900 dark:text-slate-100">
+                    {transactions.length} Purchases
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                    Lifetime recorded payments
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white dark:bg-[#151D2E] border border-gray-200/80 dark:border-slate-800/80 shadow-xs">
+                  <div className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Total Amount Invested
+                  </div>
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                    ₹{totalSpent.toLocaleString("en-IN")}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                    Inclusive of GST & upgrades
+                  </div>
+                </div>
+              </div>
+
+              {/* Transactions Table */}
+              <div className="rounded-3xl bg-white dark:bg-[#151D2E] border border-gray-200/80 dark:border-slate-800/80 p-6 sm:p-8 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">
+                      Payment & Invoice Records
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      Downloadable receipts and verified payment confirmation records.
+                    </p>
+                  </div>
+                </div>
+
+                {transactions.length === 0 ? (
+                  <div className="p-12 text-center text-xs text-gray-400 dark:text-slate-500">
+                    <Receipt className="w-10 h-10 mx-auto text-gray-300 dark:text-slate-600 mb-2" />
+                    <div>No payment records found yet.</div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="border-b border-gray-200 text-gray-500 text-[11px] uppercase tracking-wider">
-                          <th className="py-2.5 px-3">Date</th>
-                          <th className="py-2.5 px-3">Plan</th>
-                          <th className="py-2.5 px-3">Amount</th>
-                          <th className="py-2.5 px-3">Payment ID</th>
-                          <th className="py-2.5 px-3">Status</th>
+                        <tr className="border-b border-gray-100 dark:border-slate-800 text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">
+                          <th className="pb-3 pr-4">Plan / Service</th>
+                          <th className="pb-3 px-4">Amount Paid</th>
+                          <th className="pb-3 px-4">Razorpay Order ID</th>
+                          <th className="pb-3 px-4">Status</th>
+                          <th className="pb-3 pl-4">Payment Date</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                         {transactions.map((tx) => (
-                          <tr key={tx._id} className="border-b border-gray-100">
-                            <td className="py-3 px-3 font-semibold text-gray-800">
-                              {new Date(tx.createdAt).toLocaleDateString("en-IN")}
+                          <tr key={tx._id} className="text-gray-700 dark:text-slate-300">
+                            <td className="py-3.5 pr-4 font-bold flex items-center gap-2">
+                              <Crown className="w-3.5 h-3.5 text-amber-500" />
+                              <span>{tx.planName || tx.planKey}</span>
                             </td>
-                            <td className="py-3 px-3 font-bold text-gray-900">{tx.planName}</td>
-                            <td className="py-3 px-3 font-extrabold text-gray-900">₹{tx.amount?.toLocaleString("en-IN")}</td>
-                            <td className="py-3 px-3 fontFamily-mono text-[11px] text-gray-500">
-                              {tx.razorpayPaymentId || tx.razorpayOrderId}
+                            <td className="py-3.5 px-4 font-extrabold text-emerald-600 dark:text-emerald-400">
+                              ₹{tx.amount?.toLocaleString("en-IN")}
                             </td>
-                            <td className="py-3 px-3">
-                              <span
-                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
-                                  tx.status === "paid" ? "bg-green-100 text-green-800" : tx.status === "failed" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"
-                                }`}
-                              >
-                                {tx.status}
-                              </span>
+                            <td className="py-3.5 px-4 font-mono text-[11px] text-gray-500">{tx.razorpayOrderId || "—"}</td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                  tx.status === "paid"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : tx.status === "failed"
+                                    ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
+                                    : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
+                                }`}>
+                                  {tx.status}
+                                </span>
+                                {tx.status !== "paid" && (
+                                  <button
+                                    onClick={() => handleSyncPayment(tx.razorpayOrderId)}
+                                    disabled={syncingOrderId === tx.razorpayOrderId}
+                                    className="text-[10px] font-bold text-[#8B1D2C] dark:text-rose-400 underline hover:no-underline cursor-pointer"
+                                    title="Check with Razorpay if bank payment succeeded"
+                                  >
+                                    {syncingOrderId === tx.razorpayOrderId ? "Checking..." : "Re-check"}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 pl-4 text-gray-400">
+                              {new Date(tx.createdAt).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </>
-              )}
+                )}
+              </div>
             </div>
-          </>
-        )}
+          )}
+
+        </div>
       </div>
-    </div>
+    </>
   );
 }

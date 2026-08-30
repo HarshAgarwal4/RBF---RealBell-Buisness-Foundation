@@ -3,6 +3,7 @@ import Home from '../pages/Home.jsx';
 import SignUp from '../pages/signup.jsx';
 import LoginPage from '../pages/login.jsx';
 import { ProtectedRoute, IsAdminRoute, PermissionRoute } from './Auth.jsx';
+import SubscriptionGuard from '../components/SubscriptionGuard.jsx';
 import Main from '../pages/Main.jsx';
 import { AccountPage } from '../pages/Account.jsx';
 import PageNotFound from '../pages/PageNotFound.jsx';
@@ -152,51 +153,51 @@ const Routes = createBrowserRouter([
     },
     {
         path: '/jobs',
-        element: <ProtectedRoute> <Job /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="jobs" moduleName="Job Opportunities"><Job /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/connect/:type',
-        element: <ProtectedRoute> <Connect /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="connect" moduleName="Connect with Others"><Connect /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/connect/:type/:id',
-        element: <ProtectedRoute> <ViewProfile /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="connect" moduleName="Connect with Others"><ViewProfile /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/connections',
-        element: <ProtectedRoute> <ConnectionsPage /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="connections" moduleName="My Connections"><ConnectionsPage /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/community',
-        element: <ProtectedRoute> <CommunityWall /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="community" moduleName="Community Wall"><CommunityWall /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/live_sessions',
-        element: <ProtectedRoute> <LiveSessions /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="live_sessions" moduleName="Live Sessions & Rooms"><LiveSessions /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/live_sessions/:id',
-        element: <ProtectedRoute> <LiveSessionRoom /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="live_sessions" moduleName="Live Sessions & Rooms"><LiveSessionRoom /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/live-sessions',
-        element: <ProtectedRoute> <LiveSessions /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="live_sessions" moduleName="Live Sessions & Rooms"><LiveSessions /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/live-sessions/:id',
-        element: <ProtectedRoute> <LiveSessionRoom /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="live_sessions" moduleName="Live Sessions & Rooms"><LiveSessionRoom /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path : '/meetings',
-        element: <ProtectedRoute> <Meetings /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="meetings" moduleName="Scheduled Meetings"><Meetings /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/milestones',
-        element: <ProtectedRoute> <Milestones /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="milestones" moduleName="Milestone Tracking"><Milestones /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/tickets',
-        element: <ProtectedRoute> <Tickets /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="tickets" moduleName="Support Helpdesk"><Tickets /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/notifications',
@@ -208,15 +209,15 @@ const Routes = createBrowserRouter([
     },
     {
         path: '/booster',
-        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="booster" moduleName="Business Booster Kit"><BusinessBooster /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/booster',
-        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="booster" moduleName="Business Booster Kit"><BusinessBooster /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/business-booster',
-        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="booster" moduleName="Business Booster Kit"><BusinessBooster /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/unauthorized',
@@ -408,37 +409,37 @@ const Routes = createBrowserRouter([
     /* ── Resource Pages ── */
     {
         path: '/resources/contracts',
-        element: <ProtectedRoute><ContractsPage /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="resources" moduleName="Resource Library"><ContractsPage /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/resources/glossary',
-        element: <ProtectedRoute><GlossaryPage /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="resources" moduleName="Resource Library"><GlossaryPage /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/resources/reports',
-        element: <ProtectedRoute><ReportsPage /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="resources" moduleName="Resource Library"><ReportsPage /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/resources/news',
-        element: <ProtectedRoute><NewsPage /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="news" moduleName="Industry News"><NewsPage /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/resources/videos',
-        element: <ProtectedRoute><VideosPage /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="videos" moduleName="Knowledge Videos"><VideosPage /></SubscriptionGuard></ProtectedRoute>
     },
 
     /* ── Programs ── */
     {
         path: '/programs',
-        element: <ProtectedRoute><Programs /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="programs" moduleName="Incubation Programs"><Programs /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/programs/:id',
-        element: <ProtectedRoute><ProgramDetail /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="programs" moduleName="Incubation Programs"><ProgramDetail /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/programs/:id/apply',
-        element: <ProtectedRoute><ProgramApply /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="programs" moduleName="Incubation Programs"><ProgramApply /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/admin/programs',
@@ -484,15 +485,15 @@ const Routes = createBrowserRouter([
     /* ── Events ── */
     {
         path: '/events',
-        element: <ProtectedRoute><Events /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="events" moduleName="Events & Workshops"><Events /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/events/:id',
-        element: <ProtectedRoute><EventDetail /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="events" moduleName="Events & Workshops"><EventDetail /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/events/:id/apply',
-        element: <ProtectedRoute><EventApply /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="events" moduleName="Events & Workshops"><EventApply /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/admin/events',
@@ -518,19 +519,19 @@ const Routes = createBrowserRouter([
     /* ── Legal Compliances ── */
     {
         path: '/legal-compliances',
-        element: <ProtectedRoute><LegalServices /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="legal_compliance" moduleName="Legal Compliance"><LegalServices /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/legal-compliances/services/:id/apply',
-        element: <ProtectedRoute><LegalServiceApply /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="legal_compliance" moduleName="Legal Compliance"><LegalServiceApply /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/legal-compliances/my-applications',
-        element: <ProtectedRoute><MyLegalApplications /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="legal_compliance" moduleName="Legal Compliance"><MyLegalApplications /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/legal-compliances/documents',
-        element: <ProtectedRoute><LegalComplianceDocuments /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="legal_compliance" moduleName="Legal Compliance"><LegalComplianceDocuments /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/admin/legal-compliance',
@@ -638,43 +639,43 @@ const Routes = createBrowserRouter([
     /* ── Assessment & Certification - User ── */
     {
         path: '/assessments',
-        element: <ProtectedRoute><Assessments /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><Assessments /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/assessments',
-        element: <ProtectedRoute><Assessments /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><Assessments /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/assessments/:id',
-        element: <ProtectedRoute><AssessmentDetail /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><AssessmentDetail /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/assessments/:id',
-        element: <ProtectedRoute><AssessmentDetail /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><AssessmentDetail /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/assessments/:id/take',
-        element: <ProtectedRoute><TestTaking /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><TestTaking /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/assessments/:id/take',
-        element: <ProtectedRoute><TestTaking /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><TestTaking /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/assessments/attempts/:id/result',
-        element: <ProtectedRoute><TestResult /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><TestResult /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/assessments/attempts/:id/result',
-        element: <ProtectedRoute><TestResult /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="assessments" moduleName="Tests & Assessments"><TestResult /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/my-certificates',
-        element: <ProtectedRoute><MyCertificates /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="certificates" moduleName="My Certificates"><MyCertificates /></SubscriptionGuard></ProtectedRoute>
     },
     {
         path: '/app/certificates',
-        element: <ProtectedRoute><MyCertificates /></ProtectedRoute>
+        element: <ProtectedRoute><SubscriptionGuard moduleKey="certificates" moduleName="My Certificates"><MyCertificates /></SubscriptionGuard></ProtectedRoute>
     },
 
     /* ── Public Certificate Verification ── */

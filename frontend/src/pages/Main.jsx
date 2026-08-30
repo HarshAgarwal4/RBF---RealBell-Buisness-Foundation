@@ -4,7 +4,7 @@ import Dashboard from "../components/Dashboard";
 
 export default function Main() {
   return (
-    <div style={{ display: "flex" }}>
+    <div className="flex w-full min-h-screen">
       <Sidebar />
       <Dashboard />
     </div>

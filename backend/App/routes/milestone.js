@@ -1,4 +1,5 @@
 import express from "express";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import {
   getReviewerOptions,
   createMilestone,
@@ -10,12 +11,11 @@ import {
 
 const milestoneRouter = express.Router();
 
-
-milestoneRouter.get("/reviewers", getReviewerOptions); // dropdown data (accepted connections only)
-milestoneRouter.post("/", createMilestone); // create a new milestone
-milestoneRouter.get("/", getMyMilestones); // list mine (owned or reviewing), supports ?search=
-milestoneRouter.get("/:id", getMilestoneById); // single milestone
-milestoneRouter.patch("/:id", updateMilestone); // edit (owner only)
-milestoneRouter.delete("/:id", deleteMilestone); // delete (owner only)
+milestoneRouter.get("/reviewers", requireSubscription("milestones"), getReviewerOptions);
+milestoneRouter.post("/", requireSubscription("milestones"), createMilestone);
+milestoneRouter.get("/", requireSubscription("milestones"), getMyMilestones);
+milestoneRouter.get("/:id", requireSubscription("milestones"), getMilestoneById);
+milestoneRouter.patch("/:id", requireSubscription("milestones"), updateMilestone);
+milestoneRouter.delete("/:id", requireSubscription("milestones"), deleteMilestone);
 
 export default milestoneRouter;

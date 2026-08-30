@@ -1,5 +1,6 @@
 import express from "express";
 import { isAdmin, authorize } from "../../middlewares/admin.js";
+import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
 import { createUploadMiddleware } from "../../services/upload.js";
 import {
   getAllEventsPublic,
@@ -26,8 +27,8 @@ const eventUpload = createUploadMiddleware({
 /* ── Public / User Routes ── */
 eventsRouter.get("/public", getAllEventsPublic);
 eventsRouter.get("/public/:id", getEventByIdPublic);
-eventsRouter.post("/register/:id", registerForEvent);
-eventsRouter.get("/my-registrations", getMyEventRegistrations);
+eventsRouter.post("/register/:id", requireSubscription("events"), registerForEvent);
+eventsRouter.get("/my-registrations", requireSubscription("events"), getMyEventRegistrations);
 
 /* ── Admin Routes (Admin & Super Admin) ── */
 eventsRouter.get("/admin", isAdmin, authorize("events.view"), getAllEventsAdmin);
