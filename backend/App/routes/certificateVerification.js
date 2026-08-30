@@ -16,10 +16,10 @@ router.put('/admin/:id/revoke', authorize('certificates.manage'), ctrl.revokeCer
 router.put('/admin/:id/restore', authorize('certificates.manage'), ctrl.restoreCertificate);
 router.get('/admin/:id/audit', authorize('certificates.view'), ctrl.getCertificateAudit);
 
-// Certificate templates
-router.post('/templates', authorize('certificates.manage'), ctrl.createTemplate);
-router.get('/templates', authorize('certificates.view'), ctrl.getTemplates);
-router.put('/templates/:id', authorize('certificates.manage'), ctrl.updateTemplate);
-router.delete('/templates/:id', authorize('certificates.manage'), ctrl.deleteTemplate);
+// Certificate templates & builder
+router.post('/templates', authorize(['certificates.templates_manage', 'certificates.manage']), ctrl.createTemplate);
+router.get('/templates', authorize(['certificates.templates_view', 'certificates.view']), ctrl.getTemplates);
+router.put('/templates/:id', authorize(['certificates.templates_manage', 'certificates.manage']), ctrl.updateTemplate);
+router.delete('/templates/:id', authorize(['certificates.templates_manage', 'certificates.manage']), ctrl.deleteTemplate);
 
 export default router;

@@ -241,12 +241,27 @@ export const PERMISSION_MODULES = [
   },
   {
     module: "certificates",
-    name: "Certificate Management",
+    name: "Certificates & Builder",
     icon: "🏅",
-    description: "Manage RBF certificates, templates, verification, and revocation",
+    description: "Manage issued certificates, verification audits, certificate builder and templates",
     permissions: [
-      { key: "certificates.view", label: "View Certificates", description: "View all issued certificates, search, and audit trails" },
-      { key: "certificates.manage", label: "Manage Certificates", description: "Revoke, restore certificates and manage certificate templates" },
+      { key: "certificates.view", label: "View Issued Certificates", description: "View all issued certificates, verification logs, and search" },
+      { key: "certificates.manage", label: "Revoke & Restore Certificates", description: "Revoke, restore, and manage issued certificate statuses" },
+      { key: "certificates.templates_view", label: "View Certificate Builder", description: "View certificate builder templates and layouts" },
+      { key: "certificates.templates_manage", label: "Manage Certificate Templates", description: "Create, edit, design, and delete certificate builder templates" },
+    ],
+  },
+  {
+    module: "booster",
+    name: "Business Booster Kit",
+    icon: "⚡",
+    description: "Manage partner perks (AWS, Razorpay, HubSpot), credits, toolkits, and review user claims",
+    permissions: [
+      { key: "booster.view", label: "View Booster Perks & Claims", description: "View perks catalog, statistics, and incoming claims" },
+      { key: "booster.create", label: "Create Booster Perks", description: "Publish new partner perk offers, credits, and toolkits" },
+      { key: "booster.update", label: "Edit Booster Perks", description: "Update existing partner perk details, terms, and redemption links" },
+      { key: "booster.delete", label: "Delete Booster Perks", description: "Remove perks and partner toolkits" },
+      { key: "booster.review_claims", label: "Review & Assign Claims", description: "Approve, reject user claims, and assign voucher codes" },
     ],
   },
 ];

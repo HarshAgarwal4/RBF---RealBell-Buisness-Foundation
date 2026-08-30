@@ -16,8 +16,11 @@ import Meetings from '../pages/app/meetings.jsx';
 import Milestones from '../pages/app/MileStone.jsx';
 import Job from '../pages/app/Job.jsx';
 import Tickets from '../pages/app/Tickets.jsx';
+import NotificationsPage from '../pages/app/Notifications.jsx';
+import BusinessBooster from '../pages/app/BusinessBooster.jsx';
 import Unauthorized from '../pages/Unauthorized.jsx';
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
+import AdminBusinessBooster from '../pages/admin/AdminBusinessBooster.jsx';
 import AdminTeams from '../pages/admin/AdminTeams.jsx';
 import AdminUsers from '../pages/admin/AdminUsers.jsx';
 import AdminJobs from '../pages/admin/AdminJobs.jsx';
@@ -194,6 +197,26 @@ const Routes = createBrowserRouter([
     {
         path: '/tickets',
         element: <ProtectedRoute> <Tickets /> </ProtectedRoute>
+    },
+    {
+        path: '/notifications',
+        element: <ProtectedRoute> <NotificationsPage /> </ProtectedRoute>
+    },
+    {
+        path: '/app/notifications',
+        element: <ProtectedRoute> <NotificationsPage /> </ProtectedRoute>
+    },
+    {
+        path: '/booster',
+        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
+    },
+    {
+        path: '/app/booster',
+        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
+    },
+    {
+        path: '/business-booster',
+        element: <ProtectedRoute> <BusinessBooster /> </ProtectedRoute>
     },
     {
         path: '/unauthorized',
@@ -437,6 +460,26 @@ const Routes = createBrowserRouter([
             </ProtectedRoute>
         )
     },
+    {
+        path: '/admin/booster',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="booster.view" moduleName="Business Booster Kit">
+                    <AdminBusinessBooster />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/business-booster',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="booster.view" moduleName="Business Booster Kit">
+                    <AdminBusinessBooster />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
 
     /* ── Events ── */
     {
@@ -585,7 +628,7 @@ const Routes = createBrowserRouter([
         path: '/admin/certificates/templates',
         element: (
             <ProtectedRoute>
-                <PermissionRoute permission="certificates.manage" moduleName="Certificate Management">
+                <PermissionRoute permission="certificates.templates_view" moduleName="Certificate Builder">
                     <AdminCertificateTemplates />
                 </PermissionRoute>
             </ProtectedRoute>

@@ -47,7 +47,9 @@ function isPublicRoute(req) {
       path.startsWith("/legal-compliance/services") ||
       path.startsWith("/legal-compliances/services") ||
       path.startsWith("/certificates/verify") ||
-      path.startsWith("/tests/public"))
+      path.startsWith("/tests/public") ||
+      path.startsWith("/booster/public") ||
+      path.startsWith("/booster/items"))
   ) {
     return true;
   }

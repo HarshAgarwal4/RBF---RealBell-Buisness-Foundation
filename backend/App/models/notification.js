@@ -61,19 +61,26 @@ const NotificationSchema = new mongoose.Schema(
         ref: "Organization",
       },
     ],
+    dismissed_by: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Organization",
+      },
+    ],
     sent_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Organization",
       required: true,
     },
-    sent_as_email: {
-      type: Boolean,
-      default: false,
-    },
-    email_delivery_status: {
-      sent: { type: Number, default: 0 },
-      failed: { type: Number, default: 0 },
-    },
+    attachments: [
+      {
+        url: { type: String, required: true },
+        file_name: { type: String, default: "" },
+        file_type: { type: String, default: "" }, // image, video, pdf, document, other
+        file_size: { type: Number, default: 0 },
+        public_id: { type: String, default: "" },
+      },
+    ],
     meta: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -85,9 +92,11 @@ const NotificationSchema = new mongoose.Schema(
 NotificationSchema.index({ recipients: 1, createdAt: -1 });
 NotificationSchema.index({ sent_by: 1 });
 NotificationSchema.index({ target_type: 1 });
+NotificationSchema.index({ dismissed_by: 1 });
 
 const NotificationModel =
   mongoose.models.Notification ||
   mongoose.model("Notification", NotificationSchema);
 
 export default NotificationModel;
+

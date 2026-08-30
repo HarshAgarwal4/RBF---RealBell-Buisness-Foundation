@@ -44,7 +44,10 @@ import {
   FolderLock,
   Layers,
   Radio,
+  Bell,
+  Zap,
 } from "lucide-react";
+import { useWebNotifications } from "../hooks/useWebNotifications";
 
 const ICON_MAP = {
   Landmark,
@@ -65,6 +68,8 @@ const ICON_MAP = {
   BookOpen,
   Ticket,
   UserCircle2,
+  Bell,
+  Zap,
 };
 
 const DEFAULT_CONNECT_CHILDREN = [
@@ -101,6 +106,7 @@ export default function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   const navRef = useRef(null);
 
+  const { unreadCount } = useWebNotifications({ autoPoll: true, triggerWebAlerts: true });
   const [activeCount, setActiveCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -127,6 +133,7 @@ export default function Sidebar() {
   const navItems = useMemo(() => {
     return [
       { path: "/dashboard", label: "Dashboard", icon: Building2 },
+      { path: "/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
       {
         key: "connect",
         label: "Connect",
@@ -153,7 +160,6 @@ export default function Sidebar() {
           { path: "/connections", label: "My Connections" },
           { path: "/live_sessions", label: "Live Sessions & Meetings" },
           { path: "/meetings", label: "Scheduled Meetings" },
-          { path: "/mentorship-hours", label: "Mentorship Hours" },
           { path: "/milestones", label: "Milestone Tracking" },
         ],
       },
@@ -172,7 +178,7 @@ export default function Sidebar() {
         ],
       },
       { path: "/subscription", label: "Membership Plans", icon: DollarSign },
-      { path: "/booster", label: "Startup Booster Kit", icon: DollarSign },
+      { path: "/booster", label: "Business Booster Kit", icon: Zap },
       {
         key: "resources",
         label: "Resource Library",
@@ -186,7 +192,7 @@ export default function Sidebar() {
       { path: "/tickets", label: "Support Tickets", icon: Ticket },
       { path: "/account", label: "Account Settings", icon: UserCircle2 },
     ];
-  }, [connectChildren]);
+  }, [connectChildren, unreadCount]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -390,8 +396,24 @@ export default function Sidebar() {
           transition: "background 0.15s",
         }}
       >
-        <Icon size={17} color={active ? "#fff" : COLORS.primary} style={{ opacity: active ? 1 : 0.85 }} />
+        <Icon size={17} color={active ? "#fff" : COLORS.primary} style={{ opacity: active ? 1 : 0.85, flexShrink: 0 }} />
         <span style={{ flex: 1 }}>{item.label}</span>
+        {item.badge !== undefined && item.badge > 0 && (
+          <span
+            style={{
+              fontSize: 10.5,
+              fontWeight: 800,
+              background: active ? "#fff" : COLORS.primary,
+              color: active ? COLORS.primary : "#fff",
+              padding: "1px 7px",
+              borderRadius: 99,
+              lineHeight: "16px",
+              flexShrink: 0,
+            }}
+          >
+            {item.badge}
+          </span>
+        )}
       </button>
     );
   };
@@ -440,6 +462,18 @@ export default function Sidebar() {
             title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
           >
             {theme === "dark" ? <Sun size={18} color="#06B6D4" /> : <Moon size={18} color="#6366f1" />}
+          </button>
+          <button
+            onClick={() => navigate("/notifications")}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-[#182530] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#203040] transition relative cursor-pointer"
+            title="Notifications"
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => navigate("/connections?section=chat")}

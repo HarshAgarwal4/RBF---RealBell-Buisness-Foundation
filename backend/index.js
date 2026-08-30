@@ -28,6 +28,7 @@ import approvalRouter from './App/routes/approval.js';
 import assessmentRouter from './App/routes/assessment.js';
 import testTakingRouter from './App/routes/testTaking.js';
 import certificateRouter from './App/routes/certificateVerification.js';
+import boosterRouter from './App/routes/booster.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { seedDefaultTeams } from './App/controllers/teamController.js';
@@ -76,6 +77,7 @@ app.use('/approvals', approvalRouter)
 app.use('/assessments', assessmentRouter)
 app.use('/tests', testTakingRouter)
 app.use('/certificates', certificateRouter)
+app.use('/booster', boosterRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {

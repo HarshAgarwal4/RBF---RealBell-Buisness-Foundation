@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AdminLayout from './AdminLayout.jsx';
 import axios from '../../services/axios.jsx';
 import { useStore } from '../../zustand/store.jsx';
@@ -19,11 +19,19 @@ const priorityConfig = {
     'urgent': { label: 'Urgent', color: '#ef4444' },
 };
 
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
 export default function AdminNotifications() {
     const currentUser = useStore((s) => s.user);
     const isSuper = isSuperAdmin(currentUser);
     const canSend = isSuper || hasPermission(currentUser, 'notifications.send');
-    const canDelete = isSuper; // Strictly Super Admin only can delete logs
+    const canDelete = isSuper || hasPermission(currentUser, 'notifications.delete');
 
     // Form State
     const [title, setTitle] = useState('');
@@ -31,7 +39,7 @@ export default function AdminNotifications() {
     const [notifType, setNotifType] = useState('announcement');
     const [priority, setPriority] = useState('normal');
     const [actionUrl, setActionUrl] = useState('');
-    const [sentAsEmail, setSentAsEmail] = useState(false);
+    const [files, setFiles] = useState([]);
 
     // Target Selection State
     // target_type: 'all' | 'specific_users' | 'team' | 'team_selected_users' | 'normal_users_selected' | 'organization_types'
@@ -53,7 +61,7 @@ export default function AdminNotifications() {
 
     // History Log State
     const [notifications, setNotifications] = useState([]);
-    const [stats, setStats] = useState({ total: 0, info: 0, announcement: 0, warning: 0, success: 0, withEmail: 0 });
+    const [stats, setStats] = useState({ total: 0, info: 0, announcement: 0, warning: 0, success: 0, error: 0, withAttachments: 0 });
     const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -61,9 +69,13 @@ export default function AdminNotifications() {
     const [logFilterType, setLogFilterType] = useState('');
     const [logPage, setLogPage] = useState(1);
 
-    // Detail Modal & Toast
+    // Detail & Edit Modals
     const [detailModal, setDetailModal] = useState({ open: false, notification: null });
+    const [editModal, setEditModal] = useState({ open: false, notification: null, title: '', message: '', type: 'info', priority: 'normal', action_url: '', newFiles: [] });
+    const [previewMedia, setPreviewMedia] = useState(null); // { type, url, name }
     const [toast, setToast] = useState(null);
+
+    const fileInputRef = useRef(null);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -183,7 +195,19 @@ export default function AdminNotifications() {
         ).slice(0, 40);
     };
 
-    // Dispatch Notification Submit
+    // Handle File Selection
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const newFiles = Array.from(e.target.files);
+            setFiles(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeFile = (idx) => {
+        setFiles(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    // Dispatch Notification Submit (Create)
     const handleSendNotification = async (e) => {
         e.preventDefault();
         if (!title.trim()) {
@@ -201,28 +225,38 @@ export default function AdminNotifications() {
 
         setSubmitting(true);
         try {
-            const payload = {
-                title: title.trim(),
-                message: message.trim(),
-                type: notifType,
-                priority,
-                action_url: actionUrl.trim() || null,
-                target_type: targetType,
-                target_team: targetType === 'team' || targetType === 'team_selected_users' ? selectedTeam : null,
-                selected_user_ids: selectedUserIds,
-                organization_types: selectedOrgTypes,
-                sent_as_email: sentAsEmail,
-            };
+            const formData = new FormData();
+            formData.append('title', title.trim());
+            formData.append('message', message.trim());
+            formData.append('type', notifType);
+            formData.append('priority', priority);
+            if (actionUrl.trim()) formData.append('action_url', actionUrl.trim());
+            formData.append('target_type', targetType);
+            if (targetType === 'team' || targetType === 'team_selected_users') {
+                formData.append('target_team', selectedTeam);
+            }
+            formData.append('selected_user_ids', JSON.stringify(selectedUserIds));
+            formData.append('organization_types', JSON.stringify(selectedOrgTypes));
 
-            const res = await axios.post('/admin/notifications/send', payload);
+            // Append files
+            files.forEach(f => {
+                formData.append('files', f);
+            });
+
+            const res = await axios.post('/admin/notifications/send', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
             if (res.data.status === 1) {
                 showToast(res.data.msg || 'Notification dispatched successfully!');
                 // Reset form
                 setTitle('');
                 setMessage('');
                 setActionUrl('');
+                setFiles([]);
                 setSelectedUserIds([]);
                 setSelectedOrgTypes([]);
+                if (fileInputRef.current) fileInputRef.current.value = '';
                 loadNotifications();
             } else {
                 showToast(res.data.msg || 'Failed to dispatch notification', 'error');
@@ -235,7 +269,61 @@ export default function AdminNotifications() {
         }
     };
 
-    // Delete Notification
+    // Open Edit Modal
+    const openEdit = (item) => {
+        setEditModal({
+            open: true,
+            notification: item,
+            title: item.title || '',
+            message: item.message || '',
+            type: item.type || 'info',
+            priority: item.priority || 'normal',
+            action_url: item.action_url || '',
+            newFiles: [],
+        });
+    };
+
+    // Submit Edit Notification
+    const handleUpdateNotification = async (e) => {
+        e.preventDefault();
+        if (!editModal.title.trim()) {
+            showToast('Notification title is required', 'error');
+            return;
+        }
+        if (!editModal.message.trim()) {
+            showToast('Notification message is required', 'error');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('title', editModal.title.trim());
+            formData.append('message', editModal.message.trim());
+            formData.append('type', editModal.type);
+            formData.append('priority', editModal.priority);
+            formData.append('action_url', editModal.action_url.trim() || '');
+
+            editModal.newFiles.forEach(f => {
+                formData.append('files', f);
+            });
+
+            const res = await axios.put(`/admin/notifications/${editModal.notification._id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.data.status === 1) {
+                showToast('Notification updated successfully');
+                setEditModal({ open: false, notification: null, title: '', message: '', type: 'info', priority: 'normal', action_url: '', newFiles: [] });
+                loadNotifications();
+            } else {
+                showToast(res.data.msg || 'Failed to update notification', 'error');
+            }
+        } catch (err) {
+            showToast(err.response?.data?.msg || 'Error updating notification', 'error');
+        }
+    };
+
+    // Delete Notification (Delete)
     const handleDeleteNotification = async (id) => {
         if (!window.confirm('Are you sure you want to delete this notification record?')) return;
         try {
@@ -287,7 +375,7 @@ export default function AdminNotifications() {
                         </span>
                     </h1>
                     <p style={{ color: 'var(--admin-text-subtle, #64748b)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                        Broadcast in-app alerts and notifications to specific normal users, department teams, selected members, or organization types with optional email delivery.
+                        Broadcast rich in-app notifications with images, PDFs, videos, and documents to specific normal users, teams, or ecosystem organization types.
                     </p>
                 </div>
 
@@ -326,12 +414,12 @@ export default function AdminNotifications() {
                     <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fbbf24', marginTop: '0.2rem' }}>{stats.warning}</div>
                 </div>
                 <div style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.65rem', color: '#34d399', fontWeight: '600', textTransform: 'uppercase' }}>Dual Email Deliveries</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#34d399', marginTop: '0.2rem' }}>{stats.withEmail}</div>
+                    <div style={{ fontSize: '0.65rem', color: '#34d399', fontWeight: '600', textTransform: 'uppercase' }}>With Media/Files</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#34d399', marginTop: '0.2rem' }}>{stats.withAttachments}</div>
                 </div>
             </div>
 
-            {/* Notification Composer Card */}
+            {/* Notification Composer Card (Create) */}
             <div style={{
                 background: 'var(--admin-card-bg, rgba(255,255,255,0.03))',
                 border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))',
@@ -346,7 +434,7 @@ export default function AdminNotifications() {
                             📢 Compose & Dispatch Notification
                         </h2>
                         <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>
-                            Configure target audience, alert category, and message payload.
+                            Configure target audience, alert category, message, and file attachments (images, PDFs, videos, docs).
                         </p>
                     </div>
 
@@ -410,7 +498,6 @@ export default function AdminNotifications() {
                     </div>
 
                     {/* Step 1.B: Target Parameters Sub-Pickers */}
-                    {/* Team Selector for 'team' or 'team_selected_users' */}
                     {(targetType === 'team' || targetType === 'team_selected_users') && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
@@ -435,7 +522,6 @@ export default function AdminNotifications() {
                         </div>
                     )}
 
-                    {/* Organization Types Checkboxes for 'organization_types' */}
                     {targetType === 'organization_types' && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
@@ -475,7 +561,6 @@ export default function AdminNotifications() {
                         </div>
                     )}
 
-                    {/* Specific / Selected User Multi-Select Picker */}
                     {(targetType === 'specific_users' || targetType === 'normal_users_selected' || (targetType === 'team_selected_users' && selectedTeam)) && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -554,7 +639,7 @@ export default function AdminNotifications() {
                                 Action URL (Optional Link)
                             </label>
                             <input
-                                type="url"
+                                type="text"
                                 className="admin-search-input"
                                 placeholder="https://example.com/program/123 or /events"
                                 value={actionUrl}
@@ -580,7 +665,60 @@ export default function AdminNotifications() {
                         />
                     </div>
 
-                    {/* Step 3: Type, Priority, & Delivery Options */}
+                    {/* File Upload Section (Images, PDFs, Videos, Documents) */}
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <label style={{ fontSize: '0.72rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase', margin: 0, letterSpacing: '0.05em' }}>
+                                📎 Attach Files (Images, PDFs, Videos, Docs)
+                            </label>
+                            <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                                Max 10 files (up to 50MB each)
+                            </span>
+                        </div>
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                            onChange={handleFileChange}
+                            style={{ fontSize: '0.75rem', color: '#cbd5e1' }}
+                        />
+
+                        {/* File preview chips */}
+                        {files.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+                                {files.map((file, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            padding: '0.3rem 0.6rem',
+                                            borderRadius: '6px',
+                                            background: 'rgba(99,102,241,0.2)',
+                                            border: '1px solid rgba(99,102,241,0.4)',
+                                            fontSize: '0.72rem',
+                                            color: '#cbd5e1'
+                                        }}
+                                    >
+                                        <span>📎 {file.name}</span>
+                                        <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>({formatBytes(file.size)})</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(idx)}
+                                            style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', padding: '0 2px' }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Step 3: Type, Priority, & Submit */}
                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
                         {/* Type Badges */}
                         <div>
@@ -631,28 +769,6 @@ export default function AdminNotifications() {
                             </select>
                         </div>
 
-                        {/* Email Delivery Toggle */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.5rem 0.85rem',
-                            borderRadius: '10px',
-                            background: sentAsEmail ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${sentAsEmail ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                            cursor: 'pointer'
-                        }} onClick={() => setSentAsEmail(!sentAsEmail)}>
-                            <input
-                                type="checkbox"
-                                checked={sentAsEmail}
-                                onChange={e => setSentAsEmail(e.target.checked)}
-                                style={{ cursor: 'pointer' }}
-                            />
-                            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: sentAsEmail ? '#34d399' : '#cbd5e1' }}>
-                                ✉️ Send as Email as well
-                            </span>
-                        </div>
-
                         {/* Submit Button */}
                         <button
                             type="submit"
@@ -666,13 +782,13 @@ export default function AdminNotifications() {
                                 minWidth: '170px'
                             }}
                         >
-                            {submitting ? 'Dispatching...' : '🚀 Dispatch Alert'}
+                            {submitting ? 'Dispatching...' : '🚀 Dispatch Notification'}
                         </button>
                     </div>
                 </form>
             </div>
 
-            {/* Notification Outbox / History Section */}
+            {/* Notification Outbox / History Section (Read, Update, Delete) */}
             <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#f1f5f9', margin: 0 }}>
                     📜 Notification Dispatch Logs & History
@@ -711,7 +827,7 @@ export default function AdminNotifications() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                {['Notification Title & Type', 'Target Audience', 'Recipients', 'Dual Email', 'Sent By', 'Date', 'Actions'].map(h => (
+                                {['Notification Title & Type', 'Target Audience', 'Recipients', 'Attachments', 'Sent By', 'Date', 'Actions'].map(h => (
                                     <th key={h}>{h}</th>
                                 ))}
                             </tr>
@@ -766,12 +882,19 @@ export default function AdminNotifications() {
                                         </td>
 
                                         <td>
-                                            {item.sent_as_email ? (
-                                                <span style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: '600' }}>
-                                                    ✓ {item.email_delivery_status?.sent || 0} sent
+                                            {item.attachments && item.attachments.length > 0 ? (
+                                                <span style={{
+                                                    fontSize: '0.72rem',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '99px',
+                                                    background: 'rgba(52,211,153,0.12)',
+                                                    color: '#34d399',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    📎 {item.attachments.length} file(s)
                                                 </span>
                                             ) : (
-                                                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>In-app only</span>
+                                                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>None</span>
                                             )}
                                         </td>
 
@@ -794,6 +917,15 @@ export default function AdminNotifications() {
                                                 >
                                                     View
                                                 </button>
+                                                {canSend && (
+                                                    <button
+                                                        onClick={() => openEdit(item)}
+                                                        className="admin-btn admin-btn-secondary"
+                                                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem' }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                )}
                                                 {canDelete && (
                                                     <button
                                                         onClick={() => handleDeleteNotification(item._id)}
@@ -819,7 +951,7 @@ export default function AdminNotifications() {
                 )}
             </div>
 
-            {/* Notification Inspection Modal */}
+            {/* Notification Inspection Modal (View) */}
             {detailModal.open && detailModal.notification && (
                 <div className="admin-modal-overlay" onClick={e => e.target === e.currentTarget && setDetailModal({ open: false, notification: null })} style={{
                     position: 'fixed',
@@ -837,11 +969,13 @@ export default function AdminNotifications() {
                         border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))',
                         borderRadius: '16px',
                         width: '100%',
-                        maxWidth: '560px',
+                        maxWidth: '600px',
                         padding: '1.5rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '1rem'
+                        gap: '1rem',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
@@ -864,6 +998,30 @@ export default function AdminNotifications() {
                             {detailModal.notification.message}
                         </div>
 
+                        {/* Attachments inside modal */}
+                        {detailModal.notification.attachments && detailModal.notification.attachments.length > 0 && (
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#818cf8', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                                    Attached Files ({detailModal.notification.attachments.length})
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                                    {detailModal.notification.attachments.map((att, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                            <div style={{ fontSize: '0.72rem', fontWeight: '600', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {att.file_name || 'File'}
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem', fontSize: '0.65rem', color: '#64748b' }}>
+                                                <span>{formatBytes(att.file_size)}</span>
+                                                <a href={att.url} target="_blank" rel="noreferrer" download style={{ color: '#818cf8', textDecoration: 'none', fontWeight: '700' }}>
+                                                    Download ⬇️
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.75rem' }}>
                             <div>
                                 <span style={{ color: '#64748b' }}>Target Type: </span>
@@ -878,10 +1036,8 @@ export default function AdminNotifications() {
                                 <strong style={{ color: '#cbd5e1' }}>{detailModal.notification.sent_by?.name || 'Super Admin'}</strong>
                             </div>
                             <div>
-                                <span style={{ color: '#64748b' }}>Sent As Email: </span>
-                                <strong style={{ color: detailModal.notification.sent_as_email ? '#34d399' : '#94a3b8' }}>
-                                    {detailModal.notification.sent_as_email ? `Yes (${detailModal.notification.email_delivery_status?.sent || 0} sent)` : 'No'}
-                                </strong>
+                                <span style={{ color: '#64748b' }}>Priority: </span>
+                                <strong style={{ color: '#cbd5e1' }}>{detailModal.notification.priority || 'normal'}</strong>
                             </div>
                         </div>
 
@@ -904,6 +1060,142 @@ export default function AdminNotifications() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Notification Edit Modal (Update) */}
+            {editModal.open && editModal.notification && (
+                <div className="admin-modal-overlay" onClick={e => e.target === e.currentTarget && setEditModal({ open: false, notification: null, title: '', message: '', type: 'info', priority: 'normal', action_url: '', newFiles: [] })} style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.7)',
+                    backdropFilter: 'blur(5px)',
+                    zIndex: 9990,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '1rem',
+                }}>
+                    <form onSubmit={handleUpdateNotification} className="admin-modal-box" style={{
+                        background: 'var(--admin-modal-bg, #111420)',
+                        border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.08))',
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: '560px',
+                        padding: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                ✏️ Edit Notification Record
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setEditModal({ open: false, notification: null, title: '', message: '', type: 'info', priority: 'normal', action_url: '', newFiles: [] })}
+                                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.1rem', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Title *</label>
+                            <input
+                                type="text"
+                                className="admin-search-input"
+                                value={editModal.title}
+                                onChange={e => setEditModal(prev => ({ ...prev, title: e.target.value }))}
+                                style={{ width: '100%', padding: '0.5rem 0.65rem' }}
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Message Payload *</label>
+                            <textarea
+                                className="admin-search-input"
+                                rows={4}
+                                value={editModal.message}
+                                onChange={e => setEditModal(prev => ({ ...prev, message: e.target.value }))}
+                                style={{ width: '100%', padding: '0.5rem 0.65rem' }}
+                                required
+                            />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Type</label>
+                                <select
+                                    className="admin-select-input"
+                                    value={editModal.type}
+                                    onChange={e => setEditModal(prev => ({ ...prev, type: e.target.value }))}
+                                    style={{ width: '100%' }}
+                                >
+                                    {Object.entries(typeConfig).map(([k, v]) => (
+                                        <option key={k} value={k}>{v.icon} {v.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Priority</label>
+                                <select
+                                    className="admin-select-input"
+                                    value={editModal.priority}
+                                    onChange={e => setEditModal(prev => ({ ...prev, priority: e.target.value }))}
+                                    style={{ width: '100%' }}
+                                >
+                                    {Object.entries(priorityConfig).map(([k, v]) => (
+                                        <option key={k} value={k}>{v.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Action URL (Optional)</label>
+                            <input
+                                type="text"
+                                className="admin-search-input"
+                                value={editModal.action_url}
+                                onChange={e => setEditModal(prev => ({ ...prev, action_url: e.target.value }))}
+                                style={{ width: '100%', padding: '0.5rem 0.65rem' }}
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.7rem', color: '#818cf8', fontWeight: '700', marginBottom: '0.3rem' }}>Add More Attachments</label>
+                            <input
+                                type="file"
+                                multiple
+                                onChange={e => {
+                                    if (e.target.files) {
+                                        setEditModal(prev => ({ ...prev, newFiles: Array.from(e.target.files) }));
+                                    }
+                                }}
+                                style={{ fontSize: '0.75rem', color: '#cbd5e1' }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <button
+                                type="button"
+                                onClick={() => setEditModal({ open: false, notification: null, title: '', message: '', type: 'info', priority: 'normal', action_url: '', newFiles: [] })}
+                                className="admin-btn admin-btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="admin-btn admin-btn-primary"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </AdminLayout>

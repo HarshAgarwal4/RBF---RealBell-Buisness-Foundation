@@ -5,6 +5,52 @@ import OrganizationModel from "../models/organization.js";
 import TeamModel from "../models/team.js";
 import { sendMail } from "../../services/mail.js";
 import { logAudit } from "../../services/auditLogger.js";
+import { uploadFileToCloud } from "../../services/upload.js";
+
+/* =========================================================================
+   HELPER: PROCESS UPLOADED ATTACHMENTS
+   ========================================================================= */
+async function processUploadedAttachments(files, folder = "RBF/notifications") {
+  if (!Array.isArray(files) || files.length === 0) return [];
+  const results = [];
+  for (const file of files) {
+    let fileType = "document";
+    if (file.mimetype) {
+      if (file.mimetype.startsWith("image/")) fileType = "image";
+      else if (file.mimetype.startsWith("video/")) fileType = "video";
+      else if (file.mimetype === "application/pdf") fileType = "pdf";
+      else if (
+        file.mimetype.includes("word") ||
+        file.mimetype.includes("officedocument") ||
+        file.mimetype.includes("text") ||
+        file.mimetype.includes("csv") ||
+        file.mimetype.includes("sheet") ||
+        file.mimetype.includes("presentation")
+      ) {
+        fileType = "document";
+      } else {
+        fileType = "other";
+      }
+    }
+
+    try {
+      const uploadRes = await uploadFileToCloud(file.buffer, file.originalname, {
+        folder,
+        resourceType: "auto",
+      });
+      results.push({
+        url: uploadRes.secure_url,
+        file_name: file.originalname,
+        file_type: fileType,
+        file_size: file.size || uploadRes.bytes || 0,
+        public_id: uploadRes.public_id || "",
+      });
+    } catch (err) {
+      console.error(`Failed to upload file ${file.originalname}:`, err);
+    }
+  }
+  return results;
+}
 
 /* =========================================================================
    HELPER: RESOLVE TARGET RECIPIENTS
@@ -23,6 +69,26 @@ async function resolveTargetRecipients({
         .filter((e) => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
     : [];
 
+  // Normalize selected_user_ids if passed as JSON string
+  let parsedUserIds = selected_user_ids;
+  if (typeof selected_user_ids === "string") {
+    try {
+      parsedUserIds = JSON.parse(selected_user_ids);
+    } catch {
+      parsedUserIds = [selected_user_ids];
+    }
+  }
+
+  // Normalize organization_types if passed as JSON string
+  let parsedOrgTypes = organization_types;
+  if (typeof organization_types === "string") {
+    try {
+      parsedOrgTypes = JSON.parse(organization_types);
+    } catch {
+      parsedOrgTypes = [organization_types];
+    }
+  }
+
   switch (target_type) {
     case "all":
     case "all_users":
@@ -31,8 +97,8 @@ async function resolveTargetRecipients({
 
     case "specific_users":
     case "normal_users_selected":
-      if (Array.isArray(selected_user_ids) && selected_user_ids.length > 0) {
-        const validIds = selected_user_ids.filter((id) =>
+      if (Array.isArray(parsedUserIds) && parsedUserIds.length > 0) {
+        const validIds = parsedUserIds.filter((id) =>
           mongoose.isValidObjectId(id)
         );
         userQuery = { _id: { $in: validIds }, accountStatus: { $ne: "disabled" } };
@@ -46,8 +112,8 @@ async function resolveTargetRecipients({
       break;
 
     case "team_selected_users":
-      if (Array.isArray(selected_user_ids) && selected_user_ids.length > 0) {
-        const validIds = selected_user_ids.filter((id) =>
+      if (Array.isArray(parsedUserIds) && parsedUserIds.length > 0) {
+        const validIds = parsedUserIds.filter((id) =>
           mongoose.isValidObjectId(id)
         );
         userQuery = { _id: { $in: validIds }, accountStatus: { $ne: "disabled" } };
@@ -58,9 +124,9 @@ async function resolveTargetRecipients({
       break;
 
     case "organization_types":
-      if (Array.isArray(organization_types) && organization_types.length > 0) {
+      if (Array.isArray(parsedOrgTypes) && parsedOrgTypes.length > 0) {
         userQuery = {
-          company_type: { $in: organization_types },
+          company_type: { $in: parsedOrgTypes },
           accountStatus: { $ne: "disabled" },
         };
       }
@@ -75,8 +141,8 @@ async function resolveTargetRecipients({
       break;
 
     default:
-      if (Array.isArray(selected_user_ids) && selected_user_ids.length > 0) {
-        const validIds = selected_user_ids.filter((id) =>
+      if (Array.isArray(parsedUserIds) && parsedUserIds.length > 0) {
+        const validIds = parsedUserIds.filter((id) =>
           mongoose.isValidObjectId(id)
         );
         userQuery = { _id: { $in: validIds } };
@@ -191,10 +257,10 @@ export async function getRecipientsDirectory(req, res) {
 }
 
 /* =========================================================================
-   2. NOTIFICATION MANAGEMENT (Super Admin)
+   2. NOTIFICATION CRUD MANAGEMENT (Admin / Super Admin)
    ========================================================================= */
 
-// Dispatch Notification
+// Create / Dispatch Notification
 export async function sendAdminNotification(req, res) {
   try {
     const {
@@ -207,7 +273,6 @@ export async function sendAdminNotification(req, res) {
       target_team = null,
       selected_user_ids = [],
       organization_types = [],
-      sent_as_email = false,
     } = req.body;
 
     if (!title || !title.trim()) {
@@ -217,11 +282,21 @@ export async function sendAdminNotification(req, res) {
       return res.status(400).json({ status: 0, msg: "Notification message is required" });
     }
 
-    const { users, userIds, emails } = await resolveTargetRecipients({
+    let parsedUserIds = selected_user_ids;
+    if (typeof selected_user_ids === "string") {
+      try { parsedUserIds = JSON.parse(selected_user_ids); } catch { parsedUserIds = [selected_user_ids]; }
+    }
+
+    let parsedOrgTypes = organization_types;
+    if (typeof organization_types === "string") {
+      try { parsedOrgTypes = JSON.parse(organization_types); } catch { parsedOrgTypes = [organization_types]; }
+    }
+
+    const { userIds } = await resolveTargetRecipients({
       target_type,
       target_team,
-      selected_user_ids,
-      organization_types,
+      selected_user_ids: parsedUserIds,
+      organization_types: parsedOrgTypes,
     });
 
     if (userIds.length === 0) {
@@ -231,48 +306,22 @@ export async function sendAdminNotification(req, res) {
       });
     }
 
-    let emailSentCount = 0;
-    let emailFailedCount = 0;
-
-    // Send emails if requested
-    if (sent_as_email && emails.length > 0) {
-      const emailSubject = `[RealBell] ${title.trim()}`;
-      const emailHtml = `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 24px 30px; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">RealBell Business Foundation</h2>
-            <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.85;">Official Platform Notification</p>
-          </div>
-          <div style="padding: 28px 30px; color: #1e293b; line-height: 1.6;">
-            <h3 style="margin: 0 0 14px; font-size: 17px; color: #0f172a; font-weight: 600;">${title.trim()}</h3>
-            <div style="font-size: 14px; color: #334155; white-space: pre-wrap; margin-bottom: 24px;">${message.trim()}</div>
-            ${
-              action_url
-                ? `<div style="margin-top: 20px;"><a href="${action_url}" style="background: #4f46e5; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-block;">View Details</a></div>`
-                : ""
-            }
-          </div>
-          <div style="background: #f8fafc; padding: 16px 30px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center;">
-            This is an automated notification from RealBell Business Foundation.
-          </div>
-        </div>
-      `;
-
-      // Dispatch emails in parallel batches
-      const batchSize = 10;
-      for (let i = 0; i < emails.length; i += batchSize) {
-        const chunk = emails.slice(i, i + batchSize);
-        await Promise.all(
-          chunk.map(async (email) => {
-            try {
-              const success = await sendMail(email, emailSubject, emailHtml);
-              if (success) emailSentCount++;
-              else emailFailedCount++;
-            } catch {
-              emailFailedCount++;
-            }
-          })
-        );
+    // Process file attachments (uploaded via multer or existing parsed attachments)
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      const uploadedAttachments = await processUploadedAttachments(req.files, "RBF/notifications");
+      attachments.push(...uploadedAttachments);
+    }
+    if (req.body.attachments) {
+      try {
+        const existingAttachments = typeof req.body.attachments === "string"
+          ? JSON.parse(req.body.attachments)
+          : req.body.attachments;
+        if (Array.isArray(existingAttachments)) {
+          attachments.push(...existingAttachments);
+        }
+      } catch (e) {
+        console.error("Error parsing existing attachments:", e);
       }
     }
 
@@ -284,15 +333,12 @@ export async function sendAdminNotification(req, res) {
       action_url: action_url ? action_url.trim() : null,
       target_type,
       target_team: target_team || null,
-      target_organization_types: organization_types || [],
+      target_organization_types: parsedOrgTypes || [],
       recipients: userIds,
       read_by: [],
+      dismissed_by: [],
       sent_by: req.user._id,
-      sent_as_email: Boolean(sent_as_email),
-      email_delivery_status: {
-        sent: emailSentCount,
-        failed: emailFailedCount,
-      },
+      attachments,
     });
 
     await logAudit({
@@ -304,8 +350,7 @@ export async function sendAdminNotification(req, res) {
         title: newNotification.title,
         target_type: newNotification.target_type,
         recipient_count: userIds.length,
-        sent_as_email: newNotification.sent_as_email,
-        email_sent: emailSentCount,
+        attachment_count: attachments.length,
       },
       ipAddress: req.ip || req.headers["x-forwarded-for"],
     });
@@ -318,9 +363,7 @@ export async function sendAdminNotification(req, res) {
 
     return res.status(201).json({
       status: 1,
-      msg: `Notification dispatched successfully to ${userIds.length} recipient(s)${
-        sent_as_email ? ` (${emailSentCount} email(s) delivered)` : ""
-      }`,
+      msg: `Notification dispatched successfully to ${userIds.length} recipient(s)`,
       notification: populatedNotification,
     });
   } catch (err) {
@@ -329,7 +372,7 @@ export async function sendAdminNotification(req, res) {
   }
 }
 
-// Get Admin Notifications List
+// Get Admin Notifications List (Read)
 export async function getAdminNotifications(req, res) {
   try {
     const {
@@ -375,8 +418,9 @@ export async function getAdminNotifications(req, res) {
             ],
             warning: [{ $match: { type: "warning" } }, { $count: "count" }],
             success: [{ $match: { type: "success" } }, { $count: "count" }],
-            withEmail: [
-              { $match: { sent_as_email: true } },
+            error: [{ $match: { type: "error" } }, { $count: "count" }],
+            withAttachments: [
+              { $match: { "attachments.0": { $exists: true } } },
               { $count: "count" },
             ],
           },
@@ -395,7 +439,8 @@ export async function getAdminNotifications(req, res) {
         announcement: facet.announcement?.[0]?.count || 0,
         warning: facet.warning?.[0]?.count || 0,
         success: facet.success?.[0]?.count || 0,
-        withEmail: facet.withEmail?.[0]?.count || 0,
+        error: facet.error?.[0]?.count || 0,
+        withAttachments: facet.withAttachments?.[0]?.count || 0,
       },
       pagination: {
         total,
@@ -410,16 +455,83 @@ export async function getAdminNotifications(req, res) {
   }
 }
 
-// Delete Notification (Super Admin Only)
-export async function deleteAdminNotification(req, res) {
+// Update Notification (Admin CRUD Update)
+export async function updateAdminNotification(req, res) {
   try {
-    if (req.user?.role !== "super_admin") {
-      return res.status(403).json({
-        status: 0,
-        msg: "Access denied. Only Super Admin has permission to delete notification dispatch logs.",
-      });
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ status: 0, msg: "Invalid notification ID" });
     }
 
+    const notification = await NotificationModel.findById(id);
+    if (!notification) {
+      return res.status(404).json({ status: 0, msg: "Notification not found" });
+    }
+
+    const {
+      title,
+      message,
+      type,
+      priority,
+      action_url,
+    } = req.body;
+
+    if (title && title.trim()) notification.title = title.trim();
+    if (message && message.trim()) notification.message = message.trim();
+    if (type) notification.type = type;
+    if (priority) notification.priority = priority;
+    if (action_url !== undefined) notification.action_url = action_url ? action_url.trim() : null;
+
+    // Handle new uploaded attachments or updated list
+    let attachments = [...(notification.attachments || [])];
+    if (req.body.attachments) {
+      try {
+        const parsed = typeof req.body.attachments === "string"
+          ? JSON.parse(req.body.attachments)
+          : req.body.attachments;
+        if (Array.isArray(parsed)) {
+          attachments = parsed;
+        }
+      } catch (e) {
+        console.error("Error parsing attachments during update:", e);
+      }
+    }
+    if (req.files && req.files.length > 0) {
+      const newUploads = await processUploadedAttachments(req.files, "RBF/notifications");
+      attachments.push(...newUploads);
+    }
+    notification.attachments = attachments;
+
+    await notification.save();
+
+    await logAudit({
+      action: "NOTIFICATION_UPDATED",
+      performedBy: req.user,
+      targetType: "Notification",
+      targetId: id,
+      details: { title: notification.title },
+      ipAddress: req.ip || req.headers["x-forwarded-for"],
+    });
+
+    const populated = await NotificationModel.findById(id)
+      .populate("sent_by", "name email role account.image")
+      .populate("target_team", "name department")
+      .populate("recipients", "name email company_name role account.image");
+
+    return res.json({
+      status: 1,
+      msg: "Notification updated successfully",
+      notification: populated,
+    });
+  } catch (err) {
+    console.error("updateAdminNotification error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+// Delete Notification (Admin / Super Admin CRUD Delete)
+export async function deleteAdminNotification(req, res) {
+  try {
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ status: 0, msg: "Invalid notification ID" });
@@ -447,10 +559,10 @@ export async function deleteAdminNotification(req, res) {
 }
 
 /* =========================================================================
-   3. MAIL DISPATCHER MANAGEMENT (Super Admin)
+   3. MAIL DISPATCHER MANAGEMENT (Super Admin & Admin with File Attachments)
    ========================================================================= */
 
-// Dispatch Custom or Bulk Email
+// Dispatch Custom or Bulk Email with Attachments
 export async function sendAdminMail(req, res) {
   try {
     const {
@@ -470,12 +582,31 @@ export async function sendAdminMail(req, res) {
       return res.status(400).json({ status: 0, msg: "Email message body is required" });
     }
 
-    const { users, userIds, emails } = await resolveTargetRecipients({
+    let parsedUserIds = selected_user_ids;
+    if (typeof selected_user_ids === "string") {
+      try { parsedUserIds = JSON.parse(selected_user_ids); } catch { parsedUserIds = [selected_user_ids]; }
+    }
+
+    let parsedOrgTypes = organization_types;
+    if (typeof organization_types === "string") {
+      try { parsedOrgTypes = JSON.parse(organization_types); } catch { parsedOrgTypes = [organization_types]; }
+    }
+
+    let parsedCustomEmails = custom_emails;
+    if (typeof custom_emails === "string") {
+      try {
+        parsedCustomEmails = JSON.parse(custom_emails);
+      } catch {
+        parsedCustomEmails = custom_emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+      }
+    }
+
+    const { userIds, emails } = await resolveTargetRecipients({
       target_type,
       target_team,
-      selected_user_ids,
-      organization_types,
-      custom_emails,
+      selected_user_ids: parsedUserIds,
+      organization_types: parsedOrgTypes,
+      custom_emails: parsedCustomEmails,
     });
 
     if (emails.length === 0) {
@@ -485,7 +616,51 @@ export async function sendAdminMail(req, res) {
       });
     }
 
+    // Process file attachments for email
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      const uploadedAttachments = await processUploadedAttachments(req.files, "RBF/mail");
+      attachments.push(...uploadedAttachments);
+    }
+    if (req.body.attachments) {
+      try {
+        const existingAttachments = typeof req.body.attachments === "string"
+          ? JSON.parse(req.body.attachments)
+          : req.body.attachments;
+        if (Array.isArray(existingAttachments)) {
+          attachments.push(...existingAttachments);
+        }
+      } catch (e) {
+        console.error("Error parsing existing email attachments:", e);
+      }
+    }
+
     const emailSubject = subject.trim();
+    const attachmentsHtml = attachments.length > 0
+      ? `
+        <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 8px;">
+            📎 Attached Files (${attachments.length}):
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${attachments
+              .map(
+                (att) => `
+              <div style="font-size: 13px;">
+                <a href="${att.url}" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600;">
+                  ⬇️ ${att.file_name || "Download File"}
+                </a>
+                <span style="color: #94a3b8; font-size: 11px; margin-left: 6px;">
+                  (${att.file_type || "file"})
+                </span>
+              </div>`
+              )
+              .join("")}
+          </div>
+        </div>
+      `
+      : "";
+
     const formattedHtml = `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 24px 30px; color: #ffffff; border-bottom: 3px solid #6366f1;">
@@ -495,6 +670,7 @@ export async function sendAdminMail(req, res) {
         <div style="padding: 30px; color: #1e293b; line-height: 1.65;">
           <h3 style="margin: 0 0 16px; font-size: 18px; color: #0f172a; font-weight: 700;">${emailSubject}</h3>
           <div style="font-size: 14px; color: #334155; line-height: 1.7; white-space: pre-wrap;">${body.trim()}</div>
+          ${attachmentsHtml}
         </div>
         <div style="background: #f8fafc; padding: 18px 30px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center;">
           Sent by RealBell Business Foundation Administration • © ${new Date().getFullYear()} RealBell
@@ -513,7 +689,7 @@ export async function sendAdminMail(req, res) {
       await Promise.all(
         chunk.map(async (email) => {
           try {
-            const success = await sendMail(email, emailSubject, formattedHtml);
+            const success = await sendMail(email, emailSubject, formattedHtml, attachments);
             if (success) {
               successCount++;
             } else {
@@ -536,7 +712,7 @@ export async function sendAdminMail(req, res) {
       body: body.trim(),
       target_type,
       target_team: target_team || null,
-      target_organization_types: organization_types || [],
+      target_organization_types: parsedOrgTypes || [],
       recipient_emails: emails,
       recipients: userIds,
       sent_by: req.user._id,
@@ -544,6 +720,7 @@ export async function sendAdminMail(req, res) {
       success_count: successCount,
       fail_count: failCount,
       error_details: errorDetails.slice(0, 50),
+      attachments,
     });
 
     await logAudit({
@@ -557,6 +734,7 @@ export async function sendAdminMail(req, res) {
         total_recipients: emails.length,
         success_count: successCount,
         fail_count: failCount,
+        attachment_count: attachments.length,
       },
       ipAddress: req.ip || req.headers["x-forwarded-for"],
     });
@@ -569,7 +747,7 @@ export async function sendAdminMail(req, res) {
       status: 1,
       msg: `Emails dispatched: ${successCount} sent successfully${
         failCount > 0 ? `, ${failCount} failed` : ""
-      }`,
+      }${attachments.length > 0 ? ` with ${attachments.length} attachment(s)` : ""}`,
       mailLog: populatedMail,
     });
   } catch (err) {
@@ -627,6 +805,10 @@ export async function getAdminMailLogs(req, res) {
             totalEmailsSent: [
               { $group: { _id: null, total: { $sum: "$success_count" } } },
             ],
+            withAttachments: [
+              { $match: { "attachments.0": { $exists: true } } },
+              { $count: "count" },
+            ],
           },
         },
       ]),
@@ -643,6 +825,7 @@ export async function getAdminMailLogs(req, res) {
         partiallyFailed: facet.partially_failed?.[0]?.count || 0,
         failed: facet.failed?.[0]?.count || 0,
         totalDeliveredEmails: facet.totalEmailsSent?.[0]?.total || 0,
+        withAttachments: facet.withAttachments?.[0]?.count || 0,
       },
       pagination: {
         total,
@@ -657,16 +840,9 @@ export async function getAdminMailLogs(req, res) {
   }
 }
 
-// Delete Mail Log (Super Admin Only)
+// Delete Mail Log (Super Admin & Authorized RBAC)
 export async function deleteAdminMailLog(req, res) {
   try {
-    if (req.user?.role !== "super_admin") {
-      return res.status(403).json({
-        status: 0,
-        msg: "Access denied. Only Super Admin has permission to delete mail dispatch logs.",
-      });
-    }
-
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ status: 0, msg: "Invalid mail log ID" });
@@ -694,25 +870,43 @@ export async function deleteAdminMailLog(req, res) {
 }
 
 /* =========================================================================
-   4. USER-FACING IN-APP NOTIFICATIONS
+   4. USER-FACING IN-APP NOTIFICATIONS (CRUD)
    ========================================================================= */
 
-// Get current user's notifications
+// Get current user's notifications (Read with filter, search, pagination)
 export async function getMyNotifications(req, res) {
   try {
     if (!req.user || !req.user._id) {
       return res.status(401).json({ status: 0, msg: "Authentication required" });
     }
 
-    const { page = 1, limit = 20, unreadOnly = "false" } = req.query;
+    const {
+      page = 1,
+      limit = 20,
+      unreadOnly = "false",
+      search = "",
+      type = "",
+    } = req.query;
     const userId = req.user._id;
 
     const query = {
       recipients: userId,
+      dismissed_by: { $ne: userId },
     };
 
     if (unreadOnly === "true") {
       query.read_by = { $ne: userId };
+    }
+
+    if (type) {
+      query.type = type;
+    }
+
+    if (search && search.trim()) {
+      query.$or = [
+        { title: { $regex: search.trim(), $options: "i" } },
+        { message: { $regex: search.trim(), $options: "i" } },
+      ];
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -722,10 +916,11 @@ export async function getMyNotifications(req, res) {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate("sent_by", "name account.image"),
+        .populate("sent_by", "name email role account.image"),
       NotificationModel.countDocuments(query),
       NotificationModel.countDocuments({
         recipients: userId,
+        dismissed_by: { $ne: userId },
         read_by: { $ne: userId },
       }),
     ]);
@@ -737,6 +932,7 @@ export async function getMyNotifications(req, res) {
       type: n.type,
       priority: n.priority,
       action_url: n.action_url,
+      attachments: n.attachments || [],
       isRead: n.read_by.some((id) => String(id) === String(userId)),
       createdAt: n.createdAt,
       sent_by: n.sent_by,
@@ -759,7 +955,67 @@ export async function getMyNotifications(req, res) {
   }
 }
 
-// Mark single notification as read
+// Get single notification by ID (Read)
+export async function getNotificationById(req, res) {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ status: 0, msg: "Authentication required" });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ status: 0, msg: "Invalid notification ID" });
+    }
+
+    const notification = await NotificationModel.findById(id)
+      .populate("sent_by", "name email role account.image")
+      .populate("target_team", "name department");
+
+    if (!notification) {
+      return res.status(404).json({ status: 0, msg: "Notification not found" });
+    }
+
+    const userId = req.user._id;
+    const isRecipient = notification.recipients?.some((r) => String(r) === String(userId));
+    const isSender = String(notification.sent_by?._id || notification.sent_by) === String(userId);
+    const isAdminUser = ["admin", "super_admin"].includes(req.user.role);
+
+    if (!isRecipient && !isSender && !isAdminUser) {
+      return res.status(403).json({ status: 0, msg: "Access denied" });
+    }
+
+    // Auto mark as read if recipient
+    if (isRecipient && !notification.read_by.some((r) => String(r) === String(userId))) {
+      await NotificationModel.updateOne(
+        { _id: id },
+        { $addToSet: { read_by: userId } }
+      );
+    }
+
+    return res.json({
+      status: 1,
+      notification: {
+        _id: notification._id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        priority: notification.priority,
+        action_url: notification.action_url,
+        attachments: notification.attachments || [],
+        isRead: isRecipient
+          ? true
+          : notification.read_by.some((r) => String(r) === String(userId)),
+        createdAt: notification.createdAt,
+        sent_by: notification.sent_by,
+      },
+    });
+  } catch (err) {
+    console.error("getNotificationById error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+// Mark single notification as read (Update)
 export async function markNotificationRead(req, res) {
   try {
     if (!req.user || !req.user._id) {
@@ -783,7 +1039,7 @@ export async function markNotificationRead(req, res) {
   }
 }
 
-// Mark all user notifications as read
+// Mark all user notifications as read (Update)
 export async function markAllNotificationsRead(req, res) {
   try {
     if (!req.user || !req.user._id) {
@@ -798,6 +1054,30 @@ export async function markAllNotificationsRead(req, res) {
     return res.json({ status: 1, msg: "All notifications marked as read" });
   } catch (err) {
     console.error("markAllNotificationsRead error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+// Dismiss / Delete Notification from User Feed (Delete for User)
+export async function dismissNotification(req, res) {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ status: 0, msg: "Authentication required" });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ status: 0, msg: "Invalid notification ID" });
+    }
+
+    await NotificationModel.updateOne(
+      { _id: id, recipients: req.user._id },
+      { $addToSet: { dismissed_by: req.user._id } }
+    );
+
+    return res.json({ status: 1, msg: "Notification removed from your feed" });
+  } catch (err) {
+    console.error("dismissNotification error:", err);
     return res.status(500).json({ status: 0, msg: "Internal server error" });
   }
 }

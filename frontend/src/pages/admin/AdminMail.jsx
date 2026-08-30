@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AdminLayout from './AdminLayout.jsx';
 import axios from '../../services/axios.jsx';
 import { useStore } from '../../zustand/store.jsx';
@@ -37,6 +37,14 @@ const statusBadgeConfig = {
     'failed': { label: 'Failed', color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)', icon: '✕' },
 };
 
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
 export default function AdminMail() {
     const currentUser = useStore((s) => s.user);
     const isSuper = isSuperAdmin(currentUser);
@@ -47,6 +55,7 @@ export default function AdminMail() {
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [customEmailsInput, setCustomEmailsInput] = useState('');
+    const [files, setFiles] = useState([]);
 
     // Target Selection State
     // target_type: 'custom_emails' | 'specific_users' | 'team' | 'team_selected_users' | 'normal_users_selected' | 'all_users' | 'organization_types' | 'super_admins'
@@ -68,7 +77,7 @@ export default function AdminMail() {
 
     // Outbox Logs State
     const [mailLogs, setMailLogs] = useState([]);
-    const [stats, setStats] = useState({ total: 0, sent: 0, partiallyFailed: 0, failed: 0, totalDeliveredEmails: 0 });
+    const [stats, setStats] = useState({ total: 0, sent: 0, partiallyFailed: 0, failed: 0, totalDeliveredEmails: 0, withAttachments: 0 });
     const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
     const [loadingLogs, setLoadingLogs] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -79,6 +88,7 @@ export default function AdminMail() {
     // Detail Modal & Toast
     const [detailModal, setDetailModal] = useState({ open: false, mail: null });
     const [toast, setToast] = useState(null);
+    const fileInputRef = useRef(null);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -217,6 +227,18 @@ export default function AdminMail() {
         showToast(`Applied template: "${tpl.name}"`);
     };
 
+    // File selection
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const newFiles = Array.from(e.target.files);
+            setFiles(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeFile = (idx) => {
+        setFiles(prev => prev.filter((_, i) => i !== idx));
+    };
+
     // Dispatch Email Submit
     const handleSendMail = async (e) => {
         e.preventDefault();
@@ -235,25 +257,38 @@ export default function AdminMail() {
 
         setSubmitting(true);
         try {
-            const payload = {
-                subject: subject.trim(),
-                body: body.trim(),
-                target_type: targetType,
-                target_team: targetType === 'team' || targetType === 'team_selected_users' ? selectedTeam : null,
-                selected_user_ids: selectedUserIds,
-                organization_types: selectedOrgTypes,
-                custom_emails: targetType === 'custom_emails' ? parseCustomEmails() : [],
-            };
+            const formData = new FormData();
+            formData.append('subject', subject.trim());
+            formData.append('body', body.trim());
+            formData.append('target_type', targetType);
+            if (targetType === 'team' || targetType === 'team_selected_users') {
+                formData.append('target_team', selectedTeam);
+            }
+            formData.append('selected_user_ids', JSON.stringify(selectedUserIds));
+            formData.append('organization_types', JSON.stringify(selectedOrgTypes));
+            if (targetType === 'custom_emails') {
+                formData.append('custom_emails', JSON.stringify(parseCustomEmails()));
+            }
 
-            const res = await axios.post('/admin/mail/send', payload);
+            // Append attached files (images, docs, pdfs, videos)
+            files.forEach(f => {
+                formData.append('files', f);
+            });
+
+            const res = await axios.post('/admin/mail/send', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
             if (res.data.status === 1) {
                 showToast(res.data.msg || 'Emails dispatched successfully!');
                 // Reset form
                 setSubject('');
                 setBody('');
                 setCustomEmailsInput('');
+                setFiles([]);
                 setSelectedUserIds([]);
                 setSelectedOrgTypes([]);
+                if (fileInputRef.current) fileInputRef.current.value = '';
                 loadMailLogs();
             } else {
                 showToast(res.data.msg || 'Failed to dispatch emails', 'error');
@@ -318,7 +353,7 @@ export default function AdminMail() {
                         </span>
                     </h1>
                     <p style={{ color: 'var(--admin-text-subtle, #64748b)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                        Compose and dispatch official emails to anyone across the platform: individual team members, super admins, whole teams, normal users, organization types, or custom email lists.
+                        Compose and dispatch official emails with attachments (images, PDFs, documents, videos) to team members, normal users, organization types, or custom email lists.
                     </p>
                 </div>
 
@@ -353,8 +388,8 @@ export default function AdminMail() {
                     <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#38bdf8', marginTop: '0.2rem' }}>{stats.sent}</div>
                 </div>
                 <div style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: '600', textTransform: 'uppercase' }}>Partial Deliveries</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fbbf24', marginTop: '0.2rem' }}>{stats.partiallyFailed}</div>
+                    <div style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: '600', textTransform: 'uppercase' }}>With Files</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fbbf24', marginTop: '0.2rem' }}>{stats.withAttachments || 0}</div>
                 </div>
                 <div style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', background: 'var(--admin-card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--admin-border-subtle, rgba(255,255,255,0.06))', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.65rem', color: '#f87171', fontWeight: '600', textTransform: 'uppercase' }}>Failed Batches</div>
@@ -377,7 +412,7 @@ export default function AdminMail() {
                             ✉️ Compose & Send Email
                         </h2>
                         <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>
-                            Target arbitrary recipients, teams, normal users, or segment by organization type.
+                            Target arbitrary recipients, teams, normal users, or segment by organization type with file attachments.
                         </p>
                     </div>
 
@@ -471,7 +506,6 @@ export default function AdminMail() {
                     </div>
 
                     {/* Step 1.B: Target Parameters Pickers */}
-                    {/* Custom Email List Textarea */}
                     {targetType === 'custom_emails' && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
@@ -491,7 +525,6 @@ export default function AdminMail() {
                         </div>
                     )}
 
-                    {/* Team Selector */}
                     {(targetType === 'team' || targetType === 'team_selected_users') && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
@@ -516,7 +549,6 @@ export default function AdminMail() {
                         </div>
                     )}
 
-                    {/* Organization Types Checkboxes */}
                     {targetType === 'organization_types' && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
@@ -556,7 +588,6 @@ export default function AdminMail() {
                         </div>
                     )}
 
-                    {/* Specific / Selected User Multi-Select Picker */}
                     {(targetType === 'specific_users' || targetType === 'normal_users_selected' || (targetType === 'team_selected_users' && selectedTeam)) && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -644,6 +675,59 @@ export default function AdminMail() {
                         />
                     </div>
 
+                    {/* File Upload Section for Email Attachments */}
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <label style={{ fontSize: '0.72rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase', margin: 0, letterSpacing: '0.05em' }}>
+                                📎 Attach Files (Images, PDFs, Videos, Documents)
+                            </label>
+                            <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                                Max 10 files (up to 50MB each)
+                            </span>
+                        </div>
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                            onChange={handleFileChange}
+                            style={{ fontSize: '0.75rem', color: '#cbd5e1' }}
+                        />
+
+                        {/* File preview chips */}
+                        {files.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+                                {files.map((file, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            padding: '0.3rem 0.6rem',
+                                            borderRadius: '6px',
+                                            background: 'rgba(99,102,241,0.2)',
+                                            border: '1px solid rgba(99,102,241,0.4)',
+                                            fontSize: '0.72rem',
+                                            color: '#cbd5e1'
+                                        }}
+                                    >
+                                        <span>📎 {file.name}</span>
+                                        <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>({formatBytes(file.size)})</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(idx)}
+                                            style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', padding: '0 2px' }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Action Bar */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                         <button
@@ -703,7 +787,7 @@ export default function AdminMail() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                {['Subject & Preview', 'Target Audience', 'Recipients Count', 'Delivery Status', 'Dispatched By', 'Date', 'Actions'].map(h => (
+                                {['Subject & Preview', 'Target Audience', 'Recipients Count', 'Attachments', 'Delivery Status', 'Dispatched By', 'Date', 'Actions'].map(h => (
                                     <th key={h}>{h}</th>
                                 ))}
                             </tr>
@@ -743,6 +827,23 @@ export default function AdminMail() {
                                             }}>
                                                 ✉️ {item.recipient_emails?.length || item.recipients?.length || 0} emails
                                             </span>
+                                        </td>
+
+                                        <td>
+                                            {item.attachments && item.attachments.length > 0 ? (
+                                                <span style={{
+                                                    fontSize: '0.72rem',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '99px',
+                                                    background: 'rgba(52,211,153,0.12)',
+                                                    color: '#34d399',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    📎 {item.attachments.length} file(s)
+                                                </span>
+                                            ) : (
+                                                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>None</span>
+                                            )}
                                         </td>
 
                                         <td>
@@ -801,7 +902,7 @@ export default function AdminMail() {
 
                 {!loadingLogs && mailLogs.length === 0 && (
                     <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                        No email outbox logs found.
+                        No email dispatch records found.
                     </div>
                 )}
             </div>
@@ -828,12 +929,14 @@ export default function AdminMail() {
                         padding: '1.5rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '1rem'
+                        gap: '1rem',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                                 <span style={{ fontSize: '0.68rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                    Email Outbox Details
+                                    Email Dispatch Inspection
                                 </span>
                                 <h3 style={{ margin: '0.2rem 0 0', fontSize: '1.1rem', fontWeight: '700', color: '#f1f5f9' }}>
                                     {detailModal.mail.subject}
@@ -847,9 +950,33 @@ export default function AdminMail() {
                             </button>
                         </div>
 
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.65, whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                             {detailModal.mail.body}
                         </div>
+
+                        {/* Attachments inside modal */}
+                        {detailModal.mail.attachments && detailModal.mail.attachments.length > 0 && (
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#818cf8', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                                    Attached Files ({detailModal.mail.attachments.length})
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                                    {detailModal.mail.attachments.map((att, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                            <div style={{ fontSize: '0.72rem', fontWeight: '600', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {att.file_name || 'File'}
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem', fontSize: '0.65rem', color: '#64748b' }}>
+                                                <span>{formatBytes(att.file_size)}</span>
+                                                <a href={att.url} target="_blank" rel="noreferrer" download style={{ color: '#818cf8', textDecoration: 'none', fontWeight: '700' }}>
+                                                    Download ⬇️
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.75rem' }}>
                             <div>
@@ -857,7 +984,7 @@ export default function AdminMail() {
                                 <strong style={{ color: '#cbd5e1' }}>{detailModal.mail.target_type}</strong>
                             </div>
                             <div>
-                                <span style={{ color: '#64748b' }}>Successful Sent: </span>
+                                <span style={{ color: '#64748b' }}>Successful Deliveries: </span>
                                 <strong style={{ color: '#34d399' }}>{detailModal.mail.success_count || 0}</strong>
                             </div>
                             <div>
@@ -866,20 +993,19 @@ export default function AdminMail() {
                             </div>
                             <div>
                                 <span style={{ color: '#64748b' }}>Failed Deliveries: </span>
-                                <strong style={{ color: detailModal.mail.fail_count > 0 ? '#f87171' : '#64748b' }}>
-                                    {detailModal.mail.fail_count || 0}
-                                </strong>
+                                <strong style={{ color: detailModal.mail.fail_count > 0 ? '#f87171' : '#64748b' }}>{detailModal.mail.fail_count || 0}</strong>
                             </div>
                         </div>
 
-                        {detailModal.mail.recipient_emails?.length > 0 && (
+                        {/* Recipient list */}
+                        {detailModal.mail.recipient_emails && detailModal.mail.recipient_emails.length > 0 && (
                             <div>
-                                <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>
-                                    Recipients List ({detailModal.mail.recipient_emails.length}):
-                                </span>
-                                <div style={{ maxHeight: '80px', overflowY: 'auto', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                                    {detailModal.mail.recipient_emails.map((email, i) => (
-                                        <span key={i} style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600', marginBottom: '0.3rem' }}>
+                                    Recipients ({detailModal.mail.recipient_emails.length})
+                                </div>
+                                <div style={{ maxHeight: '100px', overflowY: 'auto', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.72rem', color: '#94a3b8', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                    {detailModal.mail.recipient_emails.map((email, idx) => (
+                                        <span key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', color: '#cbd5e1' }}>
                                             {email}
                                         </span>
                                     ))}

@@ -113,10 +113,12 @@ adminRouter.post("/tickets/:id/notes", addTicketInternalNote);
 adminRouter.patch("/tickets/:id/status", updateTicketStatus);
 adminRouter.delete("/tickets/:id", authorize("tickets.delete"), deleteTicket);
 
+import { uploadFile } from "../../services/upload.js";
 import {
     getRecipientsDirectory,
     sendAdminNotification,
     getAdminNotifications,
+    updateAdminNotification,
     deleteAdminNotification,
     sendAdminMail,
     getAdminMailLogs,
@@ -128,12 +130,13 @@ adminRouter.get("/recipients/directory", authorize(["notifications.view", "mail.
 
 /* ── Notifications Hub (Super Admin & Authorized RBAC) ── */
 adminRouter.get("/notifications", authorize("notifications.view"), getAdminNotifications);
-adminRouter.post("/notifications/send", authorize("notifications.send"), sendAdminNotification);
+adminRouter.post("/notifications/send", authorize("notifications.send"), uploadFile.array("files", 10), sendAdminNotification);
+adminRouter.put("/notifications/:id", authorize("notifications.send"), uploadFile.array("files", 10), updateAdminNotification);
 adminRouter.delete("/notifications/:id", authorize("notifications.delete"), deleteAdminNotification);
 
 /* ── Mail Dispatcher (Super Admin & Authorized RBAC) ── */
 adminRouter.get("/mail", authorize("mail.view"), getAdminMailLogs);
-adminRouter.post("/mail/send", authorize("mail.send"), sendAdminMail);
+adminRouter.post("/mail/send", authorize("mail.send"), uploadFile.array("files", 10), sendAdminMail);
 adminRouter.delete("/mail/:id", authorize("mail.delete"), deleteAdminMailLog);
 
 /* ── Community ── */
@@ -142,3 +145,4 @@ adminRouter.delete("/community/:id", authorize("community.delete"), deletePost);
 adminRouter.patch("/community/:id/pin", authorize("community.moderate"), togglePinPost);
 
 export default adminRouter;
+

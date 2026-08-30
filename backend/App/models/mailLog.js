@@ -68,6 +68,15 @@ const MailLogSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    attachments: [
+      {
+        url: { type: String, required: true },
+        file_name: { type: String, default: "" },
+        file_type: { type: String, default: "" },
+        file_size: { type: Number, default: 0 },
+        public_id: { type: String, default: "" },
+      },
+    ],
     meta: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
