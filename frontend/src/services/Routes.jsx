@@ -49,6 +49,8 @@ import AdminEventAttendees from '../pages/admin/AdminEventAttendees.jsx';
 import AdminRoles from '../pages/admin/AdminRoles.jsx';
 import Subscription from '../pages/Subscription.jsx';
 import AdminSubscriptions from '../pages/admin/AdminSubscriptions.jsx';
+import RbfAi from '../pages/app/RbfAi.jsx';
+import AdminAiConfig from '../pages/admin/AdminAiConfig.jsx';
 import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
 import AdminAuthSettings from '../pages/admin/AdminAuthSettings.jsx';
 import AdminAuditLogs from '../pages/admin/AdminAuditLogs.jsx';
@@ -220,11 +222,29 @@ const Routes = createBrowserRouter([
         element: <ProtectedRoute><SubscriptionGuard moduleKey="booster" moduleName="Business Booster Kit"><BusinessBooster /></SubscriptionGuard></ProtectedRoute>
     },
     {
+        path: '/ai',
+        element: <ProtectedRoute><RbfAi /></ProtectedRoute>
+    },
+    {
+        path: '/app/ai',
+        element: <ProtectedRoute><RbfAi /></ProtectedRoute>
+    },
+    {
         path: '/unauthorized',
         element: <Unauthorized />
     },
 
     /* ── Admin Routes Protected by RBAC PermissionRoute ── */
+    {
+        path: '/admin/ai-config',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission={['ai_config.view', 'ai_config.manage']} moduleName="AI Configuration">
+                    <AdminAiConfig />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
     {
         path: '/admin',
         element: (

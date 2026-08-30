@@ -265,6 +265,16 @@ export const PERMISSION_MODULES = [
       { key: "booster.review_claims", label: "Review & Assign Claims", description: "Approve, reject user claims, and assign voucher codes" },
     ],
   },
+  {
+    module: "ai_config",
+    name: "AI Configuration (Mr. Doom)",
+    icon: "🤖",
+    description: "Manage LLM providers (Groq, OpenAI, Google, Mistral, HuggingFace), model names, API credentials, and persona system prompts",
+    permissions: [
+      { key: "ai_config.view", label: "View AI Configuration", description: "Inspect active AI providers, models, hyperparameters, and persona status" },
+      { key: "ai_config.manage", label: "Manage AI Settings & Keys", description: "Update model providers, API credentials, temperature, and system instructions" },
+    ],
+  },
 ];
 
 /**
@@ -305,4 +315,5 @@ export const MODULE_VIEW_PERMISSIONS = {
   "/admin/certificates/templates": "certificates.templates_view",
   "/admin/booster": "booster.view",
   "/admin/business-booster": "booster.view",
+  "/admin/ai-config": "ai_config.view",
 };

@@ -3,6 +3,12 @@
  */
 export const AVAILABLE_SUBSCRIPTION_MODULES = [
   {
+    module_key: "rbf_ai",
+    module_name: "RBF-AI (Mr. Doom)",
+    default_line: "Mr. Doom Startup Copilot, Valuation & Strategy AI",
+    icon: "Bot",
+  },
+  {
     module_key: "community",
     module_name: "Community Wall",
     default_line: "Publish Pitch Updates & Interact on Community Wall",
@@ -128,6 +134,11 @@ export function isModuleLocked(user, moduleKey) {
 
   if (!isSubActive) return true;
 
+  // Free tier never has access to paid modules
+  if (planKey === "free" || !planKey) {
+    return true;
+  }
+
   // If user has populated included_modules from their active plan
   if (Array.isArray(sub?.included_modules) && sub.included_modules.length > 0) {
     return !sub.included_modules.some((m) => m.module_key === moduleKey && m.is_enabled !== false);
@@ -137,9 +148,6 @@ export function isModuleLocked(user, moduleKey) {
   if (planKey === "enterprise_vip") return false;
   if (planKey === "pro_growth") {
     return moduleKey === "booster" || moduleKey === "legal_compliance" || moduleKey === "certificates";
-  }
-  if (planKey === "free" || !planKey) {
-    return true;
   }
   return false;
 }

@@ -47,6 +47,7 @@ import {
   Bell,
   Zap,
   Sparkles,
+  Bot,
 } from "lucide-react";
 import { useWebNotifications } from "../hooks/useWebNotifications";
 import { isModuleLocked } from "../config/subscriptionModules.js";
@@ -136,6 +137,7 @@ export default function Sidebar() {
   const navItems = useMemo(() => {
     return [
       { path: "/dashboard", label: "Dashboard", icon: Building2 },
+      { path: "/ai", label: "RBF-AI (Mr. Doom)", icon: Bot, moduleKey: "rbf_ai" },
       { path: "/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
       {
         key: "connect",

@@ -34,6 +34,7 @@ import {
   clearSessionActiveConsultation,
   incrementSessionStats,
 } from "./liveSessionRedis.js";
+import { registerAiSocketHandlers } from "./aiSocket.js";
 
 function parseCookieValue(cookieHeader, name) {
   if (!cookieHeader) return null;
@@ -145,6 +146,7 @@ export function registerSocketServer(httpServer, app) {
     socket.join(`user:${userId}`);
 
     await setSocketUser(socket.id, userId);
+    registerAiSocketHandlers(io, socket);
     const presenceCount = await incrementPresence(userId, socket.id);
     if (presenceCount === 1) {
       await notifyPresence(io, userId, true);

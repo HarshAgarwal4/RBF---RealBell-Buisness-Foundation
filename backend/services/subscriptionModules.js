@@ -3,6 +3,12 @@
  */
 export const DEFAULT_SUBSCRIPTION_MODULES = [
   {
+    module_key: "rbf_ai",
+    module_name: "RBF-AI (Mr. Doom)",
+    access_line: "Mr. Doom Startup Copilot, Valuation & Ecosystem Intelligence",
+    is_enabled: true,
+  },
+  {
     module_key: "community",
     module_name: "Community Wall",
     access_line: "Publish Pitch Updates & Interact on Community Wall",
