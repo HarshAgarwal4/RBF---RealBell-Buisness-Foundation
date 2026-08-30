@@ -1,3 +1,8 @@
+// Native Node.js built-in .env loader (Node v20.6.0+)
+try {
+  process.loadEnvFile?.();
+} catch (_) {}
+
 import express from 'express';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'

@@ -8,9 +8,6 @@ import OrganizationModel from '../App/models/organization.js';
 import QRCode from 'qrcode';
 import Handlebars from 'handlebars';
 import { uploadFileToCloud } from './upload.js';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export async function generateUniqueId(prefix) {
   try {
