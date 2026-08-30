@@ -40,6 +40,13 @@ import { COLORS } from "../../components/colors";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 import { isModuleLocked } from "../../config/subscriptionModules";
 
+// ─────────────────────────────────────────────────────────────
+// PERSISTENT IN-MEMORY CACHE (PREVENTS RE-FETCH ON RE-RENDERS)
+// ─────────────────────────────────────────────────────────────
+let cachedSessionsList = null;
+let cachedBotInfo = null;
+const messagesMemoryCache = new Map(); // sessionId -> messages[]
+
 const QUICK_PROMPTS = [
   {
     title: "Valuation & Cap Table",
@@ -75,14 +82,19 @@ export default function RbfAi() {
   // Check if AI module is locked for current user tier (Free tier or non-subscribed)
   const isLocked = isModuleLocked(user, "rbf_ai");
 
-  const [sessions, setSessions] = useState([]);
-  const [activeSessionId, setActiveSessionId] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [sessions, setSessions] = useState(() => cachedSessionsList || []);
+  const [activeSessionId, setActiveSessionId] = useState(() => {
+    return cachedSessionsList && cachedSessionsList.length > 0 ? cachedSessionsList[0]._id : null;
+  });
+  const [messages, setMessages] = useState(() => {
+    const initialId = cachedSessionsList && cachedSessionsList.length > 0 ? cachedSessionsList[0]._id : null;
+    return initialId && messagesMemoryCache.has(initialId) ? messagesMemoryCache.get(initialId) : [];
+  });
   const [inputValue, setInputValue] = useState("");
-  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingSessions, setLoadingSessions] = useState(() => !cachedSessionsList && !isLocked);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
-  const [botInfo, setBotInfo] = useState({
+  const [botInfo, setBotInfo] = useState(() => cachedBotInfo || {
     botName: "Mr. Doom",
     provider: "groq",
     modelName: "gpt-oss 120b",
@@ -133,16 +145,16 @@ export default function RbfAi() {
           (m) => m._id === `stream-${tempId}` || m.tempId === tempId
         );
 
+        let updated;
         if (existingIdx !== -1) {
-          const updated = [...prev];
+          updated = [...prev];
           updated[existingIdx] = {
             ...updated[existingIdx],
             content: accumulated,
             isStreaming: true,
           };
-          return updated;
         } else {
-          return [
+          updated = [
             ...prev,
             {
               _id: `stream-${tempId}`,
@@ -154,6 +166,11 @@ export default function RbfAi() {
             },
           ];
         }
+
+        if (sessionId) {
+          messagesMemoryCache.set(sessionId, updated);
+        }
+        return updated;
       });
     });
 
@@ -162,12 +179,15 @@ export default function RbfAi() {
       setSending(false);
       activeTempIdRef.current = null;
 
+      const targetSessionId = session?._id || sessionId;
+
       if (session?._id) {
         setActiveSessionId(session._id);
         setSessions((prev) => {
           const exists = prev.some((s) => s._id === session._id);
-          if (!exists) return [session, ...prev];
-          return prev.map((s) => (s._id === session._id ? session : s));
+          const next = !exists ? [session, ...prev] : prev.map((s) => (s._id === session._id ? session : s));
+          cachedSessionsList = next;
+          return next;
         });
       }
 
@@ -175,16 +195,24 @@ export default function RbfAi() {
         const filtered = prev.filter(
           (m) => m._id !== `temp-${tempId}` && m._id !== `stream-${tempId}` && m.tempId !== tempId
         );
-        return [...filtered, userMessage, assistantMessage];
+        const finalMessages = [...filtered, userMessage, assistantMessage];
+        if (targetSessionId) {
+          messagesMemoryCache.set(targetSessionId, finalMessages);
+        }
+        return finalMessages;
       });
     });
 
     socket.on("ai:chat:stopped", () => {
       setSending(false);
       activeTempIdRef.current = null;
-      setMessages((prev) =>
-        prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m))
-      );
+      setMessages((prev) => {
+        const updated = prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m));
+        if (activeSessionId) {
+          messagesMemoryCache.set(activeSessionId, updated);
+        }
+        return updated;
+      });
     });
 
     socket.on("ai:chat:error", ({ msg, code }) => {
@@ -200,7 +228,7 @@ export default function RbfAi() {
     return () => {
       socket.disconnect();
     };
-  }, [backendUrl, user?._id, isLocked]);
+  }, [backendUrl, user?._id, isLocked, activeSessionId]);
 
   // Scroll to bottom
   const scrollToBottom = (smooth = true) => {
@@ -219,66 +247,74 @@ export default function RbfAi() {
     setShowScrollBottom(isUp);
   };
 
-  const fetchBotInfo = async () => {
-    try {
-      const res = await axios.get("/ai/info");
-      if (res.data?.status === 1) {
-        setBotInfo(res.data.bot);
-      }
-    } catch (e) {
-      console.warn("Failed to load bot info", e);
-    }
-  };
-
-  const fetchSessions = useCallback(async () => {
-    if (isLocked) {
-      setLoadingSessions(false);
-      return;
-    }
-    try {
-      setLoadingSessions(true);
-      const res = await axios.get("/ai/sessions");
-      if (res.data?.status === 1) {
-        const list = res.data.sessions || [];
-        setSessions(list);
-        if (list.length > 0 && !activeSessionId) {
-          setActiveSessionId(list[0]._id);
-        }
-      }
-    } catch (e) {
-      console.error("Error fetching sessions", e);
-    } finally {
-      setLoadingSessions(false);
-    }
-  }, [activeSessionId, isLocked]);
-
+  // ─────────────────────────────────────────────────────────────
+  // INITIAL DATA FETCH (RUNS ONCE, SUBSEQUENT RENDERS USE CACHE)
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchBotInfo();
-    fetchSessions();
-  }, [fetchSessions]);
+    if (isLocked) return;
 
-  const fetchMessages = useCallback(async (sessionId) => {
-    if (!sessionId || isLocked) return;
-    try {
-      setLoadingMessages(true);
-      const res = await axios.get(`/ai/sessions/${sessionId}/messages`);
-      if (res.data?.status === 1) {
-        setMessages(res.data.messages || []);
-      }
-    } catch (e) {
-      console.error("Error loading messages", e);
-    } finally {
-      setLoadingMessages(false);
+    // 1. Fetch Bot Info (only if not already cached)
+    if (!cachedBotInfo) {
+      axios
+        .get("/ai/info")
+        .then((res) => {
+          if (res.data?.status === 1) {
+            cachedBotInfo = res.data.bot;
+            setBotInfo(res.data.bot);
+          }
+        })
+        .catch((e) => console.warn("Bot info load warn", e));
+    }
+
+    // 2. Fetch Sessions List (only if not already cached)
+    if (!cachedSessionsList) {
+      setLoadingSessions(true);
+      axios
+        .get("/ai/sessions")
+        .then((res) => {
+          if (res.data?.status === 1) {
+            const list = res.data.sessions || [];
+            cachedSessionsList = list;
+            setSessions(list);
+            if (list.length > 0) {
+              setActiveSessionId((prev) => prev || list[0]._id);
+            }
+          }
+        })
+        .catch((e) => console.error("Error fetching sessions", e))
+        .finally(() => setLoadingSessions(false));
     }
   }, [isLocked]);
 
+  // ─────────────────────────────────────────────────────────────
+  // LOAD MESSAGES FOR ACTIVE SESSION (WITH INSTANT MEMORY CACHE)
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeSessionId && !isLocked) {
-      fetchMessages(activeSessionId);
-    } else {
-      setMessages([]);
+    if (!activeSessionId || isLocked) {
+      if (!activeSessionId) setMessages([]);
+      return;
     }
-  }, [activeSessionId, fetchMessages, isLocked]);
+
+    // Check Memory Cache First: Instant 0ms Load
+    if (messagesMemoryCache.has(activeSessionId)) {
+      setMessages(messagesMemoryCache.get(activeSessionId));
+      return;
+    }
+
+    // If Not in Cache, Fetch from API and Store in Cache
+    setLoadingMessages(true);
+    axios
+      .get(`/ai/sessions/${activeSessionId}/messages`)
+      .then((res) => {
+        if (res.data?.status === 1) {
+          const msgs = res.data.messages || [];
+          messagesMemoryCache.set(activeSessionId, msgs);
+          setMessages(msgs);
+        }
+      })
+      .catch((e) => console.error("Error loading messages", e))
+      .finally(() => setLoadingMessages(false));
+  }, [activeSessionId, isLocked]);
 
   const handleCreateNewSession = async () => {
     if (isLocked) {
@@ -289,8 +325,11 @@ export default function RbfAi() {
       const res = await axios.post("/ai/sessions", { title: "New Strategy Session" });
       if (res.data?.status === 1) {
         const newSession = res.data.session;
-        setSessions((prev) => [newSession, ...prev]);
+        const updatedList = [newSession, ...sessions];
+        cachedSessionsList = updatedList;
+        setSessions(updatedList);
         setActiveSessionId(newSession._id);
+        messagesMemoryCache.set(newSession._id, []);
         setMessages([]);
         setMobileDrawerOpen(false);
         setTimeout(() => textareaRef.current?.focus(), 100);
@@ -307,10 +346,15 @@ export default function RbfAi() {
     try {
       const res = await axios.delete(`/ai/sessions/${sessionId}`);
       if (res.data?.status === 1) {
-        setSessions((prev) => prev.filter((s) => s._id !== sessionId));
+        const remaining = sessions.filter((s) => s._id !== sessionId);
+        cachedSessionsList = remaining;
+        setSessions(remaining);
+        messagesMemoryCache.delete(sessionId);
+
         if (activeSessionId === sessionId) {
-          const remaining = sessions.filter((s) => s._id !== sessionId);
-          setActiveSessionId(remaining[0]?._id || null);
+          const nextId = remaining[0]?._id || null;
+          setActiveSessionId(nextId);
+          setMessages(nextId && messagesMemoryCache.has(nextId) ? messagesMemoryCache.get(nextId) : []);
         }
         toast.success("Conversation deleted");
       }
@@ -356,7 +400,13 @@ export default function RbfAi() {
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, optimisticUserMsg, optimisticStreamMsg]);
+    setMessages((prev) => {
+      const next = [...prev, optimisticUserMsg, optimisticStreamMsg];
+      if (activeSessionId) {
+        messagesMemoryCache.set(activeSessionId, next);
+      }
+      return next;
+    });
     setSending(true);
 
     const socket = socketRef.current;
@@ -383,19 +433,29 @@ export default function RbfAi() {
         });
 
         if (res.data?.status === 1) {
+          const targetSessionId = res.data.session?._id || activeSessionId;
+
           if (!activeSessionId || activeSessionId !== res.data.session?._id) {
             setActiveSessionId(res.data.session._id);
             setSessions((prev) => {
               const exists = prev.some((s) => s._id === res.data.session._id);
-              if (!exists) return [res.data.session, ...prev];
-              return prev.map((s) => (s._id === res.data.session._id ? res.data.session : s));
+              const next = !exists ? [res.data.session, ...prev] : prev.map((s) => (s._id === res.data.session._id ? res.data.session : s));
+              cachedSessionsList = next;
+              return next;
             });
           }
-          setMessages((prev) => [
-            ...prev.filter((m) => m._id !== optimisticUserMsg._id && m._id !== optimisticStreamMsg._id),
-            res.data.userMessage,
-            res.data.assistantMessage,
-          ]);
+
+          setMessages((prev) => {
+            const next = [
+              ...prev.filter((m) => m._id !== optimisticUserMsg._id && m._id !== optimisticStreamMsg._id),
+              res.data.userMessage,
+              res.data.assistantMessage,
+            ];
+            if (targetSessionId) {
+              messagesMemoryCache.set(targetSessionId, next);
+            }
+            return next;
+          });
         }
       } catch (err) {
         console.error("HTTP chat error:", err);
