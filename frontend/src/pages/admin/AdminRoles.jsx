@@ -20,6 +20,15 @@ import {
   Sliders,
   AlertTriangle,
   Loader2,
+  GripVertical,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  Check,
+  RotateCcw,
+  Sparkles,
+  Save,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -67,8 +76,15 @@ const FIELD_TYPES = [
 
 export default function AdminRoles() {
   const [roles, setRoles] = useState([]);
+  const [initialRoles, setInitialRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+
+  // Reorder & Position Arrangement State
+  const [isOrderDirty, setIsOrderDirty] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   // Edit / Create Modal State
   const [activeTab, setActiveTab] = useState("basic"); // 'basic' | 'schema' | 'ui'
@@ -96,7 +112,7 @@ export default function AdminRoles() {
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const setStoreRoles = useStore((state) => state.setRoles);
@@ -106,8 +122,11 @@ export default function AdminRoles() {
     try {
       const res = await axios.get("/roles");
       if (res.data.status === 1 && Array.isArray(res.data.roles)) {
-        setRoles(res.data.roles);
-        setStoreRoles(res.data.roles);
+        const sortedRoles = [...res.data.roles].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        setRoles(sortedRoles);
+        setInitialRoles(sortedRoles);
+        setIsOrderDirty(false);
+        setStoreRoles(sortedRoles);
       }
     } catch (err) {
       console.error(err);
@@ -121,6 +140,91 @@ export default function AdminRoles() {
     loadRoles();
   }, [loadRoles]);
 
+  // ---------- Position Arrangement Logic ----------
+  const moveRole = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= roles.length) return;
+
+    const newRoles = [...roles];
+    const itemToMove = newRoles.splice(index, 1)[0];
+    newRoles.splice(targetIndex, 0, itemToMove);
+
+    setRoles(newRoles);
+    setIsOrderDirty(true);
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newRoles = [...roles];
+    const itemToMove = newRoles.splice(draggedIndex, 1)[0];
+    newRoles.splice(targetIndex, 0, itemToMove);
+
+    setRoles(newRoles);
+    setIsOrderDirty(true);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const orderedIds = roles.map((r) => r._id);
+      const res = await axios.put("/roles/reorder", { orderedIds });
+
+      if (res.data.status === 1) {
+        showToast("Role order saved successfully! Synced with Sign Up page.", "success");
+        if (Array.isArray(res.data.roles)) {
+          setRoles(res.data.roles);
+          setInitialRoles(res.data.roles);
+          setStoreRoles(res.data.roles);
+        } else {
+          setInitialRoles([...roles]);
+          setStoreRoles([...roles]);
+        }
+        setIsOrderDirty(false);
+      } else {
+        showToast(res.data.msg || "Failed to save role order", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.msg || "Server error while saving order", "error");
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleResetOrder = () => {
+    setRoles([...initialRoles]);
+    setIsOrderDirty(false);
+    showToast("Reverted to previous role sequence", "info");
+  };
+
+  // ---------- Modal Logic ----------
   const openCreateModal = () => {
     setActiveTab("basic");
     setRoleForm({
@@ -343,8 +447,12 @@ export default function AdminRoles() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed top-16 right-6 z-50 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xl ${
-            toast.type === "error" ? "bg-red-600" : "bg-emerald-600"
+          className={`fixed top-16 right-6 z-50 rounded-xl px-4 py-2.5 text-xs font-semibold text-white shadow-2xl transition-all ${
+            toast.type === "error"
+              ? "bg-red-600 border border-red-500/50"
+              : toast.type === "info"
+              ? "bg-blue-600 border border-blue-500/50"
+              : "bg-emerald-600 border border-emerald-500/50"
           }`}
         >
           {toast.msg}
@@ -352,72 +460,200 @@ export default function AdminRoles() {
       )}
 
       {/* Header Banner */}
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-extrabold text-white">Roles & Profile Designer</h1>
-          <p className="text-xs text-slate-400">
-            Create roles, design custom profile schemas, and customize visual UI themes.
+          <h1 className="text-lg font-extrabold text-white flex items-center gap-2">
+            <span>Roles & Profile Designer</span>
+            <span className="rounded-full bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+              Ecosystem Profiles
+            </span>
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Arrange card positions, design custom profile schemas, and define onboarding sequences for public registration.
           </p>
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="admin-btn admin-btn-primary"
-          style={{ padding: "7px 14px", fontSize: "0.8rem" }}
-        >
-          <Plus className="h-3.5 w-3.5" /> Create New Role
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {isOrderDirty && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleResetOrder}
+                disabled={savingOrder}
+                className="admin-btn admin-btn-secondary"
+                style={{ padding: "7px 12px", fontSize: "0.78rem" }}
+                title="Discard position changes"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Revert
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveOrder}
+                disabled={savingOrder}
+                className="admin-btn admin-btn-primary animate-pulse"
+                style={{
+                  padding: "7px 16px",
+                  fontSize: "0.78rem",
+                  background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+                  boxShadow: "0 4px 14px 0 rgba(37, 99, 235, 0.4)",
+                }}
+              >
+                {savingOrder ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Save className="h-3.5 w-3.5" />
+                )}
+                <span>Save New Order ({roles.length})</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={openCreateModal}
+            className="admin-btn admin-btn-primary"
+            style={{ padding: "7px 14px", fontSize: "0.8rem" }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Create New Role
+          </button>
+        </div>
       </div>
 
-      {/* Roles Grid */}
+      {/* Position Arrangement Informational Banner */}
+      <div className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5 text-slate-300">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="font-bold text-white">Arrange Display Order:</span>{" "}
+            <span className="text-slate-400">
+              Drag cards or click the <span className="font-semibold text-blue-300">⬅ / ➡</span> arrows to reorder. The sequence saved here is displayed directly on the Sign Up onboarding page.
+            </span>
+          </div>
+        </div>
+
+        {isOrderDirty && (
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+              Unsaved Order
+            </span>
+            <button
+              onClick={handleSaveOrder}
+              disabled={savingOrder}
+              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition shadow-xs flex items-center gap-1 cursor-pointer"
+            >
+              {savingOrder ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              Save Order
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Roles Grid with Position Arrangement & Drag and Drop */}
       {loading ? (
         <div className="flex h-48 items-center justify-center text-xs text-slate-500">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-500 mr-2" /> Loading roles...
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" /> Loading roles...
         </div>
       ) : (
         <div className="admin-grid-2col">
-          {roles.map((role) => {
+          {roles.map((role, index) => {
             const IconComp = ICON_MAP[role.icon] || Building2;
             const stepsCount = role.profileSchema?.steps?.length || 0;
             const fieldsCount =
               role.profileSchema?.steps?.reduce((acc, step) => acc + (step.fields?.length || 0), 0) || 0;
             const themeColor = role.uiConfig?.accentColor || "#d97706";
+            const isDragging = draggedIndex === index;
+            const isOver = dragOverIndex === index && draggedIndex !== index;
 
             return (
               <div
-                key={role._id}
-                className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+                key={role._id || role.key}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`group relative flex flex-col justify-between rounded-xl border bg-slate-900/70 p-4 transition-all ${
+                  isDragging
+                    ? "opacity-40 border-dashed border-blue-500 scale-95"
+                    : isOver
+                    ? "border-blue-400 bg-blue-500/10 shadow-lg shadow-blue-500/10 -translate-y-0.5"
+                    : "border-slate-800 hover:border-slate-700 shadow-sm"
+                }`}
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Top Bar: Drag Handle, Position Badge, Role Label & Type */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap pb-2.5 border-b border-slate-800/80">
                     <div className="flex items-center gap-2.5">
+                      {/* Drag Handle */}
                       <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white flex-shrink-0"
-                        style={{ backgroundColor: `${themeColor}22`, color: themeColor }}
+                        className="cursor-grab active:cursor-grabbing p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800 transition"
+                        title="Drag to rearrange position"
                       >
-                        <IconComp className="h-3.5 w-3.5" />
+                        <GripVertical className="h-4 w-4" />
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-white">{role.label}</h3>
-                        <span className="font-mono text-[10px] text-slate-400">Key: {role.key}</span>
+
+                      {/* Position Index Badge */}
+                      <div className="flex h-6 px-2 items-center justify-center rounded-md bg-blue-500/15 border border-blue-500/30 text-[11px] font-mono font-bold text-blue-400">
+                        #{index + 1}
+                      </div>
+
+                      {/* Role Icon & Title */}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-white flex-shrink-0"
+                          style={{ backgroundColor: `${themeColor}22`, color: themeColor }}
+                        >
+                          <IconComp className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-white leading-tight">{role.label}</h3>
+                          <span className="font-mono text-[10px] text-slate-400">Key: {role.key}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {role.isBuiltIn ? (
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                        Built-in Role
-                      </span>
-                    ) : (
-                      <span
-                        className="rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ borderColor: `${themeColor}55`, backgroundColor: `${themeColor}15`, color: themeColor }}
-                      >
-                        Custom Theme
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {/* Position Move Buttons */}
+                      <div className="flex items-center bg-slate-950 rounded-lg border border-slate-800 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveRole(index, -1)}
+                          disabled={index === 0}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+                          title="Move Left / Earlier in Signup"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveRole(index, 1)}
+                          disabled={index === roles.length - 1}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+                          title="Move Right / Later in Signup"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      {role.isBuiltIn ? (
+                        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+                          Built-in
+                        </span>
+                      ) : (
+                        <span
+                          className="rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ borderColor: `${themeColor}55`, backgroundColor: `${themeColor}15`, color: themeColor }}
+                        >
+                          Custom
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <p className="mt-2 text-xs text-slate-300 line-clamp-2">
+                  <p className="mt-2.5 text-xs text-slate-300 line-clamp-2 leading-relaxed">
                     {role.description || "No description provided."}
                   </p>
 
@@ -432,6 +668,10 @@ export default function AdminRoles() {
                     <div>•</div>
                     <div>
                       <strong className="text-white font-bold">{fieldsCount}</strong> Total Fields
+                    </div>
+                    <div>•</div>
+                    <div>
+                      Position in Signup: <strong className="text-blue-400 font-bold">Step 1 (Card #{index + 1})</strong>
                     </div>
                   </div>
                 </div>
@@ -499,7 +739,7 @@ export default function AdminRoles() {
                 onClick={() => setActiveTab("basic")}
                 className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-bold transition-all whitespace-nowrap ${
                   activeTab === "basic"
-                    ? "border-indigo-500 text-indigo-400"
+                    ? "border-blue-500 text-blue-400"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -511,7 +751,7 @@ export default function AdminRoles() {
                 onClick={() => setActiveTab("schema")}
                 className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-bold transition-all whitespace-nowrap ${
                   activeTab === "schema"
-                    ? "border-indigo-500 text-indigo-400"
+                    ? "border-blue-500 text-blue-400"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -523,7 +763,7 @@ export default function AdminRoles() {
                 onClick={() => setActiveTab("ui")}
                 className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-bold transition-all whitespace-nowrap ${
                   activeTab === "ui"
-                    ? "border-indigo-500 text-indigo-400"
+                    ? "border-blue-500 text-blue-400"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -550,7 +790,7 @@ export default function AdminRoles() {
                         }));
                       }}
                       placeholder="e.g. Service Provider"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -562,7 +802,7 @@ export default function AdminRoles() {
                       value={roleForm.key}
                       onChange={(e) => setRoleForm((p) => ({ ...p, key: e.target.value.toLowerCase().replace(/\s+/g, "_") }))}
                       placeholder="e.g. service_provider"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-indigo-500 disabled:opacity-50"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-blue-500 disabled:opacity-50"
                     />
                   </div>
 
@@ -573,7 +813,7 @@ export default function AdminRoles() {
                       value={roleForm.description}
                       onChange={(e) => setRoleForm((p) => ({ ...p, description: e.target.value }))}
                       placeholder="Brief description of who belongs to this role..."
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -582,7 +822,7 @@ export default function AdminRoles() {
                     <select
                       value={roleForm.icon}
                       onChange={(e) => setRoleForm((p) => ({ ...p, icon: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
                     >
                       {Object.keys(ICON_MAP).map((iconKey) => (
                         <option key={iconKey} value={iconKey}>
@@ -599,13 +839,13 @@ export default function AdminRoles() {
             {activeTab === "schema" && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
                     Form Steps & Field Definitions
                   </span>
                   <button
                     type="button"
                     onClick={addStep}
-                    className="flex items-center gap-1 rounded-lg bg-indigo-600/20 border border-indigo-500/30 px-2.5 py-1 text-xs font-bold text-indigo-300 hover:bg-indigo-600/30"
+                    className="flex items-center gap-1 rounded-lg bg-blue-600/20 border border-blue-500/30 px-2.5 py-1 text-xs font-bold text-blue-300 hover:bg-blue-600/30"
                   >
                     <Plus className="h-3 w-3" /> Add Step Section
                   </button>
@@ -628,7 +868,7 @@ export default function AdminRoles() {
                                 value={step.title}
                                 onChange={(e) => updateStep(sIdx, "title", e.target.value)}
                                 placeholder="e.g. Basic Details"
-                                className="w-full rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white outline-none focus:border-indigo-500"
+                                className="w-full rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white outline-none focus:border-blue-500"
                               />
                             </div>
                             <div>
@@ -638,7 +878,7 @@ export default function AdminRoles() {
                                 value={step.description}
                                 onChange={(e) => updateStep(sIdx, "description", e.target.value)}
                                 placeholder="e.g. Provide contact info"
-                                className="w-full rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                className="w-full rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs text-slate-300 outline-none focus:border-blue-500"
                               />
                             </div>
                           </div>
@@ -660,7 +900,7 @@ export default function AdminRoles() {
                             <button
                               type="button"
                               onClick={() => addField(sIdx)}
-                              className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:underline"
+                              className="flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:underline"
                             >
                               <Plus className="h-3 w-3" /> Add Field
                             </button>
@@ -720,7 +960,7 @@ export default function AdminRoles() {
                                         type="checkbox"
                                         checked={Boolean(field.required)}
                                         onChange={(e) => updateField(sIdx, fIdx, "required", e.target.checked)}
-                                        className="accent-indigo-500"
+                                        className="accent-blue-500"
                                       />
                                       <span className="text-[10px] font-medium text-slate-300">Required</span>
                                     </label>

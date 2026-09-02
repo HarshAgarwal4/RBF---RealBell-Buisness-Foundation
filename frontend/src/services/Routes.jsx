@@ -54,6 +54,9 @@ import AdminAiConfig from '../pages/admin/AdminAiConfig.jsx';
 import AdminThemeCustomizer from '../pages/admin/AdminThemeCustomizer.jsx';
 import AdminAuthSettings from '../pages/admin/AdminAuthSettings.jsx';
 import AdminAuditLogs from '../pages/admin/AdminAuditLogs.jsx';
+import AdminWalletManagement from '../pages/admin/AdminWalletManagement.jsx';
+import Wallet from '../pages/app/Wallet.jsx';
+import ReferralPage from '../pages/app/ReferralPage.jsx';
 import ForgotPassword from '../pages/ForgotPassword.jsx';
 import LegalServices from '../pages/app/legalCompliance/LegalServices.jsx';
 import LegalServiceApply from '../pages/app/legalCompliance/LegalServiceApply.jsx';
@@ -136,6 +139,22 @@ const Routes = createBrowserRouter([
     {
         path: '/subscription',
         element: <ProtectedRoute><Subscription /></ProtectedRoute>
+    },
+    {
+        path: '/wallet',
+        element: <ProtectedRoute><Wallet /></ProtectedRoute>
+    },
+    {
+        path: '/app/wallet',
+        element: <ProtectedRoute><Wallet /></ProtectedRoute>
+    },
+    {
+        path: '/referrals',
+        element: <ProtectedRoute><ReferralPage /></ProtectedRoute>
+    },
+    {
+        path: '/app/referrals',
+        element: <ProtectedRoute><ReferralPage /></ProtectedRoute>
     },
     {
         path: '/account',
@@ -311,6 +330,16 @@ const Routes = createBrowserRouter([
             <ProtectedRoute>
                 <PermissionRoute permission="subscriptions.view" moduleName="Subscription Plans">
                     <AdminSubscriptions />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/wallets',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="users.view" moduleName="Wallet Management">
+                    <AdminWalletManagement />
                 </PermissionRoute>
             </ProtectedRoute>
         )

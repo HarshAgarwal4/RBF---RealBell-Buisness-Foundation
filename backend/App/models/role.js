@@ -53,6 +53,10 @@ const RoleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    order: {
+      type: Number,
+      default: 0,
+    },
     hasSubtypes: {
       type: Boolean,
       default: false,

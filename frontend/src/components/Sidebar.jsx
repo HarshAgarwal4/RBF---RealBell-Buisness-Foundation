@@ -48,6 +48,8 @@ import {
   Zap,
   Sparkles,
   Bot,
+  Coins,
+  Gift,
 } from "lucide-react";
 import { useWebNotifications } from "../hooks/useWebNotifications";
 import { isModuleLocked } from "../config/subscriptionModules.js";
@@ -90,11 +92,13 @@ const pillBtnStyle = {
   padding: "9px 0",
   borderRadius: 20,
   border: `1px solid ${COLORS.border}`,
-  background: COLORS.cardElevated,
+  background: COLORS.gradientCardElevated,
   fontSize: 13,
   fontWeight: 600,
   color: COLORS.ink,
   cursor: "pointer",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+  transition: "all 0.15s ease",
 };
 
 function isChildActive(item, pathname) {
@@ -186,6 +190,8 @@ export default function Sidebar() {
         ],
       },
       { path: "/subscription", label: "Membership Plans", icon: DollarSign },
+      { path: "/wallet", label: "Credit Wallet", icon: Coins },
+      { path: "/referrals", label: "Refer & Earn", icon: Gift },
       { path: "/booster", label: "Business Booster Kit", icon: Zap, moduleKey: "booster" },
       {
         key: "resources",
@@ -308,12 +314,12 @@ export default function Sidebar() {
               borderRadius: 10,
               border: "none",
               cursor: "pointer",
-              background: parentActive && !open ? "color-mix(in srgb, var(--color-primary) 15%, transparent)" : "transparent",
+              background: parentActive && !open ? COLORS.gradientPillBadge : "transparent",
               color: parentActive ? COLORS.primary : COLORS.ink,
               fontWeight: parentActive ? 700 : 500,
               fontSize: 14.5,
               textAlign: "left",
-              transition: "background 0.15s",
+              transition: "all 0.15s ease",
             }}
           >
             {Icon && <Icon size={17} color={COLORS.primary} style={{ opacity: 0.85, flexShrink: 0 }} />}
@@ -357,12 +363,14 @@ export default function Sidebar() {
                       borderRadius: 8,
                       border: "none",
                       cursor: "pointer",
-                      background: childActive ? COLORS.primary : "transparent",
+                      background: childActive ? COLORS.gradientPrimary : "transparent",
                       color: childActive ? "#fff" : COLORS.textSubtle,
                       fontWeight: childActive ? 700 : 500,
                       fontSize: 13.5,
                       textAlign: "left",
                       borderLeft: `2px solid ${childActive ? COLORS.primary : COLORS.border}`,
+                      boxShadow: childActive ? "0 3px 10px rgba(37, 99, 235, 0.25)" : "none",
+                      transition: "all 0.15s ease",
                     }}
                     >
                       {ChildIcon && (
@@ -397,12 +405,13 @@ export default function Sidebar() {
             borderRadius: 10,
             border: "none",
             cursor: "pointer",
-            background: active ? COLORS.primary : "transparent",
+            background: active ? COLORS.gradientPrimary : "transparent",
             color: active ? "#fff" : COLORS.ink,
             fontWeight: active ? 700 : 500,
             fontSize: 14.5,
             textAlign: "left",
-            transition: "background 0.15s",
+            boxShadow: active ? "0 4px 14px rgba(37, 99, 235, 0.28)" : "none",
+            transition: "all 0.15s ease",
           }}
         >
           <Icon size={17} color={active ? "#fff" : COLORS.primary} style={{ opacity: active ? 1 : 0.85, flexShrink: 0 }} />
@@ -515,13 +524,13 @@ export default function Sidebar() {
 
       {/* Main Sidebar (Drawer on mobile/tablet, Fixed on desktop) */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-[#E7E7EC] dark:border-[#263744] bg-white dark:bg-[#0D141B] transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-[#E7E7EC] dark:border-[#263744] transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
           width: 300,
           minWidth: 300,
-          background: COLORS.sidebarBg,
+          background: COLORS.gradientSidebar,
           fontFamily: "'Inter', system-ui, sans-serif",
         }}
       >
@@ -648,7 +657,7 @@ export default function Sidebar() {
               gap: 4,
               padding: "4px 9px",
               borderRadius: 14,
-              background: "color-mix(in srgb, var(--color-primary) 16%, transparent)",
+              background: COLORS.gradientPillBadge,
               color: "var(--color-primary)",
               fontSize: 11.5,
               fontWeight: 700,
@@ -696,13 +705,13 @@ export default function Sidebar() {
               borderRadius: 10,
               border: `1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)`,
               cursor: "pointer",
-              background: location.pathname.startsWith("/admin") ? COLORS.primary : "color-mix(in srgb, var(--color-primary) 10%, transparent)",
+              background: location.pathname.startsWith("/admin") ? COLORS.gradientPrimary : COLORS.gradientPillBadge,
               color: location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary,
               fontWeight: 700,
               fontSize: 14.5,
               textAlign: "left",
-              transition: "all 0.15s",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              transition: "all 0.15s ease",
+              boxShadow: location.pathname.startsWith("/admin") ? "0 4px 14px rgba(37, 99, 235, 0.3)" : "0 2px 6px rgba(0,0,0,0.06)",
             }}
           >
             <ShieldCheck size={18} color={location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary} />
@@ -714,7 +723,7 @@ export default function Sidebar() {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: 11, background: "color-mix(in srgb, var(--color-primary) 18%, transparent)", padding: "2px 6px", borderRadius: 4, color: COLORS.primary, fontWeight: 700 }}>
+            <span style={{ fontSize: 11, background: location.pathname.startsWith("/admin") ? "rgba(255,255,255,0.2)" : "color-mix(in srgb, var(--color-primary) 18%, transparent)", padding: "2px 6px", borderRadius: 4, color: location.pathname.startsWith("/admin") ? "#fff" : COLORS.primary, fontWeight: 700 }}>
               Console →
             </span>
           </button>
@@ -732,7 +741,7 @@ export default function Sidebar() {
               onClick={() => navigate("/subscription")}
               style={{
                 borderRadius: 14,
-                background: "linear-gradient(135deg, rgba(139, 29, 44, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%)",
+                background: COLORS.gradientProBanner,
                 border: "1px solid rgba(139, 29, 44, 0.2)",
                 padding: "12px 14px",
                 marginBottom: 12,
@@ -771,7 +780,7 @@ export default function Sidebar() {
           onClick={handleLogout}
           style={{
             width: "100%",
-            background: COLORS.darkBtnBg,
+            background: COLORS.gradientDarkBtn,
             color: "#fff",
             border: `1px solid ${COLORS.border}`,
             borderRadius: 12,
@@ -783,7 +792,8 @@ export default function Sidebar() {
             justifyContent: "center",
             gap: 8,
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            transition: "all 0.2s ease",
           }}
         >
           <LogOut size={16} /> Logout

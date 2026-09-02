@@ -28,6 +28,7 @@ const navItems = [
     { to: '/admin/certificates', label: 'Certificates', icon: '🏅', permission: 'certificates.view' },
     { to: '/admin/certificates/templates', label: 'Certificate Builder', icon: '📜', permission: 'certificates.templates_view' },
     { to: '/admin/subscriptions', label: 'Subscription Plans', icon: '💳', permission: 'subscriptions.view' },
+    { to: '/admin/wallets', label: 'Wallet Management', icon: '💰', permission: 'users.view' },
     { to: '/admin/ai-config', label: 'AI Configuration', icon: '🤖', permission: ['ai_config.view', 'ai_config.manage'] },
     { to: '/admin/theme-customizer', label: 'Theme Customizer', icon: '🎨', permission: 'theme.manage' },
     { to: '/admin/frontend-customizer', label: 'Frontend Customizer', icon: '🖥️', permission: 'frontend_customizer.view' },

@@ -57,10 +57,20 @@ export const PERMISSION_MODULES = [
   {
     module: "payments",
     name: "Payments & Transactions",
-    icon: "💰",
+    icon: "💳",
     description: "View revenue, transaction history, and payment gateway logs",
     permissions: [
       { key: "payments.view", label: "View Transactions", description: "View customer payment records and revenue reports" },
+    ],
+  },
+  {
+    module: "wallets",
+    name: "Wallet Management",
+    icon: "💰",
+    description: "Manage ecosystem user credit wallets, assign bonuses, and view ledger",
+    permissions: [
+      { key: "wallets.view", label: "View Wallets & Ledger", description: "View user wallet balances and platform credit transactions" },
+      { key: "wallets.manage", label: "Assign & Adjust Credits", description: "Credit or deduct credits for user wallets" },
     ],
   },
   {

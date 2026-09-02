@@ -7,6 +7,23 @@ import TicketModel from "../models/ticket.js";
 import CommunityPostModel from "../models/community.js";
 import MeetingModel from "../models/meeting.js";
 import MilestoneModel from "../models/milestone.js";
+import WalletModel from "../models/wallet.js";
+import WalletTransactionModel from "../models/walletTransaction.js";
+import TransactionModel from "../models/transaction.js";
+import ReferralModel from "../models/referral.js";
+import LegalComplianceApplicationModel from "../models/legalComplianceApplication.js";
+import BoosterApplicationModel from "../models/boosterApplication.js";
+import ProgramApplicationModel from "../models/programApplication.js";
+import EventRegistrationModel from "../models/eventRegistration.js";
+import LiveSessionModel from "../models/liveSession.js";
+import ChatMessageModel from "../models/chatMessage.js";
+import ChatThreadModel from "../models/chatThread.js";
+import TestAttemptModel from "../models/testAttempt.js";
+import CertificateModel from "../models/certificate.js";
+import AiSessionModel from "../models/aiSession.js";
+import AiMessageModel from "../models/aiMessage.js";
+import ApprovalSubmissionModel from "../models/approvalSubmission.js";
+import NotificationModel from "../models/notification.js";
 import { hashPassword } from "../../services/encryption.js";
 import { sendMail } from "../../services/mail.js";
 import { logAudit } from "../../services/auditLogger.js";
@@ -641,12 +658,95 @@ async function deleteUser(req, res) {
             return res.status(403).json({ status: 0, msg: "Only super admins can delete admin users" });
         }
 
-        // Delete user's related data
+        const userIdObj = new mongoose.Types.ObjectId(id);
+
+        // Permanently delete user and all associated ecosystem records across all collections
         await Promise.all([
-            JobModel.deleteMany({ organization: id }),
-            TicketModel.deleteMany({ organization: id }),
-            CommunityPostModel.deleteMany({ author: id }),
+            // 1. Organization & Relationship references
             OrganizationModel.findByIdAndDelete(id),
+            OrganizationModel.updateMany(
+                { "connections.with": userIdObj },
+                { $pull: { connections: { with: userIdObj } } }
+            ),
+            OrganizationModel.updateMany(
+                { "saved_profiles.profile": userIdObj },
+                { $pull: { saved_profiles: { profile: userIdObj } } }
+            ),
+            OrganizationModel.updateMany(
+                { referredBy: userIdObj },
+                { $set: { referredBy: null } }
+            ),
+
+            // 2. Wallets, Transactions & Subscriptions
+            WalletModel.deleteMany({ user: userIdObj }),
+            WalletTransactionModel.deleteMany({ user: userIdObj }),
+            TransactionModel.deleteMany({ user: userIdObj }),
+
+            // 3. Referrals
+            ReferralModel.deleteMany({ $or: [{ referrer: userIdObj }, { referredUser: userIdObj }] }),
+
+            // 4. Legal Compliance & Booster Applications
+            LegalComplianceApplicationModel.deleteMany({ user: userIdObj }),
+            BoosterApplicationModel.deleteMany({ user: userIdObj }),
+
+            // 5. Jobs, Tickets & Community Content
+            JobModel.deleteMany({ organization: userIdObj }),
+            TicketModel.deleteMany({ organization: userIdObj }),
+            CommunityPostModel.deleteMany({ author: userIdObj }),
+            CommunityPostModel.updateMany(
+                {},
+                {
+                    $pull: {
+                        likes: userIdObj,
+                        comments: { author: userIdObj },
+                    },
+                }
+            ),
+
+            // 6. Meetings & Milestones
+            MeetingModel.deleteMany({
+                $or: [
+                    { organizer: userIdObj },
+                    { attendee: userIdObj },
+                ],
+            }),
+            MilestoneModel.deleteMany({ organization: userIdObj }),
+
+            // 7. Programs & Events Applications / Registrations
+            ProgramApplicationModel.deleteMany({ applicant: userIdObj }),
+            EventRegistrationModel.deleteMany({ user: userIdObj }),
+
+            // 8. Live Sessions
+            LiveSessionModel.deleteMany({ host: userIdObj }),
+            LiveSessionModel.updateMany(
+                {},
+                { $pull: { queue: { user: userIdObj } } }
+            ),
+
+            // 9. Chat Threads & Messages
+            ChatMessageModel.deleteMany({ $or: [{ senderId: userIdObj }, { recipientId: userIdObj }] }),
+            ChatThreadModel.deleteMany({ participants: userIdObj }),
+
+            // 10. Assessments & Certificates
+            TestAttemptModel.deleteMany({ user: userIdObj }),
+            CertificateModel.deleteMany({ user: userIdObj }),
+
+            // 11. AI Assistant Sessions & Messages
+            AiSessionModel.deleteMany({ user: userIdObj }),
+            AiMessageModel.deleteMany({ user: userIdObj }),
+
+            // 12. Approval Submissions & Notifications
+            ApprovalSubmissionModel.deleteMany({ user: userIdObj }),
+            NotificationModel.deleteMany({ created_by: userIdObj }),
+            NotificationModel.updateMany(
+                {},
+                {
+                    $pull: {
+                        recipients: userIdObj,
+                        read_by: userIdObj,
+                    },
+                }
+            ),
         ]);
 
         await logAudit({

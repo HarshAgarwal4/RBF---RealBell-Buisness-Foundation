@@ -9,6 +9,11 @@ import ApprovalSubmissionModel from "../models/approvalSubmission.js";
 import PlanModel from "../models/plan.js";
 import { sendMail } from "../../services/mail.js";
 import { getEffectiveLoginMethod } from "./authSettingController.js";
+import { getOrCreateUserWallet } from "./walletController.js";
+import ReferralModel from "../models/referral.js";
+import WalletModel from "../models/wallet.js";
+import WalletTransactionModel from "../models/walletTransaction.js";
+import { generateUniqueReferralCode } from "./referralController.js";
 
 function normalizeCompanyType(type = "") {
     const value = String(type).toLowerCase().trim();
@@ -42,7 +47,8 @@ async function signUp(req, res) {
             phone,
             password,
             agree,
-            otp
+            otp,
+            referralCode,
         } = req.body;
 
         if (
@@ -94,6 +100,24 @@ async function signUp(req, res) {
             hashedPassword = await hashPassword(password);
         }
 
+        // Generate unique referral code for this new user (Starts with RBF...)
+        const myReferralCode = await generateUniqueReferralCode();
+
+        // Validate applied referral code if provided
+        let referrer = null;
+        if (referralCode && String(referralCode).trim()) {
+            const cleanRefCode = String(referralCode).trim().toUpperCase();
+            const foundReferrer = await OrganizationModel.findOne({
+                referralCode: cleanRefCode,
+                accountStatus: { $ne: "disabled" },
+            });
+
+            // Prevent self-referrals and disabled referrers
+            if (foundReferrer && foundReferrer.email !== email.toLowerCase().trim() && foundReferrer.phone !== phone) {
+                referrer = foundReferrer;
+            }
+        }
+
         // Strictly enforce default permitted role and Pending Approval state for public registrations
         const organization = new OrganizationModel({
             company_type,
@@ -113,7 +137,11 @@ async function signUp(req, res) {
             accountStatus: "active",
             approvalStatus: "Pending Form",
             account: {},
-            sessions: []
+            sessions: [],
+            referralCode: myReferralCode,
+            referredBy: referrer ? referrer._id : null,
+            referralCreditsEarned: 0,
+            referralCount: 0,
         });
 
         const token = await setUser(organization._id);
@@ -160,6 +188,76 @@ async function signUp(req, res) {
 
         organization.approvalSubmission = initialSubmission._id;
         await organization.save();
+
+        // 1. Automatically provision new user wallet with 500 Welcome Credits
+        try {
+            await getOrCreateUserWallet(organization._id);
+        } catch (walletErr) {
+            console.error("Auto wallet provisioning on signup error:", walletErr);
+        }
+
+        // 2. If referred by another user, award bilateral 250-credit rewards atomically
+        if (referrer) {
+            try {
+                // Check if referral was already processed (Idempotency)
+                const existingRef = await ReferralModel.findOne({ referredUser: organization._id });
+                if (!existingRef) {
+                    await ReferralModel.create({
+                        referrer: referrer._id,
+                        referredUser: organization._id,
+                        referralCode: referrer.referralCode,
+                        referrerReward: 250,
+                        referredReward: 250,
+                        status: "completed",
+                        rewardedAt: new Date(),
+                    });
+
+                    // Award +250 credits to Referrer's Wallet atomically
+                    const updatedRefWallet = await WalletModel.findOneAndUpdate(
+                        { user: referrer._id },
+                        { $inc: { balance: 250, total_credited: 250 } },
+                        { new: true, upsert: true }
+                    );
+
+                    await WalletTransactionModel.create({
+                        user: referrer._id,
+                        wallet: updatedRefWallet._id,
+                        type: "credit",
+                        amount: 250,
+                        balance_after: updatedRefWallet.balance,
+                        category: "referral_reward",
+                        description: `Referral reward: 250 credits earned for inviting ${organization.name} (${organization.company_name})`,
+                        reference_id: `REF_REWARD_${organization._id.toString().slice(-6)}`,
+                        status: "success",
+                    });
+
+                    await OrganizationModel.findByIdAndUpdate(referrer._id, {
+                        $inc: { referralCount: 1, referralCreditsEarned: 250 },
+                    });
+
+                    // Award +250 bonus credits to New User's Wallet atomically (500 Base + 250 Referral = 750)
+                    const updatedUserWallet = await WalletModel.findOneAndUpdate(
+                        { user: organization._id },
+                        { $inc: { balance: 250, total_credited: 250 } },
+                        { new: true, upsert: true }
+                    );
+
+                    await WalletTransactionModel.create({
+                        user: organization._id,
+                        wallet: updatedUserWallet._id,
+                        type: "credit",
+                        amount: 250,
+                        balance_after: updatedUserWallet.balance,
+                        category: "referral_reward",
+                        description: `Referral bonus: 250 credits earned for registering with code ${referrer.referralCode}`,
+                        reference_id: `REF_BONUS_${referrer._id.toString().slice(-6)}`,
+                        status: "success",
+                    });
+                }
+            } catch (refErr) {
+                console.error("Referral rewards processing error:", refErr);
+            }
+        }
 
         // Send registration & approval form link email
         try {

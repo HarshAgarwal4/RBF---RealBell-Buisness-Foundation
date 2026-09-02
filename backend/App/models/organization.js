@@ -337,6 +337,33 @@ const OrganizationSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // Referral System
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      uppercase: true,
+      index: true,
+    },
+
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
+    },
+
+    referralCreditsEarned: {
+      type: Number,
+      default: 0,
+    },
+
+    referralCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { useStore } from "../zustand/store";
-import { AppLoader } from "./Loading";
+import { useTheme } from "../context/ThemeProvider";
 import { DEFAULT_PAGE_FALLBACKS } from "../config/pageFallbacks";
 import {
   ArrowLeft,
@@ -25,6 +25,11 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Gift,
+  ChevronDown,
+  ChevronUp,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -68,11 +73,11 @@ function Logo() {
       <img
         src="/logo.png"
         alt="RealBell Logo"
-        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-amber-700/20 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
+        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-blue-600/10 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
       />
       <div className="leading-tight">
         <div className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
-          REAL<span className="text-amber-700 dark:text-amber-500">BELL</span>
+          REAL<span className="text-blue-600 dark:text-blue-400">BELL</span>
         </div>
         <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Business Foundation
@@ -82,11 +87,34 @@ function Logo() {
   );
 }
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label="Toggle theme"
+    >
+      {isDark ? (
+        <Sun size={17} className="text-amber-400" />
+      ) : (
+        <Moon size={17} className="text-blue-600" />
+      )}
+    </button>
+  );
+}
+
 function LeftPanel({ customData }) {
   const badge = customData?.leftPanelBadge || "Join India's Growth Foundation";
   const mainTitle = customData?.mainTitle || "Launch, Scale & Fund";
   const titleHighlight = customData?.titleHighlight || "Your Vision.";
-  const description = customData?.description || "Join a growing foundation where founders, investors, mentors, and incubators unite to build, fund, and scale real businesses.";
+  const description =
+    customData?.description ||
+    "Join a growing foundation where founders, investors, mentors, and incubators unite to build, fund, and scale real businesses.";
   const features = customData?.features || [
     { text: "Connect with a vetted community of founders and backers" },
     { text: "Discover funding cohorts, mentorship, and growth tracks" },
@@ -97,24 +125,26 @@ function LeftPanel({ customData }) {
   const statusText = customData?.platformStatusText || "Onboarding Open";
 
   return (
-    <div className="hidden w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 p-10 xl:p-12 lg:flex relative overflow-hidden">
+    <div className="hidden w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 p-10 xl:p-12 lg:flex relative overflow-hidden">
       {/* Glow shapes */}
-      <div className="absolute -top-24 -left-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         <Logo />
 
         <div className="mt-10 xl:mt-14">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-6">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 px-3 py-1 text-xs font-semibold text-blue-800 dark:text-blue-300 mb-6">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
             <span>{badge}</span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
             {mainTitle}
             <br />
-            <span className="text-amber-700 dark:text-amber-500">{titleHighlight}</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:to-indigo-400">
+              {titleHighlight}
+            </span>
           </h1>
 
           <p className="mt-5 text-sm xl:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
@@ -124,7 +154,7 @@ function LeftPanel({ customData }) {
           <div className="mt-8 space-y-3.5 text-sm text-slate-700 dark:text-slate-300">
             {features.map((item, idx) => (
               <div key={idx} className="flex items-start gap-3">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 mt-0.5">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 mt-0.5">
                   <Check className="h-3 w-3" strokeWidth={3} />
                 </div>
                 <span className="leading-snug">{item.text || item}</span>
@@ -134,7 +164,7 @@ function LeftPanel({ customData }) {
 
           <p className="mt-6 text-xs xl:text-sm font-medium text-slate-700 dark:text-slate-300">
             An initiative by{" "}
-            <span className="font-bold text-amber-700 dark:text-amber-400">
+            <span className="font-bold text-blue-600 dark:text-blue-400">
               {footerNote}.
             </span>
           </p>
@@ -143,7 +173,7 @@ function LeftPanel({ customData }) {
 
       <div className="relative z-10 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
         <p className="leading-relaxed">
-          *Open Beta preview — Pioneer the future of Indian startup ecosystems.
+          *Open Beta preview — Empowering the next generation of founders.
         </p>
         <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap ml-2">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -156,19 +186,20 @@ function LeftPanel({ customData }) {
 
 function MobileHeader() {
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-stone-50/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
+    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
       <Logo />
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ThemeToggleButton />
         <Link
           to="/"
-          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1"
+          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
         >
           <ArrowLeft size={13} />
           <span>Home</span>
         </Link>
         <Link
           to="/login"
-          className="text-xs font-bold text-amber-700 dark:text-amber-500 hover:underline"
+          className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
         >
           Login
         </Link>
@@ -183,7 +214,7 @@ function TopBar({ step, onBackStep, showLogin }) {
       {step > 1 && step <= TOTAL_STEPS ? (
         <button
           onClick={onBackStep}
-          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
+          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span>Back</span>
@@ -191,24 +222,30 @@ function TopBar({ step, onBackStep, showLogin }) {
       ) : (
         <Link
           to="/"
-          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span>Back to Home</span>
         </Link>
       )}
 
-      {showLogin && (
-        <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="font-bold text-slate-900 dark:text-white hover:text-amber-700 dark:hover:text-amber-400 underline underline-offset-2 decoration-amber-700/40"
-          >
-            Login
-          </Link>
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="hidden lg:block">
+          <ThemeToggleButton />
         </div>
-      )}
+
+        {showLogin && (
+          <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2 decoration-blue-600/40"
+            >
+              Login
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -222,10 +259,10 @@ function StepDots({ step }) {
           key={i}
           className={`h-1.5 rounded-full transition-all duration-300 ${
             i + 1 === step
-              ? "w-8 bg-amber-700 dark:bg-amber-500"
+              ? "w-8 bg-blue-600 dark:bg-blue-500"
               : i + 1 < step
               ? "w-8 bg-slate-900 dark:bg-slate-300"
-              : "w-6 bg-slate-200 dark:bg-slate-700"
+              : "w-6 bg-slate-200 dark:bg-slate-800"
           }`}
         />
       ))}
@@ -243,15 +280,15 @@ function TypeCard({ active, label, desc, icon: Icon, onClick }) {
       onClick={onClick}
       className={`group relative flex items-center gap-3.5 rounded-xl border p-4 sm:p-4.5 text-left transition-all cursor-pointer ${
         active
-          ? "border-amber-700 bg-amber-50/50 dark:bg-amber-950/30 ring-2 ring-amber-700/20 dark:ring-amber-500/20 shadow-xs"
-          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+          ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-xs"
+          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
       }`}
     >
       <div
         className={`flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
           active
-            ? "bg-amber-700 text-white"
-            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/40 group-hover:text-amber-700 dark:group-hover:text-amber-400"
+            ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
+            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 dark:group-hover:text-blue-400"
         }`}
       >
         {Icon ? <Icon className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
@@ -271,7 +308,7 @@ function TypeCard({ active, label, desc, icon: Icon, onClick }) {
       <div
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
           active
-            ? "border-amber-700 bg-amber-700 text-white"
+            ? "border-blue-600 bg-blue-600 text-white"
             : "border-slate-300 dark:border-slate-700 bg-transparent"
         }`}
       >
@@ -296,6 +333,7 @@ export default function SignUpPage() {
       "Register on RealBell Business Foundation (RBF). Apply as a Startup Founder, Angel Investor, Expert Mentor, or Incubator partner."
     );
   }, []);
+
   const { sendSignupOtp, user } = useStore();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState(null);
@@ -325,7 +363,92 @@ export default function SignUpPage() {
   const [customData, setCustomData] = useState(storeSignupData || DEFAULT_PAGE_FALLBACKS.signup);
   const otpRefs = useRef([]);
 
+  // Referral State
+  const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [appliedReferral, setAppliedReferral] = useState(null);
+  const [showReferralInput, setShowReferralInput] = useState(false);
+  const [validatingReferral, setValidatingReferral] = useState(false);
+  const [referralFeedback, setReferralFeedback] = useState({ error: "", success: "" });
+
   const storeRoles = useStore((state) => state.roles);
+
+  // Auto-detect referral code from URL or sessionStorage
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlRef = searchParams.get("ref") || searchParams.get("referral");
+      const storedRef = sessionStorage.getItem("rbf_referral_code");
+      const initialCode = (urlRef || storedRef || "").trim().toUpperCase();
+
+      if (initialCode) {
+        sessionStorage.setItem("rbf_referral_code", initialCode);
+        setReferralCodeInput(initialCode);
+        setShowReferralInput(true);
+        validateAndApplyCode(initialCode, false);
+      }
+    } catch (e) {
+      console.warn("Referral URL parse error:", e);
+    }
+  }, []);
+
+  const validateAndApplyCode = async (code, isManual = true) => {
+    if (!code || !code.trim()) {
+      if (isManual) {
+        setReferralFeedback({ error: "Please enter a referral code.", success: "" });
+      }
+      return;
+    }
+
+    const cleanCode = code.trim().toUpperCase();
+    setValidatingReferral(true);
+    setReferralFeedback({ error: "", success: "" });
+
+    try {
+      const res = await axios.get(`/referrals/validate/${cleanCode}`);
+      if (res.data.status === 1) {
+        const referrer = res.data.referrer;
+        setAppliedReferral({
+          code: cleanCode,
+          name: referrer.name,
+          company_name: referrer.company_name,
+          bonusCredits: res.data.bonusCredits || 250,
+        });
+        sessionStorage.setItem("rbf_referral_code", cleanCode);
+        setReferralFeedback({
+          error: "",
+          success: `Referral code applied! You will receive ${res.data.bonusCredits || 250} bonus credits upon registration.`,
+        });
+        if (isManual) {
+          toast.success("Referral code applied successfully.");
+        }
+      } else {
+        setAppliedReferral(null);
+        setReferralFeedback({ error: res.data.msg || "Invalid referral code.", success: "" });
+        if (isManual) {
+          toast.error(res.data.msg || "Invalid referral code.");
+        }
+      }
+    } catch (err) {
+      setAppliedReferral(null);
+      const errMsg = err.response?.data?.msg || "Invalid referral code. Please check and try again.";
+      setReferralFeedback({ error: errMsg, success: "" });
+      if (isManual) {
+        toast.error(errMsg);
+      }
+    } finally {
+      setValidatingReferral(false);
+    }
+  };
+
+  const handleRemoveReferral = () => {
+    setAppliedReferral(null);
+    setReferralCodeInput("");
+    setReferralFeedback({ error: "", success: "" });
+    try {
+      sessionStorage.removeItem("rbf_referral_code");
+    } catch (_) {}
+    toast.info("Referral code removed.");
+  };
 
   useEffect(() => {
     if (storeSignupData) {
@@ -335,10 +458,11 @@ export default function SignUpPage() {
 
   const userTypes = React.useMemo(() => {
     if (Array.isArray(storeRoles) && storeRoles.length > 0) {
-      return storeRoles.map((r) => ({
+      const sortedRoles = [...storeRoles].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      return sortedRoles.map((r) => ({
         id: r.key,
         label: r.label,
-        desc: r.desc,
+        desc: r.description || r.desc,
         icon: ICON_MAP[r.icon] || Building2,
         hasSubtypes: r.hasSubtypes,
         subtypes: r.subtypes,
@@ -415,7 +539,6 @@ export default function SignUpPage() {
     if (canContinueStep1) setStep(2);
   };
 
-  // Step 2: Trigger OTP send
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
     if (!validateBasicDetails()) return;
@@ -438,7 +561,6 @@ export default function SignUpPage() {
     }
   };
 
-  // Step 2 -> Step 3: Validate basic details + OTP entered, then go to Password Creation
   const goToStep3 = (e) => {
     if (e) e.preventDefault();
     if (validateStep2()) {
@@ -471,7 +593,6 @@ export default function SignUpPage() {
     }
   };
 
-  // Step 3 -> Step 4: Validate password & submit everything to POST /signup
   const handleCompleteSignup = async (e) => {
     if (e) e.preventDefault();
     if (!validateStep3()) return;
@@ -495,6 +616,9 @@ export default function SignUpPage() {
         password: form.password,
         agree,
         otp: code,
+        referralCode: appliedReferral
+          ? appliedReferral.code
+          : referralCodeInput.trim().toUpperCase() || undefined,
       };
 
       const r = await axios.post("/signup", payload);
@@ -549,16 +673,16 @@ export default function SignUpPage() {
     navigate("/approval-center");
   };
 
-  // ---------- Step 4: success / approval redirect ----------
+  // ---------- Step 4: Success / Verification redirect ----------
   if (step === 4) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 transition-colors">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#070B14] px-4 py-12 transition-colors">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-10 text-center shadow-xl"
+          className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-8 sm:p-10 text-center shadow-xl"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
             <CheckCircle2 className="h-10 w-10" />
           </div>
 
@@ -572,7 +696,7 @@ export default function SignUpPage() {
 
           <button
             onClick={approvalPage}
-            className="mt-8 w-full rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            className="mt-8 w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             Complete Verification Form →
           </button>
@@ -581,9 +705,9 @@ export default function SignUpPage() {
     );
   }
 
-  // ---------- Steps 1–3 shared shell ----------
+  // ---------- Steps 1–3 Shared Shell ----------
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#070B14] text-slate-800 dark:text-slate-100 transition-colors">
       <LeftPanel customData={customData} />
 
       <div className="flex flex-1 flex-col justify-between">
@@ -595,7 +719,7 @@ export default function SignUpPage() {
             <StepDots step={step} />
 
             <AnimatePresence mode="wait">
-              {/* ---------------- STEP 1 ---------------- */}
+              {/* ---------------- STEP 1: ROLE SELECTION ---------------- */}
               {step === 1 && (
                 <motion.div
                   key="step1"
@@ -647,8 +771,8 @@ export default function SignUpPage() {
                             onClick={() => setInvestorType(t.id)}
                             className={`rounded-xl border p-3 text-xs sm:text-sm font-semibold text-center transition-all cursor-pointer ${
                               investorType === t.id
-                                ? "border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 ring-1 ring-amber-700"
-                                : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
+                                ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 ring-1 ring-blue-600"
+                                : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
                             }`}
                           >
                             {t.label}
@@ -667,8 +791,8 @@ export default function SignUpPage() {
                       onClick={goToStep2}
                       className={`inline-flex items-center justify-center rounded-xl px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md transition-all cursor-pointer ${
                         canContinueStep1
-                          ? "bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 shadow-amber-700/20 hover:scale-[1.02] active:scale-[0.98]"
-                          : "cursor-not-allowed bg-amber-700/40 opacity-60"
+                          ? "bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98]"
+                          : "cursor-not-allowed bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-500 opacity-60"
                       }`}
                     >
                       Continue
@@ -707,8 +831,8 @@ export default function SignUpPage() {
                         placeholder="e.g. NexaTech Innovations"
                         value={form.companyName}
                         onChange={(e) => updateForm("companyName", e.target.value)}
-                        className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                          errors.companyName ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                        className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                          errors.companyName ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                         }`}
                       />
                       {errors.companyName && (
@@ -728,8 +852,8 @@ export default function SignUpPage() {
                           placeholder="e.g. Rahul Sharma"
                           value={form.yourName}
                           onChange={(e) => updateForm("yourName", e.target.value)}
-                          className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                            errors.yourName ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                            errors.yourName ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                           }`}
                         />
                         {errors.yourName && (
@@ -753,8 +877,8 @@ export default function SignUpPage() {
                             setOtp(Array(6).fill(""));
                             setOtpError("");
                           }}
-                          className={`w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                            errors.email ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                            errors.email ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                           }`}
                         />
                         {errors.email && (
@@ -771,7 +895,7 @@ export default function SignUpPage() {
                         <select
                           value={form.countryCode}
                           onChange={(e) => updateForm("countryCode", e.target.value)}
-                          className="w-28 sm:w-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500"
+                          className="w-28 sm:w-32 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900/90 px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500"
                         >
                           {COUNTRY_CODES.map((c) => (
                             <option key={c.code} value={c.code}>
@@ -786,8 +910,8 @@ export default function SignUpPage() {
                           onChange={(e) =>
                             updateForm("mobile", e.target.value.replace(/\D/g, ""))
                           }
-                          className={`flex-1 rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                            errors.mobile ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                          className={`flex-1 rounded-xl border bg-white dark:bg-slate-900/90 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                            errors.mobile ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                           }`}
                         />
                       </div>
@@ -796,12 +920,115 @@ export default function SignUpPage() {
                       )}
                     </div>
 
+                    {/* Referral Code Section */}
+                    <div className="rounded-2xl border border-dashed border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 p-4 transition-all">
+                      {!showReferralInput && !appliedReferral ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowReferralInput(true)}
+                          className="flex items-center justify-between w-full text-left group cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-bold text-blue-900 dark:text-blue-300">
+                            <Gift className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+                            <span>Have a referral code? (Earn 250 bonus credits)</span>
+                          </div>
+                          <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:translate-y-0.5 transition-transform" />
+                        </button>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                              <Gift className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <span>Referral Code</span>
+                            </div>
+                            {!appliedReferral && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowReferralInput(false);
+                                  setReferralFeedback({ error: "", success: "" });
+                                }}
+                                className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                              >
+                                Hide
+                              </button>
+                            )}
+                          </div>
+
+                          {appliedReferral ? (
+                            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-2.5">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div>
+                                  <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                    Code Applied: <span className="font-mono">{appliedReferral.code}</span>
+                                  </div>
+                                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                    Referred by <strong>{appliedReferral.name}</strong> ({appliedReferral.company_name}).
+                                    You will receive <strong>+250 Bonus Credits</strong> upon registration!
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleRemoveReferral}
+                                className="text-xs font-bold text-red-500 hover:text-red-700 dark:hover:text-red-400 cursor-pointer shrink-0"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="e.g. RBF8K2M1"
+                                  value={referralCodeInput}
+                                  onChange={(e) => {
+                                    setReferralCodeInput(e.target.value.toUpperCase());
+                                    setReferralFeedback({ error: "", success: "" });
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      validateAndApplyCode(referralCodeInput, true);
+                                    }
+                                  }}
+                                  className="flex-1 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-900/90 px-3.5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => validateAndApplyCode(referralCodeInput, true)}
+                                  disabled={validatingReferral || !referralCodeInput.trim()}
+                                  className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5 shadow-sm shadow-blue-600/20"
+                                >
+                                  {validatingReferral && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                  <span>Apply</span>
+                                </button>
+                              </div>
+
+                              {referralFeedback.error && (
+                                <p className="mt-1 text-xs font-medium text-red-500 dark:text-red-400">
+                                  {referralFeedback.error}
+                                </p>
+                              )}
+                              {referralFeedback.success && (
+                                <p className="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                  {referralFeedback.success}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {/* OTP Trigger & Input Section */}
                     <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-4 sm:p-5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                         <div>
                           <div className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <ShieldCheck size={16} className="text-amber-700 dark:text-amber-500" />
+                            <ShieldCheck size={16} className="text-blue-600 dark:text-blue-400" />
                             <span>Email OTP Verification</span>
                           </div>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -815,7 +1042,7 @@ export default function SignUpPage() {
                           type="button"
                           onClick={handleSendOtp}
                           disabled={sendingOtp || (otpSent && resendTimer > 0)}
-                          className="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-4 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex-shrink-0"
+                          className="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex-shrink-0"
                         >
                           {sendingOtp && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                           <span>
@@ -852,10 +1079,10 @@ export default function SignUpPage() {
                                 onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                                 maxLength={1}
                                 inputMode="numeric"
-                                className={`h-11 w-10 sm:h-12 sm:w-11 rounded-xl border bg-white dark:bg-slate-900 text-center text-lg font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 ${
+                                className={`h-11 w-10 sm:h-12 sm:w-11 rounded-xl border bg-white dark:bg-slate-900/90 text-center text-lg font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 ${
                                   otpError
                                     ? "border-red-400 dark:border-red-500"
-                                    : "border-slate-200 dark:border-slate-700"
+                                    : "border-slate-200 dark:border-slate-700/80"
                                 }`}
                               />
                             ))}
@@ -880,7 +1107,7 @@ export default function SignUpPage() {
                       </button>
                       <button
                         type="submit"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                       >
                         <span>Next: Set Password →</span>
                       </button>
@@ -913,7 +1140,6 @@ export default function SignUpPage() {
                   </div>
 
                   <form onSubmit={handleCompleteSignup} className="mt-6 space-y-5">
-                    {/* Password & Confirm Password */}
                     <div className="space-y-4">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
@@ -926,8 +1152,8 @@ export default function SignUpPage() {
                             autoFocus
                             value={form.password}
                             onChange={(e) => updateForm("password", e.target.value)}
-                            className={`w-full rounded-xl border bg-white dark:bg-slate-900 pl-4 pr-11 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                              errors.password ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                            className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 pl-4 pr-11 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                              errors.password ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                             }`}
                           />
                           <button
@@ -954,8 +1180,8 @@ export default function SignUpPage() {
                             placeholder="Re-enter password"
                             value={form.confirmPassword}
                             onChange={(e) => updateForm("confirmPassword", e.target.value)}
-                            className={`w-full rounded-xl border bg-white dark:bg-slate-900 pl-4 pr-11 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                              errors.confirmPassword ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700"
+                            className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 pl-4 pr-11 py-3 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                              errors.confirmPassword ? "border-red-400 dark:border-red-500" : "border-slate-200 dark:border-slate-700/80"
                             }`}
                           />
                           <button
@@ -982,15 +1208,15 @@ export default function SignUpPage() {
                             setAgree(e.target.checked);
                             setErrors((er) => ({ ...er, agree: undefined }));
                           }}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-amber-700 focus:ring-amber-700 cursor-pointer"
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
                         />
                         <span>
                           I agree to the{" "}
-                          <Link to="/terms-of-service" target="_blank" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
+                          <Link to="/terms-of-service" target="_blank" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                             Terms & Conditions
                           </Link>{" "}
                           and{" "}
-                          <Link to="/privacy-policy" target="_blank" className="font-semibold text-amber-700 dark:text-amber-400 hover:underline">
+                          <Link to="/privacy-policy" target="_blank" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                             Privacy Policy
                           </Link>{" "}
                           of RealBell Business Foundation.
@@ -1012,7 +1238,7 @@ export default function SignUpPage() {
                       <button
                         type="submit"
                         disabled={verifying}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
                       >
                         {verifying && <Loader2 className="h-4 w-4 animate-spin" />}
                         <span>{verifying ? "Creating Account..." : "Complete Registration"}</span>
@@ -1026,7 +1252,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Mobile footer */}
-        <div className="py-4 text-center text-xs text-slate-400 lg:hidden">
+        <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500 lg:hidden">
           © {new Date().getFullYear()} RealBell Business Foundation
         </div>
       </div>

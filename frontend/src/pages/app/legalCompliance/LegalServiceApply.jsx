@@ -60,6 +60,24 @@ export default function LegalServiceApply() {
   // Form errors: { [field_id]: errorMessage }
   const [formErrors, setFormErrors] = useState({});
 
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useCredits, setUseCredits] = useState(false);
+  const [customCredits, setCustomCredits] = useState(null);
+
+  useEffect(() => {
+    async function fetchWallet() {
+      try {
+        const res = await axios.get("/wallet/my-wallet");
+        if (res.data?.status === 1) {
+          setWalletBalance(res.data.wallet?.balance || 0);
+        }
+      } catch (err) {
+        console.warn("Could not fetch wallet in LegalServiceApply:", err);
+      }
+    }
+    fetchWallet();
+  }, []);
+
   // Document state: { [doc_id]: File }
   const [uploadedFiles, setUploadedFiles] = useState({});
   // Drag over states: { [doc_id]: boolean }
@@ -182,6 +200,12 @@ export default function LegalServiceApply() {
     }
   };
 
+  const serviceFee = Number(service?.fee || 0);
+  const isFree = !service?.is_payment_required || serviceFee === 0;
+  const maxUsableCredits = Math.min(walletBalance || 0, serviceFee);
+  const appliedCredits = !isFree && useCredits ? (customCredits !== null ? Math.min(Number(customCredits) || 0, maxUsableCredits) : maxUsableCredits) : 0;
+  const remainingPayable = Math.max(0, serviceFee - appliedCredits);
+
   // Validate entire form & documents
   const validate = () => {
     const errors = {};
@@ -281,17 +305,28 @@ export default function LegalServiceApply() {
         return;
       }
 
-      // If Payment is required: proceed to Razorpay Checkout
+      // If Payment is required: proceed to Razorpay or Wallet Credits Checkout
       setSubmissionStep("payment");
 
       const orderRes = await axios.post("/legal-compliance/applications/payment/order", {
         applicationId: createdApp._id,
+        creditsToUse: appliedCredits,
       });
 
       if (orderRes.data?.status !== 1) {
         toast.error(orderRes.data?.msg || "Failed to initialize payment gateway");
         setSubmitting(false);
         setSubmissionStep("");
+        return;
+      }
+
+      // 100% Full Payment covered by Wallet Credits
+      if (orderRes.data.isFullyPaidByWallet) {
+        setSubmissionStep("success");
+        toast.success(`🎉 Paid full fee using ${appliedCredits} wallet credits!`);
+        setTimeout(() => {
+          navigate("/legal-compliances/my-applications");
+        }, 1500);
         return;
       }
 
@@ -312,7 +347,7 @@ export default function LegalServiceApply() {
         amount: order.amount,
         currency: order.currency || "INR",
         name: "RealBell Business Foundation",
-        description: `Legal Compliance: ${service.title}`,
+        description: `Legal Compliance: ${service.title} (${appliedCredits > 0 ? `Used ${appliedCredits} Credits + Remaining Cash` : "Full Fee"})`,
         order_id: order.id,
         prefill: {
           name: user?.name || "",
@@ -338,6 +373,7 @@ export default function LegalServiceApply() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              creditsUsed: appliedCredits,
             });
 
             if (verifyRes.data?.status === 1) {
@@ -385,8 +421,6 @@ export default function LegalServiceApply() {
   }
 
   if (!service) return null;
-
-  const isFree = !service.is_payment_required || service.fee === 0;
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#E2E8F0] font-sans">
@@ -712,21 +746,86 @@ export default function LegalServiceApply() {
               </div>
             )}
 
-            {/* Section 3: Summary & Submission / Checkout */}
-            <div className="rounded-2xl bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] p-6 lg:p-8 shadow-2xs">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Section 3: Summary & Submission / Checkout with Wallet Credits */}
+            <div className="rounded-2xl bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] p-6 lg:p-8 shadow-2xs space-y-6">
+              {/* Wallet Credits Application Module */}
+              {!isFree && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800/60">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
+                        <CreditCard size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            RBF Credit Wallet
+                          </span>
+                          <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                            Balance: {walletBalance?.toLocaleString("en-IN") || 0} Credits
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          1 Credit = ₹1.00 INR. Exclusive discount on legal compliance services.
+                        </p>
+                      </div>
+                    </div>
+
+                    {walletBalance > 0 ? (
+                      <label className="flex items-center gap-2 cursor-pointer self-start sm:self-center">
+                        <input
+                          type="checkbox"
+                          checked={useCredits}
+                          onChange={(e) => setUseCredits(e.target.checked)}
+                          className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <span className="text-xs font-bold text-blue-700 dark:text-blue-300 select-none">
+                          Apply Wallet Credits
+                        </span>
+                      </label>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">No credits available</span>
+                    )}
+                  </div>
+
+                  {/* Applied Credits Summary if active */}
+                  {useCredits && walletBalance > 0 && (
+                    <div className="mt-3 pt-3 border-t border-blue-200/80 dark:border-blue-800/40 flex items-center justify-between text-xs font-semibold">
+                      <span className="text-slate-600 dark:text-slate-300">Credits Applied to this Service:</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
+                        - {appliedCredits?.toLocaleString("en-IN")} Credits (₹{appliedCredits?.toLocaleString("en-IN")})
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Price Breakdown and Action Buttons */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-2">
                 <div>
                   <div className="text-xs font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
-                    Total Payable Amount
+                    {appliedCredits > 0 ? "Remaining Online Payable" : "Total Service Fee"}
                   </div>
                   <div className="text-2xl lg:text-3xl font-extrabold text-[#0F172A] dark:text-white mt-1 flex items-center gap-2">
                     {isFree ? (
                       <span className="text-[#16A34A]">₹0 (Free Service)</span>
+                    ) : remainingPayable === 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-600 dark:text-emerald-400">₹0 Payable</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                          100% Covered by Wallet Credits
+                        </span>
+                      </div>
                     ) : (
                       <>
-                        ₹{Number(service.fee).toLocaleString("en-IN")}
+                        ₹{Number(remainingPayable).toLocaleString("en-IN")}
+                        {appliedCredits > 0 && (
+                          <span className="text-xs font-semibold line-through text-slate-400">
+                            ₹{Number(service.fee).toLocaleString("en-IN")}
+                          </span>
+                        )}
                         <span className="text-xs font-normal text-[#64748B]">
-                          (Inclusive of all taxes & processing)
+                          (Inclusive of all taxes)
                         </span>
                       </>
                     )}
@@ -762,11 +861,11 @@ export default function LegalServiceApply() {
                           ? "Verifying Payment..."
                           : "Processing..."}
                       </>
-                    ) : isFree ? (
-                      <>Submit Application</>
+                    ) : isFree || remainingPayable === 0 ? (
+                      <>Submit Application {appliedCredits > 0 ? `(Using ${appliedCredits} Credits)` : ""}</>
                     ) : (
                       <>
-                        <CreditCard size={16} /> Pay ₹{Number(service.fee).toLocaleString("en-IN")} & Submit
+                        <CreditCard size={16} /> Pay ₹{Number(remainingPayable).toLocaleString("en-IN")} &amp; Submit
                       </>
                     )}
                   </button>

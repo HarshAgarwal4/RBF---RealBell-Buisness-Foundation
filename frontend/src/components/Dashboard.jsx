@@ -21,6 +21,11 @@ import {
   ArrowRight,
   Sparkles,
   Lock,
+  Coins,
+  Wallet,
+  Gift,
+  Copy,
+  Check,
 } from "lucide-react";
 import { COLORS } from "./colors";
 import { useStore } from "../zustand/store";
@@ -150,6 +155,14 @@ export default function Dashboard() {
   const [myConnections, setMyConnections] = useState([]);
   const [latestNews, setLatestNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [referralStats, setReferralStats] = useState({
+    referralCode: "",
+    referralLink: "",
+    successfulReferrals: 0,
+    totalCreditsEarned: 0,
+  });
+  const [copiedRef, setCopiedRef] = useState(false);
 
   const completionPercent = calculateProfileCompletion(user);
 
@@ -245,6 +258,31 @@ export default function Dashboard() {
       } finally {
         setLoadingNews(false);
       }
+
+      try {
+        // Fetch user wallet balance
+        const walRes = await axios.get("/wallet/my-wallet");
+        if (walRes.data?.status === 1) {
+          setWalletBalance(walRes.data.wallet?.balance ?? 500);
+        }
+      } catch (e) {
+        console.error("Dashboard wallet load error:", e);
+      }
+
+      try {
+        // Fetch user referral stats
+        const refRes = await axios.get("/referrals/my-stats");
+        if (refRes.data?.status === 1) {
+          setReferralStats({
+            referralCode: refRes.data.referralCode || "",
+            referralLink: refRes.data.referralLink || "",
+            successfulReferrals: refRes.data.stats?.successfulReferrals || 0,
+            totalCreditsEarned: refRes.data.stats?.totalCreditsEarned || 0,
+          });
+        }
+      } catch (e) {
+        console.error("Dashboard referral stats load error:", e);
+      }
     }
 
     loadDashboardData();
@@ -316,7 +354,7 @@ export default function Dashboard() {
       className="flex-1 w-full min-w-0 ml-0 lg:ml-[300px] pt-20 lg:pt-6 px-4 sm:px-6 lg:px-8 pb-10 min-h-screen transition-all"
       style={{
         fontFamily: "'Inter', system-ui, sans-serif",
-        background: COLORS.bg,
+        background: COLORS.gradientBg,
       }}
     >
       {/* Header Row */}
@@ -342,7 +380,7 @@ export default function Dashboard() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: COLORS.card,
+                background: COLORS.gradientCard,
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 10,
                 padding: "5px 10px",
@@ -365,7 +403,7 @@ export default function Dashboard() {
                   padding: "5px 10px",
                   borderRadius: 8,
                   border: `1px solid ${COLORS.border}`,
-                  background: COLORS.hoverBg,
+                  background: COLORS.gradientCardElevated,
                   color: COLORS.ink,
                   fontSize: 12.5,
                   fontWeight: 700,
@@ -384,11 +422,31 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Wallet Balance Widget */}
+          <div
+            onClick={() => navigate("/wallet")}
+            className="flex items-center gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 dark:from-blue-950/40 dark:to-indigo-950/40 text-blue-700 dark:text-blue-300 font-bold text-xs cursor-pointer hover:shadow-md transition shadow-2xs group"
+            title="View Credit Wallet & Manage Balance"
+          >
+            <div className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs group-hover:scale-105 transition shrink-0">
+              <Coins size={15} />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] sm:text-[9.5px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Credit Wallet</span>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
+                {walletBalance?.toLocaleString("en-IN") || 0} <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">(₹{walletBalance?.toLocaleString("en-IN") || 0})</span>
+              </span>
+            </div>
+            <span className="hidden sm:inline-block ml-1 text-[10px] font-extrabold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md group-hover:bg-blue-600 group-hover:text-white transition shadow-2xs">
+              + Top Up
+            </span>
+          </div>
+
           <ProgressRing percent={completionPercent} />
           <button
             onClick={() => navigate("/profile/edit")}
             style={{
-              background: COLORS.primary,
+              background: COLORS.gradientPrimary,
               color: "#fff",
               border: "none",
               borderRadius: 10,
@@ -399,6 +457,8 @@ export default function Dashboard() {
               alignItems: "center",
               gap: 6,
               cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(37, 99, 235, 0.28)",
+              transition: "all 0.15s ease",
             }}
           >
             <Pencil size={13} /> Edit Profile
@@ -424,7 +484,8 @@ export default function Dashboard() {
           onClick={() => navigate("/connect/startups")}
           className="flex h-10 sm:h-11 items-center justify-center gap-2 px-5 rounded-xl font-semibold text-xs sm:text-sm text-white transition cursor-pointer shrink-0"
           style={{
-            background: COLORS.primary,
+            background: COLORS.gradientPrimary,
+            boxShadow: "0 4px 14px rgba(37, 99, 235, 0.25)",
           }}
         >
           <Search size={14} /> Search
@@ -435,36 +496,54 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6 mt-6">
         <div>
           {/* Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
             {[
-              { value: stats.connectRequests, label: "Connect Requests", Icon: Users, path: "/connections" },
-              { value: stats.connections, label: "Active Connections", Icon: MessageCircle, path: "/connections" },
-              { value: stats.meetings, label: "Scheduled Meetings", Icon: BarChart2, path: "/meetings" },
-              { value: stats.tickets, label: "Support Tickets", Icon: Ticket, path: "/tickets" },
+              { value: `${walletBalance?.toLocaleString("en-IN") || 0} Cr`, label: "Credit Wallet", sub: `≈ ₹${walletBalance?.toLocaleString("en-IN") || 0}`, Icon: Coins, path: "/wallet", grad: "linear-gradient(135deg, #2563EB, #4F46E5)" },
+              { value: stats.connectRequests, label: "Connect Requests", Icon: Users, path: "/connections", grad: COLORS.gradientPrimary },
+              { value: stats.connections, label: "Active Connections", Icon: MessageCircle, path: "/connections", grad: "linear-gradient(135deg, #06B6D4, #3B82F6)" },
+              { value: stats.meetings, label: "Scheduled Meetings", Icon: BarChart2, path: "/meetings", grad: "linear-gradient(135deg, #8B5CF6, #6366F1)" },
+              { value: stats.tickets, label: "Support Tickets", Icon: Ticket, path: "/tickets", grad: "linear-gradient(135deg, #EC4899, #8B5CF6)" },
             ].map((s) => (
               <div
                 key={s.label}
                 onClick={() => navigate(s.path)}
                 style={{
-                  background: COLORS.card,
+                  position: "relative",
+                  overflow: "hidden",
+                  background: COLORS.gradientCard,
                   border: `1px solid ${COLORS.border}`,
                   borderRadius: 14,
                   padding: "16px 18px",
                   cursor: "pointer",
-                  transition: "all 0.15s ease",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.04)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(37, 99, 235, 0.12)";
+                  e.currentTarget.style.borderColor = "var(--color-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.04)";
+                  e.currentTarget.style.borderColor = COLORS.border;
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                {/* Top Subtle Gradient Stripe */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: s.grad }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 2 }}>
                   <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.ink }}>{s.value}</div>
-                  <s.Icon size={18} color={COLORS.primary} />
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: COLORS.gradientPillBadge, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <s.Icon size={17} color={COLORS.primary} />
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 6, fontWeight: 600 }}>{s.label}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.muted, marginTop: 6, fontWeight: 600 }}>{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Functional Community Post Box */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, display: "flex", alignItems: "center", gap: 6 }}>
                 <Sparkles size={16} color={COLORS.primary} /> Share with the Community
@@ -518,7 +597,7 @@ export default function Dashboard() {
                   onClick={handlePostSubmit}
                   disabled={posting}
                   style={{
-                    background: COLORS.primary,
+                    background: COLORS.gradientPrimary,
                     color: "#fff",
                     border: "none",
                     borderRadius: 8,
@@ -529,7 +608,9 @@ export default function Dashboard() {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
+                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.28)",
                     opacity: posting ? 0.6 : 1,
+                    transition: "all 0.15s ease",
                   }}
                 >
                   {posting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -559,7 +640,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recommendations Tab */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink, display: "flex", alignItems: "center", gap: 6 }}>
                 <span>Explore & Connect</span>
@@ -606,14 +687,23 @@ export default function Dashboard() {
                       borderRadius: 12,
                       overflow: "hidden",
                       cursor: "pointer",
-                      background: COLORS.card,
-                      transition: "transform 0.15s ease",
+                      background: COLORS.gradientCard,
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.04)";
                     }}
                   >
                     <div
                       style={{
                         height: 70,
-                        background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`,
+                        background: COLORS.gradientPrimary,
                         display: "flex",
                         alignItems: "flex-end",
                         padding: "0 10px 8px",
@@ -633,14 +723,14 @@ export default function Dashboard() {
           </div>
 
           {/* Active Programs Section */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Active Programs</div>
               <button
                 onClick={() => navigate("/programs")}
                 style={{
-                  background: COLORS.bg,
-                  border: "none",
+                  background: COLORS.gradientCardElevated,
+                  border: `1px solid ${COLORS.border}`,
                   borderRadius: 8,
                   padding: "7px 16px",
                   fontWeight: 700,
@@ -668,7 +758,17 @@ export default function Dashboard() {
                       borderRadius: 12,
                       overflow: "hidden",
                       cursor: "pointer",
-                      background: COLORS.card,
+                      background: COLORS.gradientCard,
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.04)";
                     }}
                   >
                     <div
@@ -694,13 +794,13 @@ export default function Dashboard() {
           </div>
 
           {/* Latest Ecosystem News Section */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, marginTop: 18, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.ink }}>Latest Ecosystem News</div>
               <button
                 onClick={() => (canAccessNews ? navigate("/resources/news") : navigate("/subscription"))}
                 style={{
-                  background: canAccessNews ? COLORS.primary : "rgba(245, 158, 11, 0.15)",
+                  background: canAccessNews ? COLORS.gradientPrimary : "rgba(245, 158, 11, 0.15)",
                   color: canAccessNews ? "#fff" : "#f59e0b",
                   border: canAccessNews ? "none" : "1px solid rgba(245, 158, 11, 0.3)",
                   borderRadius: 8,
@@ -711,6 +811,7 @@ export default function Dashboard() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
+                  boxShadow: canAccessNews ? "0 4px 14px rgba(37, 99, 235, 0.25)" : "none",
                 }}
               >
                 {!canAccessNews && <Lock size={13} />}
@@ -734,11 +835,12 @@ export default function Dashboard() {
                   borderRadius: 12,
                   padding: 14,
                   cursor: "pointer",
-                  background: COLORS.card,
+                  background: COLORS.gradientCard,
                   alignItems: "center",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
                 }}
               >
-                <div style={{ width: 56, height: 56, borderRadius: 10, background: "rgba(142, 27, 46, 0.12)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 10, background: COLORS.gradientPillBadge, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                   📰
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -771,17 +873,26 @@ export default function Dashboard() {
                       padding: 12,
                       cursor: "pointer",
                       transition: "all 0.15s ease",
-                      background: COLORS.card,
+                      background: COLORS.gradientCard,
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = COLORS.primary)}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = COLORS.border)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = COLORS.primary;
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.06)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = COLORS.border;
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.04)";
+                    }}
                   >
                     <div
                       style={{
                         width: 76,
                         height: 64,
                         borderRadius: 8,
-                        background: "rgba(142, 27, 46, 0.12)",
+                        background: COLORS.gradientPillBadge,
                         flexShrink: 0,
                         overflow: "hidden",
                         display: "flex",
@@ -830,7 +941,7 @@ export default function Dashboard() {
                             style={{
                               fontSize: 10.5,
                               fontWeight: 700,
-                              background: "rgba(142, 27, 46, 0.15)",
+                              background: COLORS.gradientPillBadge,
                               color: COLORS.primary,
                               padding: "2px 7px",
                               borderRadius: 4,
@@ -860,8 +971,100 @@ export default function Dashboard() {
 
         {/* Right Column: Connections, Meetings & Events */}
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Refer & Earn Quick Widget */}
+          <div
+            style={{
+              background: COLORS.gradientCard,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 14,
+              padding: 18,
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 6, marginBottom: 12 }}>
+              <div style={{ fontWeight: 800, color: COLORS.primary, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                <Gift size={16} /> Refer & Earn +250 Credits
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.muted }}>250 / Signup</span>
+            </div>
+
+            <p style={{ fontSize: 12, color: COLORS.muted, marginBottom: 12, lineHeight: 1.4 }}>
+              Share your link or code with friends. Both of you receive <strong>250 credits</strong> on registration!
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderRadius: 10,
+                background: COLORS.gradientCardElevated,
+                border: `1px solid ${COLORS.border}`,
+                marginBottom: 12,
+              }}
+            >
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: COLORS.muted, display: "block" }}>
+                  Your Code
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 900, fontFamily: "monospace", letterSpacing: "0.05em", color: COLORS.primary }}>
+                  {referralStats.referralCode || "..."}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const link = referralStats.referralLink || `${window.location.origin}/signup?ref=${referralStats.referralCode}`;
+                  navigator.clipboard.writeText(link);
+                  setCopiedRef(true);
+                  toast.success("Referral link copied!");
+                  setTimeout(() => setCopiedRef(false), 2000);
+                }}
+                style={{
+                  background: COLORS.gradientPrimary,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+                }}
+              >
+                {copiedRef ? <Check size={12} /> : <Copy size={12} />}
+                <span>{copiedRef ? "Copied" : "Copy Link"}</span>
+              </button>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: COLORS.muted, paddingTop: 4 }}>
+              <span>Referrals: <strong style={{ color: COLORS.ink }}>{referralStats.successfulReferrals}</strong></span>
+              <button
+                onClick={() => navigate("/referrals")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: COLORS.primary,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  cursor: "pointer",
+                }}
+              >
+                <span>View Rewards Hub</span>
+                <ArrowRight size={12} />
+              </button>
+            </div>
+          </div>
+
           {/* Connections Card */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 6 }}>
               <div style={{ fontWeight: 800, color: COLORS.primary, fontSize: 14 }}>
                 My Connections
@@ -901,7 +1104,7 @@ export default function Dashboard() {
               style={{
                 width: "100%",
                 marginTop: 16,
-                background: COLORS.bg,
+                background: COLORS.gradientCardElevated,
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 10,
                 padding: "10px 0",
@@ -909,6 +1112,7 @@ export default function Dashboard() {
                 fontSize: 13.5,
                 color: COLORS.ink,
                 cursor: "pointer",
+                transition: "all 0.15s ease",
               }}
             >
               View All Connections
@@ -916,7 +1120,7 @@ export default function Dashboard() {
           </div>
 
           {/* Upcoming Meetings Card */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 6 }}>
               <div style={{ fontWeight: 800, color: COLORS.primary, fontSize: 14 }}>
                 Upcoming Meetings
@@ -932,7 +1136,7 @@ export default function Dashboard() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
                 {meetings.slice(0, 3).map((m) => (
-                  <div key={m._id} style={{ border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 10 }}>
+                  <div key={m._id} style={{ border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 10, background: COLORS.gradientCardElevated }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.ink }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.muted, marginTop: 2 }}>
                        {m.date ? new Date(m.date).toLocaleDateString() : ""} {m.time ? `· ${m.time}` : ""}
@@ -944,7 +1148,7 @@ export default function Dashboard() {
           </div>
 
           {/* Upcoming Events Card */}
-          <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18 }}>
+          <div style={{ background: COLORS.gradientCard, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 6 }}>
               <div style={{ fontWeight: 800, color: COLORS.primary, fontSize: 14 }}>Upcoming Events</div>
               <button
@@ -966,7 +1170,7 @@ export default function Dashboard() {
                   <div
                     key={evt._id}
                     onClick={() => navigate(`/events/${evt._id}`)}
-                    style={{ border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 10, cursor: "pointer" }}
+                    style={{ border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 10, cursor: "pointer", background: COLORS.gradientCardElevated }}
                   >
                     <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.ink }}>{evt.title}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.muted, marginTop: 2 }}>

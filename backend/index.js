@@ -35,12 +35,15 @@ import testTakingRouter from './App/routes/testTaking.js';
 import certificateRouter from './App/routes/certificateVerification.js';
 import boosterRouter from './App/routes/booster.js';
 import aiRouter from './App/routes/ai.js';
+import walletRouter from './App/routes/wallet.js';
+import referralRouter from './App/routes/referral.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { seedDefaultTeams } from './App/controllers/teamController.js';
 import { seedDefaultPages } from './App/controllers/frontendCustomizerController.js';
 import { seedDefaultCertificateTemplates } from './App/controllers/certificateController.js';
 import { seedDefaultAiConfig } from './App/AI/seedAiConfig.js';
+import { seedMissingReferralCodes } from './App/controllers/referralController.js';
 import { registerSocketServer } from './services/socket.js';
 import { clearRedis } from './services/Redis.js';
 import LiveSessionModel from './App/models/liveSession.js';
@@ -86,6 +89,8 @@ app.use('/tests', testTakingRouter)
 app.use('/certificates', certificateRouter)
 app.use('/booster', boosterRouter)
 app.use('/ai', aiRouter)
+app.use('/wallet', walletRouter)
+app.use('/referrals', referralRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {
@@ -124,6 +129,7 @@ mongoose.connect(process.env.DB_URL, {
     seedDefaultPages();
     seedDefaultCertificateTemplates();
     seedDefaultAiConfig();
+    seedMissingReferralCodes();
     LiveSessionModel.syncIndexes().catch((err) => {
         console.warn("LiveSessionModel syncIndexes warning:", err.message);
     });

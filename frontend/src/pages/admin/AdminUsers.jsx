@@ -764,9 +764,9 @@ export default function AdminUsers() {
                 open={deleteModal.open}
                 onClose={() => setDeleteModal({ open: false, user: null })}
                 onConfirm={handleDelete}
-                title="Delete User"
-                message={`Are you sure you want to permanently delete "${deleteModal.user?.name}"? This will also remove their associated profile and activities.`}
-                confirmText="Delete User"
+                title="Permanently Delete Ecosystem User"
+                message={`Are you sure you want to permanently delete "${deleteModal.user?.name}" (${deleteModal.user?.company_name})? This action is irreversible and will permanently delete their account, wallet, transactions, applications, tickets, meetings, referrals, certificates, posts, and all associated ecosystem records.`}
+                confirmText="Permanently Delete"
                 danger
             />
         </AdminLayout>

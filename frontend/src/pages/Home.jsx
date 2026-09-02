@@ -117,7 +117,7 @@ function Hero3DCanvas({ isDark = true, isFocusMode = false }) {
 
     const coinMaterials = [rimMaterial, faceMaterial, faceMaterial];
 
-    // --- 4. CREATE 3D RAINING COINS CLUSTER (REDUCED COUNT FOR CLEAN ELEGANT LOOK) ---
+    // --- 4. CREATE 3D RAINING COINS CLUSTER ---
     const coinCount = isMobile ? 8 : 16;
     const coins = [];
     const spreadX = isMobile ? 20 : 40;
@@ -125,20 +125,17 @@ function Hero3DCanvas({ isDark = true, isFocusMode = false }) {
     for (let i = 0; i < coinCount; i++) {
       const coinMesh = new THREE.Mesh(coinGeometry, coinMaterials);
 
-      // Stagger position across full viewport width and height
       const startX = (Math.random() - 0.5) * spreadX;
       const startY = (Math.random() - 0.5) * 36;
       const startZ = (Math.random() - 0.5) * 18 - 2;
 
       coinMesh.position.set(startX, startY, startZ);
 
-      // Responsive scale variation
       const baseScale = isMobile ? 0.5 : 0.65;
       const scaleRange = isMobile ? 0.45 : 0.7;
       const scale = baseScale + Math.random() * scaleRange;
       coinMesh.scale.set(scale, scale, scale);
 
-      // Random initial rotations
       coinMesh.rotation.set(
         Math.random() * Math.PI * 2,
         Math.random() * Math.PI * 2,
@@ -200,135 +197,83 @@ function Hero3DCanvas({ isDark = true, isFocusMode = false }) {
     let scrollVelocity = 0;
     let lastScrollY = window.scrollY;
 
-    const onMouseMove = (event) => {
-      mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
-      mouseY = (event.clientY / window.innerHeight - 0.5) * 2;
+    const onPointerMove = (e) => {
+      const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? width / 2;
+      const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? height / 2;
+      targetX = (clientX / width - 0.5) * 2;
+      targetY = (clientY / height - 0.5) * 2;
     };
-    window.addEventListener("mousemove", onMouseMove);
 
-    const onTouchMove = (event) => {
-      if (event.touches.length > 0) {
-        mouseX = (event.touches[0].clientX / window.innerWidth - 0.5) * 2;
-        mouseY = (event.touches[0].clientY / window.innerHeight - 0.5) * 2;
-      }
-    };
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("touchstart", onTouchMove, { passive: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("touchmove", onPointerMove, { passive: true });
 
     const onScroll = () => {
       const currentScrollY = window.scrollY;
-      scrollVelocity = (currentScrollY - lastScrollY) * 0.003;
+      scrollVelocity = (currentScrollY - lastScrollY) * 0.01;
       lastScrollY = currentScrollY;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    const onResize = () => {
-      if (!container) return;
+    let animationFrameId;
+    let clock = new THREE.Clock();
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      mouseX += (targetX - mouseX) * 0.05;
+      mouseY += (targetY - mouseY) * 0.05;
+      scrollVelocity *= 0.92;
+
+      camera.position.x = mouseX * 2.5;
+      camera.position.y = -mouseY * 2.0;
+      camera.lookAt(0, 0, 0);
+
+      coins.forEach((c) => {
+        c.mesh.position.y -= (c.speedY + Math.abs(scrollVelocity) * 0.08);
+        c.mesh.position.x += c.speedX;
+
+        c.mesh.rotation.x += c.rotX;
+        c.mesh.rotation.y += c.rotY;
+        c.mesh.rotation.z += c.rotZ;
+
+        if (c.mesh.position.y < -22) {
+          c.mesh.position.y = 22;
+          c.mesh.position.x = (Math.random() - 0.5) * spreadX;
+        }
+      });
+
+      sparkles.rotation.y += 0.001;
+      sparkles.rotation.x += 0.0005;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      if (!mountRef.current) return;
       width = window.innerWidth;
       height = window.innerHeight;
       isMobile = width < 768;
-
       camera.aspect = width / height;
       camera.fov = isMobile ? 52 : 45;
       camera.position.z = isMobile ? 32 : 26;
       camera.updateProjectionMatrix();
-
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
     };
-    window.addEventListener("resize", onResize);
 
-    // Animation Loop
-    let animationFrameId;
-
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-
-      targetX += (mouseX - targetX) * 0.04;
-      targetY += (mouseY - targetY) * 0.04;
-      scrollVelocity *= 0.92;
-
-      // Subtle Camera Tilt
-      camera.position.x = targetX * (isMobile ? 1.2 : 2.2);
-      camera.position.y = -targetY * (isMobile ? 0.8 : 1.5);
-      camera.lookAt(0, 0, 0);
-
-      // Animate Point Light
-      pointLight.position.x = targetX * 14;
-      pointLight.position.y = -targetY * 9 + 4;
-
-      // Animate Each Raining 3D Coin Across Full Page
-      const mouse3DX = targetX * (isMobile ? 10 : 16);
-      const mouse3DY = -targetY * (isMobile ? 7 : 12);
-      const currentSpreadX = isMobile ? 22 : 44;
-
-      for (let i = 0; i < coins.length; i++) {
-        const item = coins[i];
-        const mesh = item.mesh;
-
-        // Fall Downwards + scroll acceleration
-        mesh.position.y -= item.speedY + Math.abs(scrollVelocity);
-        mesh.position.x += item.speedX;
-
-        // Rotate & Tumble in 3D
-        mesh.rotation.x += item.rotX + scrollVelocity * 0.1;
-        mesh.rotation.y += item.rotY;
-        mesh.rotation.z += item.rotZ;
-
-        // Pointer Physics Interaction (gentle repulsion)
-        const dx = mesh.position.x - mouse3DX;
-        const dy = mesh.position.y - mouse3DY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < (isMobile ? 4.5 : 6.0)) {
-          const pushForce = ((isMobile ? 4.5 : 6.0) - dist) * 0.015;
-          mesh.position.x += (dx / dist) * pushForce;
-          mesh.position.y += (dy / dist) * pushForce;
-          mesh.rotation.x += 0.06;
-          mesh.rotation.y += 0.06;
-        }
-
-        // Loop Back to Top When Falling Off Screen
-        if (mesh.position.y < -19) {
-          mesh.position.y = 19 + Math.random() * 4;
-          mesh.position.x = (Math.random() - 0.5) * currentSpreadX;
-          mesh.position.z = (Math.random() - 0.5) * 18 - 2;
-          item.speedY = 0.04 + Math.random() * (isMobile ? 0.05 : 0.065);
-        }
-      }
-
-      // Sparkles Fall & Swirl
-      const sPos = sparkleGeo.attributes.position;
-      for (let i = 0; i < sparkleCount; i++) {
-        sPos.array[i * 3 + 1] -= 0.025 + Math.abs(scrollVelocity) * 0.5;
-        if (sPos.array[i * 3 + 1] < -20) {
-          sPos.array[i * 3 + 1] = 20;
-          sPos.array[i * 3] = (Math.random() - 0.5) * (isMobile ? 26 : 48);
-        }
-      }
-      sPos.needsUpdate = true;
-      sparkles.rotation.y += 0.001;
-
-      renderer.render(scene, camera);
-    };
-    animate();
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchstart", onTouchMove);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
       cancelAnimationFrame(animationFrameId);
-      if (container && renderer.domElement) {
-        container.removeChild(renderer.domElement);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onPointerMove);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", handleResize);
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
       }
-      coinGeometry.dispose();
-      coinTexture.dispose();
-      faceMaterial.dispose();
-      rimMaterial.dispose();
-      sparkleGeo.dispose();
-      sparkleMat.dispose();
       renderer.dispose();
     };
   }, [isDark]);
@@ -336,21 +281,23 @@ function Hero3DCanvas({ isDark = true, isFocusMode = false }) {
   return (
     <div
       ref={mountRef}
-      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden transition-opacity duration-500 ${
-        isFocusMode ? "opacity-100" : isDark ? "opacity-95" : "opacity-85"
+      className={`fixed inset-0 pointer-events-none z-0 transition-opacity duration-700 ${
+        isFocusMode ? "opacity-30" : "opacity-100"
       }`}
+      aria-hidden="true"
     />
   );
 }
 
 /* =========================================================================
-   2. INTERACTIVE 3D TILT SPOTLIGHT CARD COMPONENT
+   2. REUSABLE 3D TILT CARD COMPONENT
    ========================================================================= */
-function TiltCard({ children, className = "", glowColor = "rgba(245, 158, 11, 0.18)" }) {
+function TiltCard({ children, className = "", glowColor = "rgba(37, 99, 235, 0.15)" }) {
   const cardRef = useRef(null);
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [glowPos, setGlowPos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
@@ -361,42 +308,43 @@ function TiltCard({ children, className = "", glowColor = "rgba(245, 158, 11, 0.
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotateX = ((y - centerY) / centerY) * -6;
-    const rotateY = ((x - centerX) / centerX) * 6;
+    const rotX = -((y - centerY) / centerY) * 7;
+    const rotY = ((x - centerX) / centerX) * 7;
 
-    setCoords({ x, y });
-    setRotate({ x: rotateX, y: rotateY });
+    setRotateX(rotX);
+    setRotateY(rotY);
+    setGlowPos({
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100,
+    });
   };
 
-  const handleMouseEnter = () => setIsHovered(true);
   const handleMouseLeave = () => {
     setIsHovered(false);
-    setRotate({ x: 0, y: 0 });
+    setRotateX(0);
+    setRotateY(0);
   };
 
   return (
     <motion.div
       ref={cardRef}
+      onMouseEnter={() => setIsHovered(true)}
       onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       animate={{
-        rotateX: rotate.x,
-        rotateY: rotate.y,
-        scale: isHovered ? 1.02 : 1,
+        rotateX,
+        rotateY,
+        transformPerspective: 1000,
       }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      style={{
-        transformStyle: "preserve-3d",
-        perspective: 1000,
-      }}
-      className={`relative rounded-2xl transition-shadow duration-300 ${className}`}
+      className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
+      style={{ transformStyle: "preserve-3d" }}
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300"
+        className="pointer-events-none absolute -inset-px transition-opacity duration-300"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, ${glowColor}, transparent 70%)`,
+          background: `radial-gradient(400px circle at ${glowPos.x}% ${glowPos.y}%, ${glowColor}, transparent 70%)`,
         }}
       />
       {children}
@@ -646,7 +594,7 @@ export default function Home() {
       badge: "Flagship",
       ctaText: "Apply Now",
       ctaLink: "/signup",
-      color: "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10",
+      color: "border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10",
     },
     {
       title: "All-India Angel Pitch Marathon",
@@ -680,7 +628,7 @@ export default function Home() {
         ctaText: c.ctaText || "Apply Now",
         ctaLink: c.ctaLink || "/signup",
         color: [
-          "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10",
+          "border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10",
           "border-indigo-500/40 text-indigo-600 dark:text-indigo-400 bg-indigo-500/10",
           "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
         ][idx % 3],
@@ -720,7 +668,7 @@ export default function Home() {
   const faqs = [
     {
       q: "What is RealBell Business Foundation (RBF)?",
-      a: "RealBell Business Foundation is a non-profit and ecosystem initiative dedicated to empowering startups, entrepreneurs, and business leaders in India. We provide incubation support, structured mentorship, angel investment connect, legal resources, and milestone accountability under a single integrated platform.",
+      a: "RealBell Business Foundation is a platform and ecosystem initiative dedicated to empowering startups, entrepreneurs, and business leaders in India. We provide incubation support, structured mentorship, angel investment connect, legal resources, and milestone accountability under a single integrated platform.",
     },
     {
       q: "Who can join the RBF platform?",
@@ -780,19 +728,23 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#faf8f5] dark:bg-slate-950 text-stone-900 dark:text-slate-100 selection:bg-amber-500/30 selection:text-amber-950 dark:selection:text-amber-200 overflow-x-hidden font-['Inter',sans-serif] transition-colors duration-300">
-      
-      {/* FULL-PAGE FIXED 3D RAINING GOLD COINS CANVAS LAYER */}
+    <div
+      className="relative min-h-screen text-slate-900 dark:text-slate-100 selection:bg-blue-500/30 selection:text-blue-950 dark:selection:text-blue-200 overflow-x-hidden font-['Inter',sans-serif] transition-colors duration-300"
+      style={{
+        background: "var(--gradient-bg, var(--color-bg))",
+      }}
+    >
+      {/* FULL-PAGE FIXED 3D RAINING TECH TOKENS CANVAS LAYER */}
       <Hero3DCanvas isDark={isDark} />
 
       {/* Top Global Scroll Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-indigo-500 to-amber-400 z-50 origin-left shadow-lg shadow-amber-500/50"
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 z-50 origin-left shadow-lg shadow-blue-500/50"
         style={{ scaleX }}
       />
 
       {/* Floating Vertical Section Indicator / Slide Dock */}
-      <div className="hidden xl:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-3 bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl p-2.5 rounded-full border border-stone-200 dark:border-slate-800/80 shadow-2xl shadow-stone-300/40 dark:shadow-black/60">
+      <div className="hidden xl:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-3 bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl p-2.5 rounded-full border border-slate-200 dark:border-slate-800/80 shadow-2xl shadow-slate-300/40 dark:shadow-black/60">
         {[
           { id: "hero", label: "Overview" },
           { id: "services", label: "Capabilities" },
@@ -810,11 +762,11 @@ export default function Home() {
             <div
               className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
                 activeSection === s.id
-                  ? "bg-amber-500 dark:bg-amber-400 scale-150 shadow-md shadow-amber-400/80 ring-2 ring-amber-400/30"
-                  : "bg-stone-300 dark:bg-slate-700 hover:bg-stone-400 dark:hover:bg-slate-500"
+                  ? "bg-blue-600 dark:bg-blue-400 scale-150 shadow-md shadow-blue-400/80 ring-2 ring-blue-400/30"
+                  : "bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-500"
               }`}
             />
-            <span className="absolute right-7 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800 text-stone-800 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
+            <span className="absolute right-7 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
               {s.label}
             </span>
           </a>
@@ -823,45 +775,45 @@ export default function Home() {
 
       {/* Top Notification / Live Ticker Bar */}
       {customHome?.navbar?.showLiveTicker && customHome?.navbar?.tickerText && (
-        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-indigo-600 text-white text-[11px] sm:text-xs font-bold py-1.5 px-4 text-center relative z-40 shadow-sm flex items-center justify-center gap-2">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-[11px] sm:text-xs font-bold py-1.5 px-4 text-center relative z-40 shadow-sm flex items-center justify-center gap-2">
           <Sparkles size={13} className="shrink-0" />
           <span>{customHome.navbar.tickerText}</span>
         </div>
       )}
 
       {/* ================= STICKY NAVBAR ================= */}
-      <header className="sticky top-0 z-40 backdrop-blur-2xl bg-[#faf8f5]/90 dark:bg-slate-950/80 border-b border-stone-200/80 dark:border-slate-800/80 transition-all">
+      <header className="sticky top-0 z-40 backdrop-blur-2xl bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-slate-800/80 transition-all">
         <div className="max-w-7xl mx-auto h-16 sm:h-20 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
             <div className="relative">
-              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-500 opacity-30 dark:opacity-40 blur-sm group-hover:opacity-70 transition duration-300" />
+              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 opacity-30 dark:opacity-40 blur-sm group-hover:opacity-70 transition duration-300" />
               <img
                 src="/logo.png"
                 alt="RealBell Foundation Logo"
-                className="relative h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain bg-white dark:bg-slate-900 p-1 sm:p-1.5 border border-stone-200 dark:border-slate-800 shadow-md"
+                className="relative h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain bg-white dark:bg-slate-900 p-1 sm:p-1.5 border border-slate-200 dark:border-slate-800 shadow-md"
               />
             </div>
             <div>
-              <div className="text-base sm:text-xl font-black tracking-tight text-stone-900 dark:text-white flex items-center gap-1 sm:gap-1.5">
+              <div className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1 sm:gap-1.5">
                 <span>
                   {(customHome?.navbar?.brandName || "REAL").toUpperCase().endsWith((customHome?.navbar?.brandHighlight || "BELL").toUpperCase()) && (customHome?.navbar?.brandName || "REAL").length > (customHome?.navbar?.brandHighlight || "BELL").length
                     ? (customHome?.navbar?.brandName || "REAL").substring(0, (customHome?.navbar?.brandName || "REAL").length - (customHome?.navbar?.brandHighlight || "BELL").length)
                     : (customHome?.navbar?.brandName || "REAL")}
                 </span>
-                <span className="text-amber-600 dark:text-amber-500">{customHome?.navbar?.brandHighlight || "BELL"}</span>
-                <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest bg-amber-100 dark:bg-amber-500/10 text-amber-900 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-2 py-0.5 rounded-md">
+                <span className="text-blue-600 dark:text-blue-400">{customHome?.navbar?.brandHighlight || "BELL"}</span>
+                <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest bg-blue-100 dark:bg-blue-500/10 text-blue-900 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded-md">
                   Foundation
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] font-medium text-stone-500 dark:text-slate-400 leading-none sm:leading-normal">
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-none sm:leading-normal">
                 {customHome?.navbar?.subtitle || "Empowering India's Entrepreneurs"}
               </p>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-stone-600 dark:text-slate-300">
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600 dark:text-slate-300">
             {(customHome?.navbar?.navLinks || [
               { label: "Capabilities", href: "#services" },
               { label: "Tracks", href: "#personas" },
@@ -872,7 +824,7 @@ export default function Home() {
               <a
                 key={idx}
                 href={link.href}
-                className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 {link.label}
               </a>
@@ -883,22 +835,22 @@ export default function Home() {
           <div className="hidden lg:flex items-center gap-3.5">
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-stone-100 dark:hover:bg-slate-800 text-stone-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-indigo-600" />}
+              {isDark ? <Sun size={18} className="text-cyan-400" /> : <Moon size={18} className="text-blue-600" />}
             </button>
 
             <button
               onClick={() => navigate("/login")}
-              className="px-5 py-2.5 rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-stone-100 dark:hover:bg-slate-800 hover:border-stone-300 dark:hover:border-slate-700 text-sm font-bold text-stone-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+              className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
             >
               {customHome?.navbar?.loginButtonText || "Login"}
             </button>
 
             <button
               onClick={() => navigate("/signup")}
-              className="relative group overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-sm font-bold text-white shadow-lg shadow-amber-600/30 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer flex items-center gap-2"
+              className="relative group overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer flex items-center gap-2"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
               <span className="relative z-10">{customHome?.navbar?.registerButtonText || "Join Ecosystem"}</span>
@@ -910,13 +862,13 @@ export default function Home() {
           <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-stone-700 dark:text-slate-300 cursor-pointer"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer"
             >
-              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600" />}
+              {isDark ? <Sun size={17} className="text-cyan-400" /> : <Moon size={17} className="text-blue-600" />}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-stone-700 dark:text-slate-300 cursor-pointer"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer"
             >
               {mobileMenuOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
@@ -936,46 +888,46 @@ export default function Home() {
                 <a
                   href="#services"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-amber-600 dark:hover:text-amber-400"
+                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   Capabilities
                 </a>
                 <a
                   href="#personas"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-amber-600 dark:hover:text-amber-400"
+                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   Tracks
                 </a>
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-amber-600 dark:hover:text-amber-400"
+                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   Roadmap
                 </a>
                 <a
                   href="#demo-days"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-amber-600 dark:hover:text-amber-400"
+                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                 >
-                  Cohorts &amp; Events
+                  Cohorts
                 </a>
                 <a
                   href="#faq"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-amber-600 dark:hover:text-amber-400"
+                  className="py-2 border-b border-slate-100 dark:border-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   FAQ
                 </a>
 
-                <div className="pt-3 flex flex-col gap-2.5">
+                <div className="flex flex-col gap-2 pt-2">
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       navigate("/login");
                     }}
-                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-center font-bold text-slate-800 dark:text-white cursor-pointer text-sm"
+                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-center font-bold text-slate-700 dark:text-slate-200 cursor-pointer text-sm"
                   >
                     Login
                   </button>
@@ -984,9 +936,9 @@ export default function Home() {
                       setMobileMenuOpen(false);
                       navigate("/signup");
                     }}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-center font-bold text-white shadow-lg shadow-amber-600/30 cursor-pointer text-sm"
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-center font-bold text-white shadow-lg shadow-blue-600/30 cursor-pointer text-sm"
                   >
-                    Join Ecosystem
+                    Join Ecosystem →
                   </button>
                 </div>
               </div>
@@ -996,9 +948,9 @@ export default function Home() {
       </header>
 
       {/* ================= SECTION 1: HERO ================= */}
-      <section id="hero" className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center pt-6 pb-16 sm:pt-8 sm:pb-20 overflow-hidden">
+      <section id="hero" className="relative pt-12 sm:pt-20 lg:pt-28 pb-16 sm:pb-24 lg:pb-32 overflow-hidden">
         {/* Ambient Gradient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[650px] h-[250px] sm:h-[450px] bg-gradient-to-tr from-amber-400/20 via-orange-300/15 to-transparent dark:from-amber-500/15 dark:via-indigo-500/10 dark:to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[650px] h-[250px] sm:h-[450px] bg-gradient-to-tr from-blue-500/20 via-indigo-500/15 to-transparent dark:from-blue-600/20 dark:via-indigo-600/10 dark:to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
@@ -1011,12 +963,12 @@ export default function Home() {
               className="lg:col-span-7 text-center lg:text-left"
             >
               {/* Live Status Beacon Badge */}
-              <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-amber-400/40 bg-amber-50/90 dark:border-amber-500/30 dark:bg-amber-500/10 backdrop-blur-md mb-4 sm:mb-6 shadow-xs max-w-full">
+              <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-blue-400/40 bg-blue-50/90 dark:border-blue-500/30 dark:bg-blue-500/10 backdrop-blur-md mb-4 sm:mb-6 shadow-xs max-w-full">
                 <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-amber-600 dark:bg-amber-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-blue-600 dark:bg-blue-500" />
                 </span>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 truncate">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300 truncate">
                   {customHome?.hero?.badgeText || "India's Premier Business Incubation Ecosystem"}
                 </span>
               </motion.div>
@@ -1024,10 +976,10 @@ export default function Home() {
               {/* Main Headline (Fully Responsive for Mobile) */}
               <motion.h1
                 variants={fadeInUp}
-                className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 dark:text-white leading-[1.18] sm:leading-[1.12] mb-4 sm:mb-6"
+                className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.18] sm:leading-[1.12] mb-4 sm:mb-6"
               >
                 {customHome?.hero?.mainHeadline || "Where High-Growth"} <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-indigo-600 dark:from-amber-400 dark:via-amber-200 dark:to-indigo-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:via-cyan-300 dark:to-indigo-400 bg-clip-text text-transparent">
                   {customHome?.hero?.headlineHighlight || "Founders & Capital Converge"}
                 </span>
               </motion.h1>
@@ -1035,7 +987,7 @@ export default function Home() {
               {/* Sub-headline */}
               <motion.p
                 variants={fadeInUp}
-                className="text-sm sm:text-base lg:text-lg text-stone-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-6 sm:mb-8"
+                className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-6 sm:mb-8"
               >
                 {customHome?.hero?.description || "RealBell Business Foundation bridges early-stage startups with institutional angel syndicates, veteran CXO mentors, cohort acceleration programs, and verified legal frameworks."}
               </motion.p>
@@ -1047,7 +999,7 @@ export default function Home() {
               >
                 <button
                   onClick={() => navigate(customHome?.hero?.primaryButtonLink || "/signup")}
-                  className="w-full sm:w-auto relative group overflow-hidden px-6 py-3.5 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-sm sm:text-base font-bold text-white shadow-xl shadow-amber-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2.5"
+                  className="w-full sm:w-auto relative group overflow-hidden px-6 py-3.5 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-sm sm:text-base font-bold text-white shadow-xl shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2.5"
                 >
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                   <span className="relative z-10">{customHome?.hero?.primaryButtonText || "Apply For Incubation"}</span>
@@ -1056,20 +1008,20 @@ export default function Home() {
 
                 <a
                   href={customHome?.hero?.secondaryButtonLink || "#personas"}
-                  className="w-full sm:w-auto px-6 py-3.5 sm:px-7 sm:py-4 rounded-xl border border-stone-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/80 hover:bg-stone-100 dark:hover:bg-slate-800 hover:border-stone-300 dark:hover:border-slate-700 text-sm sm:text-base font-bold text-stone-800 dark:text-slate-200 transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:w-auto px-6 py-3.5 sm:px-7 sm:py-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200 transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
                   <span>{customHome?.hero?.secondaryButtonText || "Explore Tracks"}</span>
                   <ArrowRight size={16} />
                 </a>
               </motion.div>
 
-              {/* Trust Badges (Stacked on small screens) */}
+              {/* Trust Badges */}
               <motion.div
                 variants={fadeInUp}
-                className="pt-4 sm:pt-6 border-t border-stone-200 dark:border-slate-900/80 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5 sm:gap-6 text-xs text-stone-600 dark:text-slate-400 font-medium"
+                className="pt-4 sm:pt-6 border-t border-slate-200 dark:border-slate-900/80 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5 sm:gap-6 text-xs text-slate-600 dark:text-slate-400 font-medium"
               >
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                  <CheckCircle2 size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
                   <span>DPIIT &amp; Section 8 Recognized</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1090,14 +1042,14 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="lg:col-span-5"
             >
-              <TiltCard className="bg-white dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-slate-950/90 border border-stone-200 dark:border-slate-800/90 p-4 sm:p-6 shadow-2xl backdrop-blur-xl">
+              <TiltCard className="bg-white dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-slate-950/90 border border-slate-200 dark:border-slate-800/90 p-4 sm:p-6 shadow-2xl backdrop-blur-xl">
                 {/* Terminal Header */}
-                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-stone-100 dark:border-slate-800 mb-4 sm:mb-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 mb-4 sm:mb-5">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-blue-500/80" />
                     <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-                    <span className="text-[11px] sm:text-xs font-mono text-stone-400 dark:text-slate-500 ml-1 sm:ml-2">rbf-ecosystem-live.io</span>
+                    <span className="text-[11px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 ml-1 sm:ml-2">rbf-ecosystem-live.io</span>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     ONLINE
@@ -1107,48 +1059,48 @@ export default function Home() {
                 {/* Simulated Live Ecosystem Feed */}
                 <div className="space-y-3 sm:space-y-4">
                   {/* Item 1 */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-stone-50 dark:bg-slate-900/90 border border-stone-200/80 dark:border-slate-800 hover:border-amber-500/40 transition-colors">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/40 transition-colors">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-bold text-stone-900 dark:text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
+                      <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
                         <TrendingUp size={13} className="text-emerald-500 dark:text-emerald-400" />
                         Seed Capital Closed
                       </span>
-                      <span className="text-stone-400 dark:text-slate-500 text-[10px]">2h ago</span>
+                      <span className="text-slate-400 dark:text-slate-500 text-[10px]">2h ago</span>
                     </div>
-                    <p className="text-[11px] sm:text-xs text-stone-600 dark:text-slate-300 leading-snug">
-                      NexusHealth closed <strong className="text-amber-600 dark:text-amber-400">₹1.8 Cr</strong> angel round with Apex Syndicate.
+                    <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-snug">
+                      NexusHealth closed <strong className="text-blue-600 dark:text-blue-400">₹1.8 Cr</strong> angel round with Apex Syndicate.
                     </p>
                   </div>
 
                   {/* Item 2 */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-stone-50 dark:bg-slate-900/90 border border-stone-200/80 dark:border-slate-800 hover:border-indigo-500/40 transition-colors">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/40 transition-colors">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-bold text-stone-900 dark:text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
+                      <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
                         <Rocket size={13} className="text-indigo-500 dark:text-indigo-400" />
                         New Cohort Intake
                       </span>
-                      <span className="text-stone-400 dark:text-slate-500 text-[10px]">Active</span>
+                      <span className="text-slate-400 dark:text-slate-500 text-[10px]">Active</span>
                     </div>
-                    <p className="text-[11px] sm:text-xs text-stone-600 dark:text-slate-300 leading-snug">
+                    <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-snug">
                       Sprint 2026 Batch: 24 Startups shortlisted for demo day presentations.
                     </p>
                   </div>
 
                   {/* Item 3: Milestone Progress Bar */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-stone-50 dark:bg-slate-900/90 border border-stone-200/80 dark:border-slate-800">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800">
                     <div className="flex items-center justify-between text-[11px] sm:text-xs mb-1.5 sm:mb-2">
-                      <span className="font-bold text-stone-900 dark:text-white flex items-center gap-1.5">
-                        <Target size={13} className="text-amber-500 dark:text-amber-400" />
+                      <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Target size={13} className="text-blue-500 dark:text-blue-400" />
                         Milestone Velocity
                       </span>
-                      <span className="text-amber-600 dark:text-amber-400 font-bold">92% On-Track</span>
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">92% On-Track</span>
                     </div>
-                    <div className="w-full bg-stone-200 dark:bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: "0%" }}
                         animate={{ width: "92%" }}
                         transition={{ duration: 1.5, delay: 0.5 }}
-                        className="h-full bg-gradient-to-r from-amber-500 to-indigo-500 rounded-full"
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
                       />
                     </div>
                   </div>
@@ -1156,7 +1108,7 @@ export default function Home() {
                   {/* Terminal Action Button */}
                   <button
                     onClick={() => navigate("/signup")}
-                    className="w-full py-2 sm:py-2.5 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-stone-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-2 sm:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
                   >
                     <span>View Deal Room Preview</span>
                     <ExternalLink size={13} />
@@ -1169,7 +1121,7 @@ export default function Home() {
       </section>
 
       {/* ================= SECTION 2: STATS METRICS GRID ================= */}
-      <section className="py-8 sm:py-12 bg-white/70 dark:bg-slate-900/50 border-y border-stone-200/80 dark:border-slate-800/60 relative z-10">
+      <section className="py-8 sm:py-12 bg-white/70 dark:bg-slate-900/50 border-y border-slate-200/80 dark:border-slate-800/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
             {stats.map((stat) => {
@@ -1177,19 +1129,19 @@ export default function Home() {
               return (
                 <TiltCard
                   key={stat.title}
-                  glowColor="rgba(99, 102, 241, 0.15)"
-                  className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 p-4 sm:p-6 text-center shadow-xs"
+                  glowColor="rgba(37, 99, 235, 0.15)"
+                  className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 text-center shadow-xs"
                 >
-                  <div className="inline-flex p-2 sm:p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-2 sm:mb-3 border border-amber-500/20">
+                  <div className="inline-flex p-2 sm:p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-2 sm:mb-3 border border-blue-500/20">
                     <IconComp size={18} className="sm:w-[22px] sm:h-[22px]" />
                   </div>
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 dark:text-white tracking-tight mb-0.5 sm:mb-1">
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-0.5 sm:mb-1">
                     {stat.number}
                   </div>
-                  <div className="text-xs sm:text-sm font-bold text-stone-800 dark:text-slate-200 mb-0.5">
+                  <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">
                     {stat.title}
                   </div>
-                  <div className="text-[10px] sm:text-xs text-stone-500 dark:text-slate-400">
+                  <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                     {stat.subtitle}
                   </div>
                 </TiltCard>
@@ -1204,13 +1156,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
               {customHome?.servicesSection?.badge || "Full-Stack Acceleration"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.servicesSection?.title || "Everything Your Venture Needs to Scale"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.servicesSection?.subtitle || "A complete institutional suite designed to eliminate roadblocks in fundraising, mentor advisory, compliance, and execution."}
             </p>
           </div>
@@ -1222,29 +1174,29 @@ export default function Home() {
               return (
                 <TiltCard
                   key={svc.title || sIdx}
-                  glowColor="rgba(245, 158, 11, 0.2)"
-                  className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800/80 p-5 sm:p-8 flex flex-col justify-between group hover:border-amber-500/50 dark:hover:border-slate-700 shadow-md hover:shadow-xl"
+                  glowColor="rgba(37, 99, 235, 0.2)"
+                  className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-8 flex flex-col justify-between group hover:border-blue-500/50 dark:hover:border-slate-700 shadow-md hover:shadow-xl"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4 sm:mb-6">
-                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-amber-50 dark:bg-slate-800 border border-amber-200/60 dark:border-slate-700 text-amber-700 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white dark:group-hover:text-slate-950 transition-all duration-300 shadow-sm">
+                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200/60 dark:border-slate-700 text-blue-700 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white dark:group-hover:text-white transition-all duration-300 shadow-sm">
                         <IconComp size={20} className="sm:w-6 sm:h-6" />
                       </div>
-                      <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-600 dark:text-slate-400 bg-stone-100 dark:bg-slate-800/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-stone-200 dark:border-slate-700">
+                      <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-slate-200 dark:border-slate-700">
                         {svc.tag}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white mb-2 sm:mb-3 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2 sm:mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {svc.title}
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-stone-600 dark:text-slate-400 leading-relaxed mb-4 sm:mb-6">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 sm:mb-6">
                       {svc.desc}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-1.5 transition-transform duration-300">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1.5 transition-transform duration-300">
                     <span>Learn more</span>
                     <ChevronRight size={14} />
                   </div>
@@ -1256,22 +1208,22 @@ export default function Home() {
       </section>
 
       {/* ================= SECTION 4: INTERACTIVE TRACKS (PERSONAS) ================= */}
-      <section id="personas" className="py-16 sm:py-24 bg-[#f4f1ea] dark:bg-slate-900/40 border-y border-stone-200/80 dark:border-slate-800/60 relative z-10">
+      <section id="personas" className="py-16 sm:py-24 bg-slate-100/90 dark:bg-slate-900/40 border-y border-slate-300/80 dark:border-slate-800/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-indigo-800 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
               {customHome?.personasSection?.badge || "Stakeholder Tracks"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.personasSection?.title || "Tailored Value for Every Stakeholder"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.personasSection?.subtitle || "Choose your role in India's startup growth story and unlock dedicated tooling."}
             </p>
           </div>
 
-          {/* Persona Tab Switcher (Horizontal scroll on mobile) */}
+          {/* Persona Tab Switcher */}
           <div className="flex flex-wrap sm:flex-nowrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 px-1">
             {Object.values(personas).map((p) => {
               const IconComp = p.icon;
@@ -1282,14 +1234,14 @@ export default function Home() {
                   onClick={() => setActivePersona(p.id)}
                   className={`relative flex items-center gap-1.5 sm:gap-2 px-3.5 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
                     isActive
-                      ? "text-white shadow-xl shadow-amber-500/20"
-                      : "text-stone-600 dark:text-slate-400 hover:text-stone-900 dark:hover:text-slate-200 bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 shadow-xs"
+                      ? "text-white shadow-xl shadow-blue-500/20"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xs"
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeTabPill"
-                      className="absolute inset-0 bg-gradient-to-r from-amber-600 to-amber-500 rounded-xl"
+                      className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -1321,23 +1273,23 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
-                  className="bg-white dark:bg-slate-900/90 border border-stone-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-12 shadow-2xl backdrop-blur-xl"
+                  className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-12 shadow-2xl backdrop-blur-xl"
                 >
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                     {/* Left Details */}
                     <div className="lg:col-span-7">
-                      <div className="inline-flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20 mb-3 sm:mb-4">
+                      <div className="inline-flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-blue-500/10 text-blue-800 dark:text-blue-400 border border-blue-500/20 mb-3 sm:mb-4">
                         <IconComp size={16} className="sm:w-5 sm:h-5" />
                         <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                           {current.badge}
                         </span>
                       </div>
 
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-stone-900 dark:text-white mb-2 sm:mb-4">
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white mb-2 sm:mb-4">
                         {current.title}
                       </h3>
 
-                      <p className="text-xs sm:text-sm lg:text-base text-stone-600 dark:text-slate-300 mb-5 sm:mb-8 leading-relaxed">
+                      <p className="text-xs sm:text-sm lg:text-base text-slate-600 dark:text-slate-300 mb-5 sm:mb-8 leading-relaxed">
                         {current.tagline}
                       </p>
 
@@ -1347,7 +1299,7 @@ export default function Home() {
                             <div className="p-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0">
                               <Check size={12} className="sm:w-3.5 sm:h-3.5" />
                             </div>
-                            <span className="text-xs sm:text-sm text-stone-700 dark:text-slate-300 font-medium">
+                            <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                               {pt}
                             </span>
                           </div>
@@ -1356,7 +1308,7 @@ export default function Home() {
 
                       <button
                         onClick={() => navigate(current.route || "/signup")}
-                        className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-amber-600/30 transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
                       >
                         <span>{current.cta || "Apply Now"}</span>
                         <ArrowRight size={15} />
@@ -1365,28 +1317,28 @@ export default function Home() {
 
                     {/* Right Interactive Track Card */}
                     <div className="lg:col-span-5">
-                      <div className="bg-stone-50 dark:bg-slate-950/90 border border-stone-200 dark:border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-sm">
-                        <div className="flex items-center justify-between pb-2 sm:pb-3 border-b border-stone-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold text-stone-500 dark:text-slate-400">
+                      <div className="bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-2 sm:pb-3 border-b border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
                           <span>TRACK CAPABILITIES</span>
-                          <span className="text-amber-600 dark:text-amber-400">VERIFIED</span>
+                          <span className="text-blue-600 dark:text-blue-400">VERIFIED</span>
                         </div>
 
                         <div className="space-y-2 sm:space-y-2.5">
-                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
-                            <span className="text-stone-700 dark:text-slate-300">Cohort Availability</span>
+                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
+                            <span className="text-slate-700 dark:text-slate-300">Cohort Availability</span>
                             <span className="font-bold text-emerald-600 dark:text-emerald-400">Open</span>
                           </div>
-                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
-                            <span className="text-stone-700 dark:text-slate-300">Mentorship Network</span>
-                            <span className="font-bold text-stone-900 dark:text-white">150+ CXOs</span>
+                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
+                            <span className="text-slate-700 dark:text-slate-300">Mentorship Network</span>
+                            <span className="font-bold text-slate-900 dark:text-white">150+ CXOs</span>
                           </div>
-                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
-                            <span className="text-stone-700 dark:text-slate-300">Legal Vault Access</span>
-                            <span className="font-bold text-stone-900 dark:text-white">Included</span>
+                          <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs">
+                            <span className="text-slate-700 dark:text-slate-300">Legal Vault Access</span>
+                            <span className="font-bold text-slate-900 dark:text-white">Included</span>
                           </div>
                         </div>
 
-                        <div className="pt-1 sm:pt-2 text-center text-[10px] sm:text-[11px] text-stone-400 dark:text-slate-500">
+                        <div className="pt-1 sm:pt-2 text-center text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500">
                           Free registration during Open Beta.
                         </div>
                       </div>
@@ -1403,13 +1355,13 @@ export default function Home() {
       <section id="how-it-works" className="py-16 sm:py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
               {customHome?.howItWorksSection?.badge || "Structured Journey"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.howItWorksSection?.title || "How RealBell Accelerates Your Venture"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.howItWorksSection?.subtitle || "A predictable 4-step framework from profile onboarding to closing capital and scaling."}
             </p>
           </div>
@@ -1421,23 +1373,23 @@ export default function Home() {
                 <TiltCard
                   key={step.step || rIdx}
                   glowColor="rgba(99, 102, 241, 0.15)"
-                  className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 p-4 sm:p-6 flex flex-col justify-between group hover:border-amber-500/50 shadow-md hover:shadow-xl"
+                  className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 flex flex-col justify-between group hover:border-blue-500/50 shadow-md hover:shadow-xl"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4 sm:mb-6">
-                      <span className="text-2xl sm:text-3xl font-black text-stone-300 dark:text-slate-700 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-300 dark:text-slate-700 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {step.step}
                       </span>
-                      <div className="p-2 sm:p-2.5 rounded-xl bg-stone-100 dark:bg-slate-800 text-stone-700 dark:text-slate-300 group-hover:bg-amber-500 group-hover:text-white dark:group-hover:text-slate-950 transition-colors">
+                      <div className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white dark:group-hover:text-white transition-colors">
                         <IconComp size={18} className="sm:w-5 sm:h-5" />
                       </div>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {step.title}
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-stone-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                       {step.desc}
                     </p>
                   </div>
@@ -1449,16 +1401,16 @@ export default function Home() {
       </section>
 
       {/* ================= SECTION 6: LIVE COHORTS & DEMO DAYS ================= */}
-      <section id="demo-days" className="py-16 sm:py-24 bg-[#f4f1ea] dark:bg-slate-900/40 border-y border-stone-200/80 dark:border-slate-800/60 relative z-10">
+      <section id="demo-days" className="py-16 sm:py-24 bg-slate-100/90 dark:bg-slate-900/40 border-y border-slate-300/80 dark:border-slate-800/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
               {customHome?.demoDaysSection?.badge || "Live Programs"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.demoDaysSection?.title || "Upcoming Cohorts & Pitch Arenas"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.demoDaysSection?.subtitle || "Apply to active sprints, masterclasses, and private demo day opportunities."}
             </p>
           </div>
@@ -1476,33 +1428,33 @@ export default function Home() {
                 <TiltCard
                   key={prog.title || pIdx}
                   glowColor="rgba(52, 211, 153, 0.15)"
-                  className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 p-5 sm:p-6 flex flex-col justify-between shadow-md hover:shadow-xl"
+                  className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 flex flex-col justify-between shadow-md hover:shadow-xl"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <span className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 sm:py-1 rounded-md border ${prog.color || "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10"}`}>
+                      <span className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 sm:py-1 rounded-md border ${prog.color || "border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10"}`}>
                         {prog.badge}
                       </span>
-                      <span className="text-[11px] sm:text-xs text-stone-500 dark:text-slate-500 font-semibold">{prog.category}</span>
+                      <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-500 font-semibold">{prog.category}</span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white mb-1.5 sm:mb-2">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">
                       {displayTitle}
                     </h3>
 
-                    <div className="text-xs text-amber-600 dark:text-amber-400 font-bold mb-2.5 sm:mb-3 flex items-center gap-1.5">
+                    <div className="text-xs text-blue-600 dark:text-blue-400 font-bold mb-2.5 sm:mb-3 flex items-center gap-1.5">
                       <Calendar size={13} />
                       <span>{displayDate}</span>
                     </div>
 
-                    <p className="text-xs text-stone-600 dark:text-slate-400 leading-relaxed mb-4 sm:mb-6">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4 sm:mb-6">
                       {displayDesc}
                     </p>
                   </div>
 
                   <button
                     onClick={() => navigate(ctaLink)}
-                    className="w-full py-2.5 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-stone-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <span>{ctaText}</span>
                     <ArrowRight size={13} />
@@ -1518,13 +1470,13 @@ export default function Home() {
       <section className="py-16 sm:py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
               {customHome?.testimonialsSection?.badge || "Ecosystem Voices"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.testimonialsSection?.title || "Backed by Founders & Operators"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.testimonialsSection?.subtitle || "Discover how ventures across India are leveraging RealBell to build and scale."}
             </p>
           </div>
@@ -1533,31 +1485,31 @@ export default function Home() {
             {testimonialsList.map((t, tIdx) => (
               <TiltCard
                 key={t.author || tIdx}
-                glowColor="rgba(245, 158, 11, 0.15)"
-                className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 p-5 sm:p-8 flex flex-col justify-between shadow-md hover:shadow-xl"
+                glowColor="rgba(37, 99, 235, 0.15)"
+                className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-5 sm:p-8 flex flex-col justify-between shadow-md hover:shadow-xl"
               >
                 <div>
-                  <div className="flex gap-1 text-amber-500 dark:text-amber-400 mb-3 sm:mb-4">
+                  <div className="flex gap-1 text-amber-400 mb-3 sm:mb-4">
                     {[...Array(5)].map((_, idx) => (
                       <Star key={idx} size={13} fill="currentColor" />
                     ))}
                   </div>
 
-                  <p className="text-xs sm:text-sm text-stone-600 dark:text-slate-300 leading-relaxed italic mb-4 sm:mb-6">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic mb-4 sm:mb-6">
                     "{t.quote}"
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 pt-3.5 sm:pt-4 border-t border-stone-100 dark:border-slate-800/80">
+                <div className="flex items-center gap-3 pt-3.5 sm:pt-4 border-t border-slate-100 dark:border-slate-800/80">
                   <img
                     src={t.avatar}
                     alt={t.author}
-                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border border-stone-200 dark:border-slate-700"
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                   />
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-stone-900 dark:text-white">{t.author}</div>
-                    <div className="text-[10px] sm:text-[11px] text-stone-500 dark:text-slate-400">{t.role}, {t.company}</div>
-                    <div className="text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 font-semibold">{t.stage}</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{t.author}</div>
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">{t.role}, {t.company}</div>
+                    <div className="text-[9px] sm:text-[10px] text-blue-600 dark:text-blue-400 font-semibold">{t.stage}</div>
                   </div>
                 </div>
               </TiltCard>
@@ -1567,16 +1519,16 @@ export default function Home() {
       </section>
 
       {/* ================= SECTION 8: FAQ ================= */}
-      <section id="faq" className="py-16 sm:py-24 bg-[#f4f1ea] dark:bg-slate-900/40 border-y border-stone-200/80 dark:border-slate-800/60 relative z-10">
+      <section id="faq" className="py-16 sm:py-24 bg-slate-100/90 dark:bg-slate-900/40 border-y border-slate-300/80 dark:border-slate-800/60 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-indigo-800 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
               {customHome?.faqSection?.badge || "Frequently Asked Questions"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-3 sm:mt-4 mb-3 sm:mb-4">
               {customHome?.faqSection?.title || "Everything You Need to Know"}
             </h2>
-            <p className="text-stone-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm sm:text-base">
               {customHome?.faqSection?.subtitle || "Got questions about RealBell Business Foundation? We have answers."}
             </p>
           </div>
@@ -1587,19 +1539,19 @@ export default function Home() {
               return (
                 <div
                   key={faq.question || fIdx}
-                  className="bg-white dark:bg-slate-900/80 border border-stone-200 dark:border-slate-800 rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 shadow-xs"
+                  className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 shadow-xs"
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : fIdx)}
                     className="w-full px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-left gap-4 cursor-pointer"
                   >
-                    <span className="text-xs sm:text-sm sm:text-base font-bold text-stone-900 dark:text-white">
+                    <span className="text-xs sm:text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                       {faq.question || faq.q}
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`text-stone-500 dark:text-slate-400 transition-transform duration-300 shrink-0 ${
-                        isOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : ""
+                      className={`text-slate-500 dark:text-slate-400 transition-transform duration-300 shrink-0 ${
+                        isOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
                       }`}
                     />
                   </button>
@@ -1612,7 +1564,7 @@ export default function Home() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.25 }}
                       >
-                        <div className="px-5 sm:px-6 pb-4 sm:pb-6 text-xs sm:text-sm text-stone-600 dark:text-slate-400 leading-relaxed border-t border-stone-100 dark:border-slate-800/80 pt-3 sm:pt-4">
+                        <div className="px-5 sm:px-6 pb-4 sm:pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/80 pt-3 sm:pt-4">
                           {faq.answer || faq.a}
                         </div>
                       </motion.div>
@@ -1628,7 +1580,7 @@ export default function Home() {
       {/* ================= SECTION 9: CTA BANNER ================= */}
       <section className="py-16 sm:py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 p-8 sm:p-12 lg:p-16 text-center text-white overflow-hidden shadow-2xl">
+          <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 p-8 sm:p-12 lg:p-16 text-center text-white overflow-hidden shadow-2xl">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/15 to-transparent pointer-events-none" />
 
             <div className="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
@@ -1636,13 +1588,13 @@ export default function Home() {
                 {customHome?.ctaBanner?.title || "Start Building on India's Premier Incubation Network"}
               </h2>
 
-              <p className="text-xs sm:text-sm sm:text-base lg:text-lg text-amber-100/90 leading-relaxed">
+              <p className="text-xs sm:text-sm sm:text-base lg:text-lg text-blue-100/90 leading-relaxed">
                 {customHome?.ctaBanner?.subtitle || "Join founders, angel syndicates, and mentors driving the next chapter of enterprise innovation."}
               </p>
 
               <button
                 onClick={() => navigate(customHome?.ctaBanner?.buttonLink || "/signup")}
-                className="px-6 sm:px-10 py-3 sm:py-4 rounded-xl bg-white text-stone-900 font-extrabold text-xs sm:text-sm lg:text-base hover:bg-stone-100 shadow-xl transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
+                className="px-6 sm:px-10 py-3 sm:py-4 rounded-xl bg-white text-blue-900 font-extrabold text-xs sm:text-sm lg:text-base hover:bg-slate-100 shadow-xl transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
               >
                 <span>{customHome?.ctaBanner?.buttonText || "Create Foundation Account"}</span>
                 <ArrowRight size={17} />
@@ -1653,7 +1605,7 @@ export default function Home() {
       </section>
 
       {/* ================= SECTION 10: FOOTER ================= */}
-      <footer className="bg-[#181513] dark:bg-slate-950 text-stone-300 dark:text-slate-300 border-t border-stone-800 dark:border-slate-800 pt-10 sm:pt-12 pb-6 sm:pb-8 relative z-10">
+      <footer className="bg-[#0B1120] dark:bg-[#070B14] text-slate-300 dark:text-slate-300 border-t border-slate-800 dark:border-slate-800/80 pt-10 sm:pt-12 pb-6 sm:pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
             {/* Column 1: Logo & Mission Tagline */}
@@ -1662,7 +1614,7 @@ export default function Home() {
                 <img
                   src="/logo.png"
                   alt="RealBell Logo"
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl object-contain bg-white p-1 border border-stone-700 shadow-md"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl object-contain bg-white p-1 border border-slate-700 shadow-md"
                 />
                 <div>
                   <div className="text-base sm:text-lg font-black tracking-tight text-white flex items-center">
@@ -1671,21 +1623,21 @@ export default function Home() {
                         ? (customHome?.navbar?.brandName || "REAL").substring(0, (customHome?.navbar?.brandName || "REAL").length - (customHome?.navbar?.brandHighlight || "BELL").length)
                         : (customHome?.navbar?.brandName || "REAL")}
                     </span>
-                    <span className="text-amber-500">{customHome?.navbar?.brandHighlight || "BELL"}</span>
+                    <span className="text-blue-500">{customHome?.navbar?.brandHighlight || "BELL"}</span>
                   </div>
-                  <div className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 dark:text-slate-500">
+                  <div className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
                     {customHome?.navbar?.subtitle || "Business Foundation"}
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs leading-relaxed text-stone-400 dark:text-slate-400 max-w-sm">
+              <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-400 max-w-sm">
                 {customHome?.footer?.brandDescription || "Empowering India's next generation of entrepreneurial leaders through structured incubation, capital connections, strategic mentorship, and milestone accountability."}
               </p>
 
               {customHome?.footer?.address && (
-                <div className="text-[11px] text-stone-400 dark:text-slate-500 flex items-start gap-1.5 max-w-sm pt-1">
-                  <span className="text-amber-500 font-bold shrink-0 mt-0.5">•</span>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-start gap-1.5 max-w-sm pt-1">
+                  <span className="text-blue-500 font-bold shrink-0 mt-0.5">•</span>
                   <span>{customHome.footer.address}</span>
                 </div>
               )}
@@ -1696,18 +1648,18 @@ export default function Home() {
                   {customHome.footer.contactEmail && (
                     <a
                       href={`mailto:${customHome.footer.contactEmail}`}
-                      className="inline-flex items-center gap-1.5 text-stone-400 hover:text-amber-400 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors"
                     >
-                      <Mail size={12} className="text-amber-400 shrink-0" />
+                      <Mail size={12} className="text-blue-400 shrink-0" />
                       <span>{customHome.footer.contactEmail}</span>
                     </a>
                   )}
                   {customHome.footer.contactPhone && (
                     <a
                       href={`tel:${customHome.footer.contactPhone}`}
-                      className="inline-flex items-center gap-1.5 text-stone-400 hover:text-amber-400 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors"
                     >
-                      <Phone size={12} className="text-amber-400 shrink-0" />
+                      <Phone size={12} className="text-blue-400 shrink-0" />
                       <span>{customHome.footer.contactPhone}</span>
                     </a>
                   )}
@@ -1724,19 +1676,19 @@ export default function Home() {
                 {(customHome?.footer?.ecosystemLinks && customHome.footer.ecosystemLinks.length > 0) ? (
                   customHome.footer.ecosystemLinks.map((lnk, idx) => (
                     <li key={idx}>
-                      <Link to={lnk.href || "/signup"} className="hover:text-amber-400 transition-colors">
+                      <Link to={lnk.href || "/signup"} className="hover:text-blue-400 transition-colors">
                         {lnk.label}
                       </Link>
                     </li>
                   ))
                 ) : (
                   <>
-                    <li><Link to="/signup" className="hover:text-amber-400 transition-colors">For Startups</Link></li>
-                    <li><Link to="/signup" className="hover:text-amber-400 transition-colors">For Angel Investors</Link></li>
-                    <li><Link to="/signup" className="hover:text-amber-400 transition-colors">For Mentors &amp; CXOs</Link></li>
-                    <li><Link to="/signup" className="hover:text-amber-400 transition-colors">For Incubators</Link></li>
-                    <li><Link to="/signup" className="hover:text-amber-400 transition-colors">For Accelerators</Link></li>
-                    <li><Link to="/login" className="hover:text-amber-400 transition-colors">Member Dashboard</Link></li>
+                    <li><Link to="/signup" className="hover:text-blue-400 transition-colors">For Startups</Link></li>
+                    <li><Link to="/signup" className="hover:text-blue-400 transition-colors">For Angel Investors</Link></li>
+                    <li><Link to="/signup" className="hover:text-blue-400 transition-colors">For Mentors &amp; CXOs</Link></li>
+                    <li><Link to="/signup" className="hover:text-blue-400 transition-colors">For Incubators</Link></li>
+                    <li><Link to="/signup" className="hover:text-blue-400 transition-colors">For Accelerators</Link></li>
+                    <li><Link to="/login" className="hover:text-blue-400 transition-colors">Member Dashboard</Link></li>
                   </>
                 )}
               </ul>
@@ -1751,7 +1703,7 @@ export default function Home() {
                 {(customHome?.footer?.quickLinks && customHome.footer.quickLinks.length > 0) ? (
                   customHome.footer.quickLinks.map((lnk, idx) => (
                     <li key={idx}>
-                      <Link to={lnk.href || "#"} className="hover:text-amber-400 transition-colors">
+                      <Link to={lnk.href || "#"} className="hover:text-blue-400 transition-colors">
                         {lnk.label}
                       </Link>
                     </li>
@@ -1759,18 +1711,18 @@ export default function Home() {
                 ) : (customHome?.footer?.resourceLinks && customHome.footer.resourceLinks.length > 0) ? (
                   customHome.footer.resourceLinks.map((lnk, idx) => (
                     <li key={idx}>
-                      <Link to={lnk.href || "#"} className="hover:text-amber-400 transition-colors">
+                      <Link to={lnk.href || "#"} className="hover:text-blue-400 transition-colors">
                         {lnk.label}
                       </Link>
                     </li>
                   ))
                 ) : (
                   <>
-                    <li><Link to="/resources/contracts" className="hover:text-amber-400 transition-colors">Legal Contract Vault</Link></li>
-                    <li><Link to="/resources/glossary" className="hover:text-amber-400 transition-colors">Startup Glossary</Link></li>
-                    <li><Link to="/resources/reports" className="hover:text-amber-400 transition-colors">Market Reports</Link></li>
-                    <li><Link to="/resources/videos" className="hover:text-amber-400 transition-colors">Masterclass Videos</Link></li>
-                    <li><Link to="/milestones" className="hover:text-amber-400 transition-colors">Milestone Tracker</Link></li>
+                    <li><Link to="/resources/contracts" className="hover:text-blue-400 transition-colors">Legal Contract Vault</Link></li>
+                    <li><Link to="/resources/glossary" className="hover:text-blue-400 transition-colors">Startup Glossary</Link></li>
+                    <li><Link to="/resources/reports" className="hover:text-blue-400 transition-colors">Market Reports</Link></li>
+                    <li><Link to="/resources/videos" className="hover:text-blue-400 transition-colors">Masterclass Videos</Link></li>
+                    <li><Link to="/milestones" className="hover:text-blue-400 transition-colors">Milestone Tracker</Link></li>
                   </>
                 )}
               </ul>
@@ -1781,7 +1733,7 @@ export default function Home() {
               <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white">
                 {customHome?.footer?.newsletterTitle || "Stay Updated"}
               </h4>
-              <p className="text-[11px] text-stone-400 dark:text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-slate-400 dark:text-slate-400 leading-relaxed">
                 {customHome?.footer?.newsletterSubtitle || "Receive cohort announcements and angel pitch notifications."}
               </p>
 
@@ -1798,11 +1750,11 @@ export default function Home() {
                     placeholder="founder@venture.com"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
-                    className="w-full rounded-xl border border-stone-800 bg-stone-900 dark:bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-stone-500 dark:placeholder:text-slate-600 outline-none focus:border-amber-500"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 dark:bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 dark:placeholder:text-slate-600 outline-none focus:border-blue-500"
                   />
                   <button
                     type="submit"
-                    className="w-full py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold transition-colors cursor-pointer"
+                    className="w-full py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 cursor-pointer"
                   >
                     Subscribe to Dispatch
                   </button>
@@ -1812,7 +1764,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Bar: Copyright, Social Handles CRUD, Legal Terms */}
-          <div className="mt-8 sm:mt-12 pt-6 border-t border-stone-800/80 dark:border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] sm:text-xs text-stone-400 dark:text-slate-500">
+          <div className="mt-8 sm:mt-12 pt-6 border-t border-slate-800/80 dark:border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] sm:text-xs text-slate-400 dark:text-slate-500">
             {/* Copyright */}
             <div className="order-3 md:order-1 text-center md:text-left">
               © {new Date().getFullYear()} {customHome?.footer?.copyrightText || "RealBell Business Foundation. All Rights Reserved."}
@@ -1838,7 +1790,7 @@ export default function Home() {
                         href={soc.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 rounded-xl bg-stone-900/90 dark:bg-slate-900 border border-stone-700/60 hover:border-amber-500/60 text-stone-400 hover:text-amber-400 transition-all hover:scale-105 shadow-xs flex items-center justify-center"
+                        className="p-2 rounded-xl bg-slate-900/90 dark:bg-slate-900 border border-slate-700/60 hover:border-blue-500/60 text-slate-400 hover:text-blue-400 transition-all hover:scale-105 shadow-xs flex items-center justify-center"
                         title={soc.label || plat.toUpperCase()}
                       >
                         {plat === "twitter" || plat === "x" ? (
@@ -1871,13 +1823,13 @@ export default function Home() {
 
             {/* Legal Terms */}
             <div className="order-2 md:order-3 flex gap-4 sm:gap-6">
-              <Link to="/privacy-policy" className="hover:text-stone-200 dark:hover:text-slate-400 transition-colors">
+              <Link to="/privacy-policy" className="hover:text-slate-200 dark:hover:text-slate-400 transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="/terms-of-service" className="hover:text-stone-200 dark:hover:text-slate-400 transition-colors">
+              <Link to="/terms-of-service" className="hover:text-slate-200 dark:hover:text-slate-400 transition-colors">
                 Terms of Foundation
               </Link>
-              <Link to="/code-of-conduct" className="hover:text-stone-200 dark:hover:text-slate-400 transition-colors">
+              <Link to="/code-of-conduct" className="hover:text-slate-200 dark:hover:text-slate-400 transition-colors">
                 Code of Conduct
               </Link>
             </div>

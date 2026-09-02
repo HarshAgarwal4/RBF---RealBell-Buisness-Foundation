@@ -13,7 +13,8 @@
     margin: 0;
     padding: 0;
     -webkit-text-size-adjust: 100%;
-    background-color: var(--color-bg);
+    background: var(--gradient-bg, var(--color-bg));
+    background-attachment: fixed;
     color: var(--color-text-main);
   }
 
@@ -35,8 +36,6 @@
   animation-timing-function: ease-in-out;
 }
 
-
-
 /* ==========================================================================
    NORMAL USER DASHBOARD: GLOBAL DYNAMIC THEME ENGINE (LIGHT & DARK MODE)
    (Driven by frontend/src/theme.css — Scoped so Admin Panel is untouched)
@@ -44,7 +43,7 @@
 
 /* ================= 1. PRIMARY ACCENT BUTTONS, TEXT & BORDERS ================= */
 
-/* Primary Action Buttons */
+/* Primary Action Buttons with Gradient Polish */
 :not(.admin-scope) .bg-\[\#8E1B2E\],
 :not(.admin-scope) .bg-\[\#8B1D2C\],
 :not(.admin-scope) .bg-\[\#9d1d27\],
@@ -56,8 +55,11 @@
 :not(.admin-scope) .bg-red-700,
 :not(.admin-scope) .bg-red-800,
 :not(.admin-scope) .bg-red-600 {
-  background-color: var(--color-primary) !important;
+  background: var(--gradient-primary, var(--color-primary)) !important;
   color: #FFFFFF !important;
+  box-shadow: 0 4px 16px 0 rgba(37, 99, 235, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 :not(.admin-scope) .hover\:bg-\[\#721724\]:hover,
@@ -69,7 +71,9 @@
 :not(.admin-scope) .hover\:bg-\[\#152352\]:hover,
 :not(.admin-scope) .hover\:bg-red-800:hover,
 :not(.admin-scope) .hover\:bg-red-700:hover {
-  background-color: var(--color-primary-hover, var(--color-primary-dark)) !important;
+  background: var(--gradient-primary-hover, var(--color-primary-hover)) !important;
+  box-shadow: 0 8px 24px 0 rgba(37, 99, 235, 0.45);
+  transform: translateY(-1.5px);
 }
 
 /* Primary Accent Text */
@@ -105,14 +109,14 @@
 :not(.admin-scope) .bg-\[\#fcf5f6\],
 :not(.admin-scope) .bg-\[\#9d1d27\]\/10,
 :not(.admin-scope) .bg-\[\#9d1d27\]\/20 {
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
+  background: var(--gradient-pill-badge) !important;
   color: var(--color-primary-light, var(--color-primary)) !important;
   border-color: color-mix(in srgb, var(--color-primary) 25%, transparent) !important;
 }
 
 /* Profile Tag Pills & Badges in Dark Mode */
 html.dark:not(.admin-scope) .bg-blue-50 {
-  background-color: var(--color-card-elevated) !important;
+  background: var(--gradient-card-elevated, var(--color-card-elevated)) !important;
 }
 html.dark:not(.admin-scope) .border-blue-100 {
   border-color: var(--color-border) !important;
@@ -121,14 +125,14 @@ html.dark:not(.admin-scope) .text-blue-900 {
   color: var(--color-primary) !important;
 }
 html.dark:not(.admin-scope) .bg-green-100 {
-  background-color: color-mix(in srgb, var(--color-success) 18%, transparent) !important;
-  color: var(--color-success) !important;
+  background: var(--gradient-success) !important;
+  color: #ffffff !important;
 }
 html.dark:not(.admin-scope) .text-green-700 {
   color: var(--color-success) !important;
 }
 html.dark:not(.admin-scope) .bg-\[\#fafbfc\] {
-  background-color: var(--color-card-elevated) !important;
+  background: var(--gradient-card-elevated, var(--color-card-elevated)) !important;
 }
 
 /* Watermarks & Decorative Shapes */
@@ -160,36 +164,52 @@ html.dark:not(.admin-scope) .dark\:bg-\[\#151D2E\],
 html.dark:not(.admin-scope) .dark\:bg-\[\#111827\],
 html.dark:not(.admin-scope) .dark\:bg-slate-900,
 html.dark:not(.admin-scope) .dark\:bg-slate-950 {
-  background-color: var(--color-bg) !important;
+  background: var(--gradient-bg, var(--color-bg)) !important;
 }
 
-/* Card Surfaces */
+/* Card Surfaces with Gradient Polish & Clear Object Separation */
 html.dark:not(.admin-scope) .bg-white,
 html.dark:not(.admin-scope) .bg-stone-50,
 html.dark:not(.admin-scope) .bg-slate-50,
 html.dark:not(.admin-scope) .bg-gray-50,
 html.dark:not(.admin-scope) .bg-zinc-50,
 html.dark:not(.admin-scope) .bg-neutral-50 {
-  background-color: var(--color-card) !important;
+  background: var(--gradient-card, var(--color-card)) !important;
   color: var(--color-text-main) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Elevated Sub-Cards */
-html.dark:not(.admin-scope) .bg-gray-100,
-html.dark:not(.admin-scope) .bg-slate-100,
-html.dark:not(.admin-scope) .bg-zinc-100,
-html.dark:not(.admin-scope) .bg-stone-100,
-html.dark:not(.admin-scope) .bg-slate-200,
-html.dark:not(.admin-scope) .bg-gray-200 {
-  background-color: var(--color-card-elevated) !important;
+:not(html.dark):not(.admin-scope) .bg-white {
+  background: var(--gradient-card, #FFFFFF) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 6px 20px -2px rgba(15, 23, 42, 0.08);
+}
+
+/* Elevated Sub-Cards & Nested Containers (distinct from parent card) */
+:not(.admin-scope) .bg-gray-100,
+:not(.admin-scope) .bg-slate-100,
+:not(.admin-scope) .bg-zinc-100,
+:not(.admin-scope) .bg-stone-100,
+:not(.admin-scope) .bg-slate-200,
+:not(.admin-scope) .bg-gray-200 {
+  background: var(--gradient-card-elevated, var(--color-card-elevated)) !important;
   color: var(--color-text-main) !important;
+  border-color: var(--color-border) !important;
+}
+
+:not(html.dark):not(.admin-scope) .bg-slate-50,
+:not(html.dark):not(.admin-scope) .bg-stone-50,
+:not(html.dark):not(.admin-scope) .bg-gray-50 {
+  background: var(--gradient-card-elevated, #F1F5F9) !important;
+  border-color: var(--color-border) !important;
 }
 
 html.dark:not(.admin-scope) .bg-slate-50\/50,
 html.dark:not(.admin-scope) .bg-gray-50\/50,
 html.dark:not(.admin-scope) .bg-gray-50\/60,
 html.dark:not(.admin-scope) .bg-gray-50\/80 {
-  background-color: var(--color-hover) !important;
+  background: var(--gradient-card-hover, var(--color-hover)) !important;
 }
 
 /* Modals & Backdrop Blur */
@@ -218,14 +238,14 @@ html.dark:not(.admin-scope) .dark\:bg-slate-900\/95 {
 :not(.admin-scope) .border-\[\#EEF1F6\],
 :not(.admin-scope) .border-\[\#E8ECF4\],
 :not(.admin-scope) .border-\[\#ABB1C5\],
-html.dark:not(.admin-scope) .border-gray-100,
-html.dark:not(.admin-scope) .border-gray-200,
-html.dark:not(.admin-scope) .border-gray-300,
-html.dark:not(.admin-scope) .border-slate-100,
-html.dark:not(.admin-scope) .border-slate-200,
-html.dark:not(.admin-scope) .border-slate-300,
-html.dark:not(.admin-scope) .border-zinc-200,
-html.dark:not(.admin-scope) .border-stone-200,
+:not(.admin-scope) .border-gray-100,
+:not(.admin-scope) .border-gray-200,
+:not(.admin-scope) .border-gray-300,
+:not(.admin-scope) .border-slate-100,
+:not(.admin-scope) .border-slate-200,
+:not(.admin-scope) .border-slate-300,
+:not(.admin-scope) .border-zinc-200,
+:not(.admin-scope) .border-stone-200,
 html.dark:not(.admin-scope) .dark\:border-slate-800,
 html.dark:not(.admin-scope) .dark\:border-slate-700 {
   border-color: var(--color-border) !important;
@@ -266,7 +286,7 @@ input:not([type]):focus,
 textarea:focus {
   border-color: var(--color-primary) !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent) !important;
 }
 
 /* Number Inputs */
@@ -279,7 +299,7 @@ input[type="number"] {
 input[type="number"]:focus {
   border-color: var(--color-primary) !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent) !important;
 }
 
 /* Date & Time Inputs */
@@ -300,7 +320,7 @@ html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-/* File Upload Inputs */
+/* File Upload Inputs with Gradient Button */
 input[type="file"] {
   background-color: var(--color-input-bg) !important;
   color: var(--color-text-muted) !important;
@@ -309,9 +329,9 @@ input[type="file"] {
 
 input[type="file"]::file-selector-button,
 input[type="file"]::-webkit-file-upload-button {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+  background: var(--gradient-primary) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   border-radius: 8px !important;
   padding: 6px 14px !important;
   font-weight: 600 !important;
@@ -319,12 +339,12 @@ input[type="file"]::-webkit-file-upload-button {
   cursor: pointer !important;
   margin-right: 12px !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
 }
 
 input[type="file"]::file-selector-button:hover,
 input[type="file"]::-webkit-file-upload-button:hover {
-  background: linear-gradient(135deg, var(--color-primary-light, var(--color-primary)), var(--color-primary)) !important;
+  background: var(--gradient-primary-hover) !important;
   transform: translateY(-1px);
 }
 
@@ -338,7 +358,7 @@ select {
 select:focus {
   border-color: var(--color-primary) !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent) !important;
 }
 
 select option,

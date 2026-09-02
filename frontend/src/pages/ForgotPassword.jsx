@@ -11,12 +11,15 @@ import {
   EyeOff,
   KeyRound,
   Check,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../zustand/store";
+import { useTheme } from "../context/ThemeProvider";
 
 function Logo() {
   return (
@@ -24,12 +27,12 @@ function Logo() {
       <img
         src="/logo.png"
         alt="RealBell Logo"
-        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-amber-700/20 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
+        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-blue-600/10 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
       />
 
       <div>
         <div className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
-          REAL<span className="text-amber-700 dark:text-amber-500">BELL</span>
+          REAL<span className="text-blue-600 dark:text-blue-400">BELL</span>
         </div>
 
         <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -40,26 +43,49 @@ function Logo() {
   );
 }
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label="Toggle theme"
+    >
+      {isDark ? (
+        <Sun size={17} className="text-amber-400" />
+      ) : (
+        <Moon size={17} className="text-blue-600" />
+      )}
+    </button>
+  );
+}
+
 function LeftPanel() {
   return (
-    <div className="hidden lg:flex w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 p-10 xl:p-12 relative overflow-hidden">
+    <div className="hidden lg:flex w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 p-10 xl:p-12 relative overflow-hidden">
       {/* Decorative background glow */}
-      <div className="absolute -top-24 -left-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         <Logo />
 
         <div className="mt-12 xl:mt-16">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-6">
-            <ShieldCheck className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 px-3 py-1 text-xs font-semibold text-blue-800 dark:text-blue-300 mb-6">
+            <ShieldCheck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
             <span>Account Security & Recovery</span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black leading-tight text-slate-900 dark:text-white">
             Forgot Your
             <br />
-            <span className="text-amber-700 dark:text-amber-500">Password?</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:to-indigo-400">
+              Password?
+            </span>
           </h1>
 
           <p className="mt-5 text-sm xl:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
@@ -73,7 +99,7 @@ function LeftPanel() {
               { icon: Sparkles, text: "Immediate restoration of all platform privileges" },
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
                   <item.icon className="h-3.5 w-3.5" />
                 </div>
                 <span>{item.text}</span>
@@ -96,12 +122,13 @@ function LeftPanel() {
 
 function MobileHeader() {
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-stone-50/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
+    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
       <Logo />
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ThemeToggleButton />
         <Link
           to="/login"
-          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1"
+          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
         >
           <ArrowLeft size={13} />
           <span>Login</span>
@@ -115,7 +142,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const user = useStore((state) => state.user);
 
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP + New Password, 3: Success
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -315,7 +342,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#070B14] text-slate-800 dark:text-slate-100 transition-colors">
       <LeftPanel />
 
       <div className="flex flex-1 flex-col justify-between">
@@ -328,7 +355,7 @@ export default function ForgotPassword() {
               {step === 2 ? (
                 <button
                   onClick={() => setStep(1)}
-                  className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
+                  className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                 >
                   <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
                   <span>Back</span>
@@ -336,21 +363,27 @@ export default function ForgotPassword() {
               ) : (
                 <Link
                   to="/login"
-                  className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                  className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
                   <span>Back to Login</span>
                 </Link>
               )}
 
-              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                Remember your password?{" "}
-                <Link
-                  to="/login"
-                  className="font-bold text-slate-900 dark:text-white hover:text-amber-700 dark:hover:text-amber-400 underline underline-offset-2 decoration-amber-700/40"
-                >
-                  Log In
-                </Link>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="hidden lg:block">
+                  <ThemeToggleButton />
+                </div>
+
+                <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                  Remember password?{" "}
+                  <Link
+                    to="/login"
+                    className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2 decoration-blue-600/40"
+                  >
+                    Log In
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -360,15 +393,15 @@ export default function ForgotPassword() {
                 <div
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     step === 1
-                      ? "w-8 bg-amber-700 dark:bg-amber-500"
+                      ? "w-8 bg-blue-600 dark:bg-blue-500"
                       : "w-8 bg-slate-900 dark:bg-slate-300"
                   }`}
                 />
                 <div
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     step === 2
-                      ? "w-8 bg-amber-700 dark:bg-amber-500"
-                      : "w-6 bg-slate-200 dark:bg-slate-700"
+                      ? "w-8 bg-blue-600 dark:bg-blue-500"
+                      : "w-6 bg-slate-200 dark:bg-slate-800"
                   }`}
                 />
                 <span className="ml-2 text-xs font-medium text-slate-400 dark:text-slate-500">
@@ -415,10 +448,10 @@ export default function ForgotPassword() {
                             setEmail(e.target.value);
                             setError("");
                           }}
-                          className={`w-full rounded-xl border bg-white dark:bg-slate-900 pl-11 pr-4 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
+                          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 pl-11 pr-4 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
                             error
                               ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
-                              : "border-slate-200 dark:border-slate-700"
+                              : "border-slate-200 dark:border-slate-700/80"
                           }`}
                         />
                       </div>
@@ -433,7 +466,7 @@ export default function ForgotPassword() {
                     <div className="flex items-center justify-between pt-2">
                       <Link
                         to="/login"
-                        className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400"
+                        className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                       >
                         Return to Login
                       </Link>
@@ -441,7 +474,7 @@ export default function ForgotPassword() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
                       >
                         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                         <span>{loading ? "Sending Code..." : "Send Verification Code"}</span>
@@ -493,10 +526,10 @@ export default function ForgotPassword() {
                             onKeyDown={(e) => handleOTPKeyDown(index, e)}
                             maxLength={1}
                             inputMode="numeric"
-                            className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl border bg-white dark:bg-slate-900 text-center text-lg sm:text-xl font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
+                            className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl border bg-white dark:bg-slate-900/90 text-center text-lg sm:text-xl font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
                               otpError
                                 ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
-                                : "border-slate-200 dark:border-slate-700"
+                                : "border-slate-200 dark:border-slate-700/80"
                             }`}
                           />
                         ))}
@@ -511,13 +544,13 @@ export default function ForgotPassword() {
                       <div className="mt-3 flex items-center justify-between text-xs">
                         {timer > 0 ? (
                           <span className="text-slate-500 dark:text-slate-400">
-                            Resend code in <strong className="text-amber-700 dark:text-amber-500">{timer}s</strong>
+                            Resend code in <strong className="text-blue-600 dark:text-blue-400">{timer}s</strong>
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={resendOTP}
-                            className="font-bold text-amber-700 dark:text-amber-500 hover:underline cursor-pointer"
+                            className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                           >
                             Resend Code
                           </button>
@@ -550,7 +583,7 @@ export default function ForgotPassword() {
                             setPassword(e.target.value);
                             setError("");
                           }}
-                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20"
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900/90 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
                         />
                         <button
                           type="button"
@@ -580,7 +613,7 @@ export default function ForgotPassword() {
                             setConfirmPassword(e.target.value);
                             setError("");
                           }}
-                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20"
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900/90 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
                         />
                         <button
                           type="button"
@@ -612,7 +645,7 @@ export default function ForgotPassword() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
                       >
                         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                         <span>{loading ? "Resetting..." : "Reset Password"}</span>
@@ -646,7 +679,7 @@ export default function ForgotPassword() {
                   <div className="mt-8">
                     <Link
                       to="/login"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <span>Proceed to Login</span>
                       <ArrowLeft className="h-4 w-4 rotate-180" />
@@ -659,7 +692,7 @@ export default function ForgotPassword() {
         </div>
 
         {/* Mobile footer */}
-        <div className="py-4 text-center text-xs text-slate-400 lg:hidden">
+        <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500 lg:hidden">
           © {new Date().getFullYear()} RealBell Business Foundation
         </div>
       </div>

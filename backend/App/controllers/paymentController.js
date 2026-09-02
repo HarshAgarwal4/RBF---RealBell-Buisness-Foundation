@@ -3,6 +3,8 @@ import Razorpay from "razorpay";
 import PlanModel from "../models/plan.js";
 import TransactionModel from "../models/transaction.js";
 import OrganizationModel from "../models/organization.js";
+import WalletModel from "../models/wallet.js";
+import WalletTransactionModel from "../models/walletTransaction.js";
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_RBF1234567890";
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "rzp_test_secret_RBF";
@@ -458,6 +460,40 @@ export async function handleRazorpayWebhook(req, res) {
           }
 
           console.log(`[Razorpay Webhook] Successfully auto-activated subscription for user ${txn.user} on order ${orderId}`);
+        }
+      }
+
+      // Handle Wallet Credit Top-up via Webhook
+      const notes = paymentEntity?.notes || orderEntity?.notes;
+      if (notes?.type === "WALLET_TOPUP" || notes?.creditsToPurchase) {
+        const userId = notes.userId;
+        const credits = Number(notes.creditsToPurchase || Math.round((paymentEntity?.amount || 0) / 100));
+
+        if (userId && credits > 0) {
+          const existingTxn = await WalletTransactionModel.findOne({ razorpay_payment_id: paymentId });
+          if (!existingTxn) {
+            const updatedWallet = await WalletModel.findOneAndUpdate(
+              { user: userId },
+              { $inc: { balance: credits, total_credited: credits } },
+              { new: true, upsert: true }
+            );
+
+            await WalletTransactionModel.create({
+              user: userId,
+              wallet: updatedWallet._id,
+              type: "credit",
+              amount: credits,
+              balance_after: updatedWallet.balance,
+              category: "razorpay_topup",
+              description: `Added ${credits} credits via Razorpay online payment (Webhook)`,
+              reference_id: paymentId,
+              razorpay_order_id: orderId,
+              razorpay_payment_id: paymentId,
+              status: "success",
+            });
+
+            console.log(`[Razorpay Webhook] Successfully credited ${credits} credits to user ${userId} for payment ${paymentId}`);
+          }
         }
       }
     } else if (event === "payment.failed") {

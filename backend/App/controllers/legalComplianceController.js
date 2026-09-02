@@ -3,6 +3,9 @@ import Razorpay from "razorpay";
 import LegalComplianceServiceModel from "../models/legalComplianceService.js";
 import LegalComplianceApplicationModel from "../models/legalComplianceApplication.js";
 import TransactionModel from "../models/transaction.js";
+import WalletModel from "../models/wallet.js";
+import WalletTransactionModel from "../models/walletTransaction.js";
+import { getOrCreateUserWallet } from "./walletController.js";
 import { uploadFileToCloud } from "../../services/upload.js";
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_RBF1234567890";
@@ -492,9 +495,12 @@ export async function createApplication(req, res) {
 /**
  * User: Create Razorpay Payment Order for Compliance Application
  */
+/**
+ * User: Create Razorpay Payment Order or Full Wallet Credit Payment for Compliance Application
+ */
 export async function createApplicationPaymentOrder(req, res) {
   try {
-    const { applicationId } = req.body;
+    const { applicationId, creditsToUse = 0 } = req.body;
     if (!applicationId) {
       return res.status(400).json({ status: 0, msg: "Application ID is required" });
     }
@@ -523,7 +529,94 @@ export async function createApplicationPaymentOrder(req, res) {
       });
     }
 
-    const amountInPaise = Math.round(application.payment.amount * 100);
+    const totalFee = Number(application.payment.amount);
+    let requestedCredits = Math.max(0, Math.floor(Number(creditsToUse) || 0));
+
+    // Cap requested credits to the total service fee
+    requestedCredits = Math.min(requestedCredits, totalFee);
+
+    // If user requested to use credits, validate their wallet balance
+    let userWallet = null;
+    if (requestedCredits > 0) {
+      userWallet = await getOrCreateUserWallet(req.user._id);
+      if (userWallet.balance < requestedCredits) {
+        return res.status(400).json({
+          status: 0,
+          msg: `Insufficient wallet balance. You have ${userWallet.balance} credits available, but tried to use ${requestedCredits} credits.`,
+        });
+      }
+    }
+
+    const cashPayable = totalFee - requestedCredits;
+
+    // CASE 1: 100% Full Payment via Wallet Credits (cashPayable === 0)
+    if (cashPayable === 0 && requestedCredits > 0) {
+      // Deduct wallet balance
+      userWallet.balance = userWallet.balance - requestedCredits;
+      userWallet.total_debited = (userWallet.total_debited || 0) + requestedCredits;
+      await userWallet.save();
+
+      // Record Wallet Transaction in ledger
+      await WalletTransactionModel.create({
+        user: req.user._id,
+        wallet: userWallet._id,
+        type: "debit",
+        amount: requestedCredits,
+        balance_after: userWallet.balance,
+        category: "legal_compliance_payment",
+        description: `Full payment using ${requestedCredits} wallet credits for service: ${application.service_snapshot.title} (${application.application_number})`,
+        reference_id: application.application_number,
+        legal_compliance_application: application._id,
+        status: "success",
+      });
+
+      // Update Application Payment Record
+      application.payment.status = "paid";
+      application.payment.credits_used = requestedCredits;
+      application.payment.cash_amount = 0;
+      application.payment.credits_pending_deduction = 0;
+      application.payment.payment_method = "wallet";
+      application.payment.razorpay_order_id = "WALLET_FULL_CREDITS";
+      application.payment.razorpay_payment_id = "WALLET_FULL_CREDITS";
+      application.payment.razorpay_signature = "wallet_verified";
+      application.payment.paid_at = new Date();
+
+      application.status = "Payment Completed";
+      application.status_history.push({
+        status: "Payment Completed",
+        remark: `Full payment of ₹${totalFee} completed using ${requestedCredits} wallet credits.`,
+        updated_by: req.user._id,
+        updated_by_name: req.user.name,
+        updated_at: new Date(),
+      });
+
+      await application.save();
+
+      // Record Platform Transaction
+      await TransactionModel.create({
+        user: req.user._id,
+        amount: totalFee,
+        currency: application.payment.currency || "INR",
+        razorpayOrderId: "WALLET_FULL_CREDITS",
+        razorpayPaymentId: "WALLET_FULL_CREDITS",
+        razorpaySignature: "wallet_verified",
+        status: "paid",
+        planName: `Legal Compliance: ${application.service_snapshot.title} (Wallet Credits)`,
+        planKey: `legal_compliance_${application.application_number}`,
+        startDate: new Date(),
+      });
+
+      return res.json({
+        status: 1,
+        isFullyPaidByWallet: true,
+        msg: `Payment completed successfully using ${requestedCredits} wallet credits!`,
+        application,
+        walletBalance: userWallet.balance,
+      });
+    }
+
+    // CASE 2: Cash Payment or Hybrid Payment (Cash + Wallet Credits)
+    const amountInPaise = Math.round(cashPayable * 100);
     const receiptId = `lc_${application.application_number}_${Date.now().toString().slice(-6)}`;
 
     let razorpayOrder = null;
@@ -538,6 +631,9 @@ export async function createApplicationPaymentOrder(req, res) {
             applicationNumber: application.application_number,
             userId: req.user._id.toString(),
             serviceTitle: application.service_snapshot.title,
+            creditsToUse: String(requestedCredits),
+            cashPayable: String(cashPayable),
+            totalFee: String(totalFee),
           },
         });
       } catch (err) {
@@ -555,13 +651,16 @@ export async function createApplicationPaymentOrder(req, res) {
     }
 
     application.payment.razorpay_order_id = razorpayOrder.id;
+    application.payment.credits_pending_deduction = requestedCredits;
     await application.save();
 
     return res.json({
       status: 1,
       order: razorpayOrder,
       key_id: KEY_ID,
-      amount: application.payment.amount,
+      amount: cashPayable,
+      creditsUsed: requestedCredits,
+      totalFee,
       applicationNumber: application.application_number,
     });
   } catch (err) {
@@ -571,11 +670,11 @@ export async function createApplicationPaymentOrder(req, res) {
 }
 
 /**
- * User: Verify Razorpay Payment Signature
+ * User: Verify Razorpay Payment Signature for compliance application (with wallet credit debit)
  */
 export async function verifyApplicationPayment(req, res) {
   try {
-    const { applicationId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { applicationId, razorpay_order_id, razorpay_payment_id, razorpay_signature, creditsUsed = 0 } = req.body;
 
     if (!applicationId || !razorpay_order_id || !razorpay_payment_id) {
       return res.status(400).json({ status: 0, msg: "Invalid payment payload" });
@@ -591,7 +690,7 @@ export async function verifyApplicationPayment(req, res) {
     }
 
     // Cryptographic signature check if live key secret exists
-    if (process.env.RAZORPAY_KEY_SECRET && razorpay_signature) {
+    if (process.env.RAZORPAY_KEY_SECRET && razorpay_signature && razorpay_signature !== "demo_signature") {
       const generatedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -604,8 +703,47 @@ export async function verifyApplicationPayment(req, res) {
       }
     }
 
+    const totalFee = Number(application.payment.amount);
+    const appliedCredits = Number(application.payment.credits_pending_deduction || creditsUsed || 0);
+
+    // If credits were part of this hybrid payment, deduct from user's wallet
+    let walletTxn = null;
+    if (appliedCredits > 0) {
+      const userWallet = await getOrCreateUserWallet(req.user._id);
+      const actualDeduct = Math.min(appliedCredits, userWallet.balance);
+
+      if (actualDeduct > 0) {
+        userWallet.balance = userWallet.balance - actualDeduct;
+        userWallet.total_debited = (userWallet.total_debited || 0) + actualDeduct;
+        await userWallet.save();
+
+        walletTxn = await WalletTransactionModel.create({
+          user: req.user._id,
+          wallet: userWallet._id,
+          type: "debit",
+          amount: actualDeduct,
+          balance_after: userWallet.balance,
+          category: "legal_compliance_payment",
+          description: `Applied ${actualDeduct} credits + ₹${totalFee - actualDeduct} online payment for service: ${application.service_snapshot.title} (${application.application_number})`,
+          reference_id: razorpay_payment_id,
+          razorpay_order_id,
+          razorpay_payment_id,
+          legal_compliance_application: application._id,
+          status: "success",
+        });
+      }
+    }
+
+    const finalCreditsUsed = appliedCredits;
+    const finalCashAmount = totalFee - finalCreditsUsed;
+    const paymentMethod = finalCreditsUsed > 0 ? "hybrid" : "razorpay";
+
     // Update payment details
     application.payment.status = "paid";
+    application.payment.credits_used = finalCreditsUsed;
+    application.payment.cash_amount = finalCashAmount;
+    application.payment.credits_pending_deduction = 0;
+    application.payment.payment_method = paymentMethod;
     application.payment.razorpay_order_id = razorpay_order_id;
     application.payment.razorpay_payment_id = razorpay_payment_id;
     application.payment.razorpay_signature = razorpay_signature || "verified";
@@ -615,7 +753,9 @@ export async function verifyApplicationPayment(req, res) {
     application.status = "Payment Completed";
     application.status_history.push({
       status: "Payment Completed",
-      remark: `Payment of ₹${application.payment.amount} completed successfully. Payment ID: ${razorpay_payment_id}`,
+      remark: finalCreditsUsed > 0
+        ? `Payment of ₹${totalFee} completed (Used ${finalCreditsUsed} Wallet Credits + Paid ₹${finalCashAmount} via Razorpay). Payment ID: ${razorpay_payment_id}`
+        : `Payment of ₹${totalFee} completed via Razorpay. Payment ID: ${razorpay_payment_id}`,
       updated_by: req.user._id,
       updated_by_name: req.user.name,
       updated_at: new Date(),
@@ -623,16 +763,16 @@ export async function verifyApplicationPayment(req, res) {
 
     await application.save();
 
-    // Record transaction
+    // Record platform transaction
     await TransactionModel.create({
       user: req.user._id,
-      amount: application.payment.amount,
+      amount: totalFee,
       currency: application.payment.currency || "INR",
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature || "verified",
       status: "paid",
-      planName: `Legal Compliance: ${application.service_snapshot.title}`,
+      planName: `Legal Compliance: ${application.service_snapshot.title} (${finalCreditsUsed > 0 ? `${finalCreditsUsed} Credits + ₹${finalCashAmount} Cash` : "Full Cash"})`,
       planKey: `legal_compliance_${application.application_number}`,
       startDate: new Date(),
     });

@@ -9,6 +9,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Sun,
+  Moon,
   KeyRound,
   Layers,
 } from "lucide-react";
@@ -17,7 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "../services/axios";
 import { toast } from "react-toastify";
 import { useStore } from "../zustand/store";
-import { AppLoader } from "./Loading";
+import { useTheme } from "../context/ThemeProvider";
 import { DEFAULT_PAGE_FALLBACKS } from "../config/pageFallbacks";
 
 function Logo() {
@@ -26,12 +28,12 @@ function Logo() {
       <img
         src="/logo.png"
         alt="RealBell Logo"
-        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-amber-700/20 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
+        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-contain shadow-md shadow-blue-600/10 group-hover:scale-105 transition-transform bg-white p-1 border border-slate-200 dark:border-slate-700"
       />
 
       <div>
         <div className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
-          REAL<span className="text-amber-700 dark:text-amber-500">BELL</span>
+          REAL<span className="text-blue-600 dark:text-blue-400">BELL</span>
         </div>
 
         <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -42,12 +44,35 @@ function Logo() {
   );
 }
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label="Toggle theme"
+    >
+      {isDark ? (
+        <Sun size={17} className="text-amber-400" />
+      ) : (
+        <Moon size={17} className="text-blue-600" />
+      )}
+    </button>
+  );
+}
+
 function LeftPanel({ customData }) {
   const badge = customData?.leftPanelBadge || "Welcome to RBF Ecosystem";
   const mainTitle = customData?.mainTitle || "Welcome Back.";
   const titleHighlight = customData?.titleHighlight || "Let's Continue";
   const titleSuffix = customData?.titleSuffix || "Building.";
-  const description = customData?.description || "Log in to RealBell Business Foundation to access your dashboard, discover funding cohorts, connect with seasoned mentors, and scale your venture.";
+  const description =
+    customData?.description ||
+    "Log in to RealBell Business Foundation to access your dashboard, discover funding cohorts, connect with seasoned mentors, and scale your venture.";
   const features = customData?.features || [
     { text: "Direct access to founders & accredited investors" },
     { text: "Curated incubator programs & startup cohorts" },
@@ -57,24 +82,27 @@ function LeftPanel({ customData }) {
   const statusText = customData?.platformStatusText || "Platform Active";
 
   return (
-    <div className="hidden lg:flex w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-900 p-10 xl:p-12 relative overflow-hidden">
+    <div className="hidden lg:flex w-full max-w-md xl:max-w-lg flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 p-10 xl:p-12 relative overflow-hidden">
       {/* Decorative background glow */}
-      <div className="absolute -top-24 -left-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         <Logo />
 
         <div className="mt-12 xl:mt-16">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-6">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 px-3 py-1 text-xs font-semibold text-blue-800 dark:text-blue-300 mb-6">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
             <span>{badge}</span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black leading-tight text-slate-900 dark:text-white">
             {mainTitle}
             <br />
-            <span className="text-amber-700 dark:text-amber-500">{titleHighlight}</span> {titleSuffix}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:to-indigo-400">
+              {titleHighlight}
+            </span>{" "}
+            {titleSuffix}
           </h1>
 
           <p className="mt-5 text-sm xl:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
@@ -84,7 +112,7 @@ function LeftPanel({ customData }) {
           <div className="mt-8 space-y-3.5">
             {features.map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 </div>
                 <span>{item.text}</span>
@@ -107,19 +135,20 @@ function LeftPanel({ customData }) {
 
 function MobileHeader() {
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-stone-50/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
+    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 py-4 lg:hidden">
       <Logo />
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ThemeToggleButton />
         <Link
           to="/"
-          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1"
+          className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
         >
           <ArrowLeft size={13} />
           <span>Home</span>
         </Link>
         <Link
           to="/signup"
-          className="text-xs font-bold text-amber-700 dark:text-amber-500 hover:underline"
+          className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
         >
           Sign Up
         </Link>
@@ -128,13 +157,13 @@ function MobileHeader() {
   );
 }
 
-function TopBar({ step, back, showBackToHome }) {
+function TopBar({ step, back }) {
   return (
     <div className="flex items-center justify-between gap-4">
       {step === 2 ? (
         <button
           onClick={back}
-          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
+          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
         >
           <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
           <span>Back</span>
@@ -142,21 +171,27 @@ function TopBar({ step, back, showBackToHome }) {
       ) : (
         <Link
           to="/"
-          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+          className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
           <span>Back to Home</span>
         </Link>
       )}
 
-      <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-        Don't have an account?{" "}
-        <Link
-          to="/signup"
-          className="font-bold text-slate-900 dark:text-white hover:text-amber-700 dark:hover:text-amber-400 underline underline-offset-2 decoration-amber-700/40"
-        >
-          Sign Up
-        </Link>
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="hidden lg:block">
+          <ThemeToggleButton />
+        </div>
+
+        <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2 decoration-blue-600/40"
+          >
+            Sign Up
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -177,6 +212,7 @@ export default function LoginPage() {
       "Log in to RealBell Business Foundation (RBF) to access your startup dashboard, deal flow, mentorship schedules, and legal compliance tools."
     );
   }, []);
+
   const fetchUser = useStore((state) => state.fetchUser);
   const user = useStore((state) => state.user);
   const sendOtp = useStore((state) => state.sendOtp);
@@ -193,6 +229,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const storeLoginData = useStore((state) => state.pageContents?.login);
   const [customData, setCustomData] = useState(storeLoginData || DEFAULT_PAGE_FALLBACKS.login);
+
+  const otpRefs = useRef([]);
 
   useEffect(() => {
     if (storeLoginData) {
@@ -211,10 +249,6 @@ export default function LoginPage() {
     }
   }, [step, timer]);
 
-  // STEP 1 SUBMIT HANDLER:
-  // - In 'otp' mode: sends OTP to email.
-  // - In 'password' mode: directly logs in with email + password.
-  // - In 'both' mode: verifies password and sends OTP to email.
   const handleStep1Submit = async (e) => {
     if (e) e.preventDefault();
     setError("");
@@ -248,7 +282,12 @@ export default function LoginPage() {
         if (status === 1) {
           toast.success(msg || "Login successful");
           const loggedInUser = await fetchUser();
-          if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.role !== "admin" && loggedInUser.approvalStatus !== "Approved") {
+          if (
+            loggedInUser &&
+            loggedInUser.role !== "super_admin" &&
+            loggedInUser.role !== "admin" &&
+            loggedInUser.approvalStatus !== "Approved"
+          ) {
             navigate("/approval-center");
           } else {
             navigate("/dashboard");
@@ -396,7 +435,6 @@ export default function LoginPage() {
     }
   };
 
-  // STEP 2 (OTP Verification) -> POST /login with { email, otp }
   const verifyOTP = async (e) => {
     if (e) e.preventDefault();
     const code = otp.join("");
@@ -418,7 +456,12 @@ export default function LoginPage() {
       if (status === 1) {
         toast.success(msg || "Login successful");
         const loggedInUser = await fetchUser();
-        if (loggedInUser && loggedInUser.role !== "super_admin" && loggedInUser.role !== "admin" && loggedInUser.approvalStatus !== "Approved") {
+        if (
+          loggedInUser &&
+          loggedInUser.role !== "super_admin" &&
+          loggedInUser.role !== "admin" &&
+          loggedInUser.approvalStatus !== "Approved"
+        ) {
           navigate("/approval-center");
         } else {
           navigate("/dashboard");
@@ -457,7 +500,7 @@ export default function LoginPage() {
   const isMultiStep = loginMethod === "otp" || loginMethod === "both";
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#070B14] text-slate-800 dark:text-slate-100 transition-colors">
       <LeftPanel customData={customData} />
 
       <div className="flex flex-1 flex-col justify-between">
@@ -467,264 +510,264 @@ export default function LoginPage() {
           <div className="w-full max-w-lg">
             <TopBar step={step} back={() => setStep(1)} />
 
-            {/* Step Dots when the configured mode has multiple steps */}
+            {/* Step Dots */}
             {isMultiStep && (
               <div className="mt-6 sm:mt-8 flex items-center gap-2">
-                    <div
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        step === 1
-                          ? "w-8 bg-amber-700 dark:bg-amber-500"
-                          : "w-8 bg-slate-900 dark:bg-slate-300"
-                      }`}
-                    />
-                    <div
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        step === 2
-                          ? "w-8 bg-amber-700 dark:bg-amber-500"
-                          : "w-6 bg-slate-200 dark:bg-slate-700"
-                      }`}
-                    />
-                    <span className="ml-2 text-xs font-medium text-slate-400 dark:text-slate-500">
-                      Step {step} of 2
-                    </span>
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    step === 1
+                      ? "w-8 bg-blue-600 dark:bg-blue-500"
+                      : "w-8 bg-slate-900 dark:bg-slate-300"
+                  }`}
+                />
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    step === 2
+                      ? "w-8 bg-blue-600 dark:bg-blue-500"
+                      : "w-6 bg-slate-200 dark:bg-slate-800"
+                  }`}
+                />
+                <span className="ml-2 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  Step {step} of 2
+                </span>
+              </div>
+            )}
+
+            <AnimatePresence mode="wait">
+              {/* ================= STEP 1 FORM ================= */}
+              {step === 1 && (
+                <motion.div
+                  key="login-step1"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
+                  className="mt-6 sm:mt-8"
+                >
+                  <div className="space-y-2">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+                      Login
+                    </h2>
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                      {loginMethod === "otp"
+                        ? "Enter your registered email address to receive a one-time verification code."
+                        : loginMethod === "password"
+                        ? "Enter your registered email and password to log in."
+                        : "Enter your email and password. A verification code will be sent to your email."}
+                    </p>
                   </div>
-                )}
 
-                <AnimatePresence mode="wait">
-                  {/* ================= STEP 1 FORM ================= */}
-                  {step === 1 && (
-                    <motion.div
-                      key="login-step1"
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.25 }}
-                      className="mt-6 sm:mt-8"
-                    >
-                      <div className="space-y-2">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
-                          Login
-                        </h2>
-                        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                          {loginMethod === "otp"
-                            ? "Enter your registered email address to receive a one-time verification code."
+                  <form onSubmit={handleStep1Submit} className="mt-8 space-y-5">
+                    {/* Email Input */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                          <Mail className="h-5 w-5" />
+                        </div>
+                        <input
+                          type="email"
+                          autoFocus
+                          placeholder="founder@company.com"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setError("");
+                          }}
+                          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 pl-11 pr-4 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                            error
+                              ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
+                              : "border-slate-200 dark:border-slate-700/80"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password Input */}
+                    {(loginMethod === "password" || loginMethod === "both") && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                            Password
+                          </label>
+                          <Link
+                            to="/forgot-password"
+                            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            Forgot Password?
+                          </Link>
+                        </div>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <Lock className="h-5 w-5" />
+                          </div>
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => {
+                              setPassword(e.target.value);
+                              setError("");
+                            }}
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900/90 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1"
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {error && (
+                      <p className="text-xs sm:text-sm font-medium text-red-500 dark:text-red-400">
+                        {error}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {loginMethod === "otp"
+                          ? "Passwordless secure login"
+                          : loginMethod === "password"
+                          ? "Encrypted password login"
+                          : "2-Factor Protected Login"}
+                      </span>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                      >
+                        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        <span>
+                          {loading
+                            ? "Verifying..."
                             : loginMethod === "password"
-                            ? "Enter your registered email and password to log in."
-                            : "Enter your email and password. A verification code will be sent to your email."}
-                        </p>
+                            ? "Login to RBF"
+                            : "Continue"}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ================= STEP 2: VERIFY OTP ================= */}
+              {step === 2 && isMultiStep && (
+                <motion.div
+                  key="login-step2"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
+                  className="mt-6 sm:mt-8"
+                >
+                  <div className="space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                      Verify your Email
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      We've sent a 6-digit verification code to{" "}
+                      <span className="font-bold text-slate-900 dark:text-white break-all">
+                        {email}
+                      </span>
+                    </p>
+                  </div>
+
+                  <form onSubmit={verifyOTP} className="mt-8 space-y-6">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">
+                        6-Digit Security Code
+                      </label>
+                      <div
+                        className="flex items-center justify-between gap-1.5 sm:gap-3"
+                        onPaste={handlePaste}
+                      >
+                        {otp.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={(el) => (otpRefs.current[index] = el)}
+                            value={digit}
+                            autoFocus={index === 0}
+                            onChange={(e) => handleOTPChange(index, e.target.value)}
+                            onKeyDown={(e) => handleOTPKeyDown(index, e)}
+                            maxLength={1}
+                            inputMode="numeric"
+                            className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl border bg-white dark:bg-slate-900/90 text-center text-lg sm:text-xl font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 ${
+                              otpError
+                                ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
+                                : "border-slate-200 dark:border-slate-700/80"
+                            }`}
+                          />
+                        ))}
                       </div>
 
-                      <form onSubmit={handleStep1Submit} className="mt-8 space-y-5">
-                        {/* Email Input */}
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                            Email Address
-                          </label>
-                          <div className="relative">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                              <Mail className="h-5 w-5" />
-                            </div>
-                            <input
-                              type="email"
-                              autoFocus
-                              placeholder="founder@company.com"
-                              value={email}
-                              onChange={(e) => {
-                                setEmail(e.target.value);
-                                setError("");
-                              }}
-                              className={`w-full rounded-xl border bg-white dark:bg-slate-900 pl-11 pr-4 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                                error
-                                  ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
-                                  : "border-slate-200 dark:border-slate-700"
-                              }`}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Password Input (rendered when loginMethod is 'password' or 'both') */}
-                        {(loginMethod === "password" || loginMethod === "both") && (
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                Password
-                              </label>
-                              <Link
-                                to="/forgot-password"
-                                className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
-                              >
-                                Forgot Password?
-                              </Link>
-                            </div>
-                            <div className="relative">
-                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                                <Lock className="h-5 w-5" />
-                              </div>
-                              <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => {
-                                  setPassword(e.target.value);
-                                  setError("");
-                                }}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-11 pr-11 py-3.5 text-sm sm:text-base text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1"
-                                tabIndex={-1}
-                              >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {error && (
-                          <p className="text-xs sm:text-sm font-medium text-red-500 dark:text-red-400">
-                            {error}
-                          </p>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {loginMethod === "otp"
-                              ? "Passwordless secure login"
-                              : loginMethod === "password"
-                              ? "Encrypted password login"
-                              : "2-Factor Protected Login"}
-                          </span>
-
-                          <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
-                          >
-                            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                            <span>
-                              {loading
-                                ? "Verifying..."
-                                : loginMethod === "password"
-                                ? "Login to RBF"
-                                : "Continue"}
-                            </span>
-                          </button>
-                        </div>
-                      </form>
-                    </motion.div>
-                  )}
-
-                  {/* ================= STEP 2: VERIFY OTP (for 'otp' and 'both') ================= */}
-                  {step === 2 && isMultiStep && (
-                    <motion.div
-                      key="login-step2"
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.25 }}
-                      className="mt-6 sm:mt-8"
-                    >
-                      <div className="space-y-2">
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                          Verify your Email
-                        </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                          We've sent a 6-digit verification code to{" "}
-                          <span className="font-bold text-slate-900 dark:text-white break-all">
-                            {email}
-                          </span>
+                      {otpError && (
+                        <p className="mt-2 text-xs sm:text-sm font-medium text-red-500 dark:text-red-400">
+                          {otpError}
                         </p>
-                      </div>
+                      )}
+                    </div>
 
-                      <form onSubmit={verifyOTP} className="mt-8 space-y-6">
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">
-                            6-Digit Security Code
-                          </label>
-                          <div
-                            className="flex items-center justify-between gap-1.5 sm:gap-3"
-                            onPaste={handlePaste}
-                          >
-                            {otp.map((digit, index) => (
-                              <input
-                                key={index}
-                                ref={(el) => (otpRefs.current[index] = el)}
-                                value={digit}
-                                autoFocus={index === 0}
-                                onChange={(e) => handleOTPChange(index, e.target.value)}
-                                onKeyDown={(e) => handleOTPKeyDown(index, e)}
-                                maxLength={1}
-                                inputMode="numeric"
-                                className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl border bg-white dark:bg-slate-900 text-center text-lg sm:text-xl font-bold text-slate-900 dark:text-white outline-none transition-all focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:focus:border-amber-500 dark:focus:ring-amber-500/20 ${
-                                  otpError
-                                    ? "border-red-400 dark:border-red-500 ring-2 ring-red-500/10"
-                                    : "border-slate-200 dark:border-slate-700"
-                                }`}
-                              />
-                            ))}
-                          </div>
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
+                      {timer > 0 ? (
+                        <span className="text-slate-500 dark:text-slate-400">
+                          Resend code in <strong className="text-blue-600 dark:text-blue-400">{timer}s</strong>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={resendOTP}
+                          className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                        >
+                          Resend Code
+                        </button>
+                      )}
 
-                          {otpError && (
-                            <p className="mt-2 text-xs sm:text-sm font-medium text-red-500 dark:text-red-400">
-                              {otpError}
-                            </p>
-                          )}
-                        </div>
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Change Credentials
+                      </button>
+                    </div>
 
-                        <div className="flex items-center justify-between text-xs sm:text-sm">
-                          {timer > 0 ? (
-                            <span className="text-slate-500 dark:text-slate-400">
-                              Resend code in <strong className="text-amber-700 dark:text-amber-500">{timer}s</strong>
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={resendOTP}
-                              className="font-bold text-amber-700 dark:text-amber-500 hover:underline cursor-pointer"
-                            >
-                              Resend Code
-                            </button>
-                          )}
+                    <div className="mt-10 flex items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        disabled={loading}
+                        className="rounded-xl bg-slate-100 dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        Back
+                      </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setStep(1)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
-                          >
-                            Change Credentials
-                          </button>
-                        </div>
-
-                        <div className="mt-10 flex items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                          <button
-                            type="button"
-                            onClick={() => setStep(1)}
-                            disabled={loading}
-                            className="rounded-xl bg-slate-100 dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                          >
-                            Back
-                          </button>
-
-                          <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-amber-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
-                          >
-                            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                            <span>{loading ? "Logging in..." : "Login to RBF"}</span>
-                          </button>
-                        </div>
-                      </form>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                      >
+                        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        <span>{loading ? "Logging in..." : "Login to RBF"}</span>
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
         {/* Mobile footer */}
-        <div className="py-4 text-center text-xs text-slate-400 lg:hidden">
+        <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500 lg:hidden">
           © {new Date().getFullYear()} RealBell Business Foundation
         </div>
       </div>
