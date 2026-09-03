@@ -930,7 +930,7 @@ export default function SignUpPage() {
                         >
                           <div className="flex items-center gap-2 text-xs font-bold text-blue-900 dark:text-blue-300">
                             <Gift className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
-                            <span>Have a referral code? (Earn 250 bonus credits)</span>
+                            <span>Have a referral code? (Earn bonus credits)</span>
                           </div>
                           <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:translate-y-0.5 transition-transform" />
                         </button>
@@ -965,7 +965,7 @@ export default function SignUpPage() {
                                   </div>
                                   <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
                                     Referred by <strong>{appliedReferral.name}</strong> ({appliedReferral.company_name}).
-                                    You will receive <strong>+250 Bonus Credits</strong> upon registration!
+                                    You will receive <strong>+{appliedReferral.bonusCredits || 250} Bonus Credits</strong> upon registration!
                                   </p>
                                 </div>
                               </div>

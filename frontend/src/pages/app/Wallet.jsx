@@ -349,7 +349,7 @@ export default function Wallet() {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                    <span>500 Welcome Credits included initially for your compliance services</span>
+                    <span>Welcome Bonus Credits included initially for your compliance services</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />

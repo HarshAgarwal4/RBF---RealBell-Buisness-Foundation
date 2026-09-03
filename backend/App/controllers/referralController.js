@@ -3,7 +3,7 @@ import OrganizationModel from "../models/organization.js";
 import ReferralModel from "../models/referral.js";
 import WalletModel from "../models/wallet.js";
 import WalletTransactionModel from "../models/walletTransaction.js";
-import { getOrCreateUserWallet } from "./walletController.js";
+import { getOrCreateUserWallet, getWalletConfig } from "./walletController.js";
 
 /**
  * Helper to generate a clean, secure, unique uppercase alphanumeric referral code
@@ -72,16 +72,19 @@ export async function validateReferralCode(req, res) {
       });
     }
 
+    const config = await getWalletConfig();
+    const bonusCredits = typeof config.referralCredits === "number" ? config.referralCredits : 250;
+
     return res.json({
       status: 1,
-      msg: `Referral code applied! You will receive 250 bonus credits on registration.`,
+      msg: `Referral code applied! You will receive ${bonusCredits} bonus credits on registration.`,
       referrer: {
         name: referrer.name,
         company_name: referrer.company_name,
         company_type: referrer.company_type,
         referralCode: normalizedCode,
       },
-      bonusCredits: 250,
+      bonusCredits,
     });
   } catch (err) {
     console.error("validateReferralCode error:", err);
@@ -108,6 +111,10 @@ export async function getMyReferralStats(req, res) {
       await user.save();
     }
 
+    // Fetch dynamic referral reward configuration
+    const config = await getWalletConfig();
+    const rewardPerReferral = typeof config.referralCredits === "number" ? config.referralCredits : 250;
+
     // Fetch referral history
     const referrals = await ReferralModel.find({ referrer: req.user._id })
       .populate("referredUser", "name company_name company_type createdAt")
@@ -122,8 +129,8 @@ export async function getMyReferralStats(req, res) {
       referralLink,
       stats: {
         successfulReferrals: user.referralCount || referrals.length,
-        totalCreditsEarned: user.referralCreditsEarned || referrals.length * 250,
-        rewardPerReferral: 250,
+        totalCreditsEarned: user.referralCreditsEarned || referrals.length * rewardPerReferral,
+        rewardPerReferral,
       },
       referrals: referrals.map((r) => ({
         _id: r._id,
@@ -132,7 +139,7 @@ export async function getMyReferralStats(req, res) {
           company_name: r.referredUser?.company_name || "Startup Project",
           company_type: r.referredUser?.company_type || "startup",
         },
-        rewardAmount: r.referrerReward || 250,
+        rewardAmount: r.referrerReward ?? rewardPerReferral,
         status: r.status || "completed",
         rewardedAt: r.rewardedAt || r.createdAt,
       })),

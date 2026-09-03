@@ -3,6 +3,8 @@ import Razorpay from "razorpay";
 import WalletModel from "../models/wallet.js";
 import WalletTransactionModel from "../models/walletTransaction.js";
 import OrganizationModel from "../models/organization.js";
+import WalletSettingModel from "../models/walletSetting.js";
+import { logAudit } from "../../services/auditLogger.js";
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_RBF1234567890";
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "rzp_test_secret_RBF";
@@ -18,32 +20,57 @@ try {
 }
 
 /**
- * Helper: Retrieve or auto-initialize a user's wallet with 500 Initial Welcome Credits
+ * Helper: Retrieve global wallet rules & credit configurations
+ */
+export async function getWalletConfig() {
+  try {
+    let setting = await WalletSettingModel.findOne({ key: "wallet_config" });
+    if (!setting) {
+      setting = await WalletSettingModel.create({
+        key: "wallet_config",
+        welcomeCredits: 500,
+        referralCredits: 250,
+      });
+    }
+    return setting;
+  } catch (err) {
+    console.error("Error fetching wallet config:", err);
+    return { welcomeCredits: 500, referralCredits: 250 };
+  }
+}
+
+/**
+ * Helper: Retrieve or auto-initialize a user's wallet with Dynamic Welcome Credits
  */
 export async function getOrCreateUserWallet(userId) {
   let wallet = await WalletModel.findOne({ user: userId });
 
   if (!wallet) {
+    const config = await getWalletConfig();
+    const initialCredits = typeof config.welcomeCredits === "number" ? config.welcomeCredits : 500;
+
     wallet = await WalletModel.create({
       user: userId,
-      balance: 500,
-      total_credited: 500,
+      balance: initialCredits,
+      total_credited: initialCredits,
       total_debited: 0,
       currency: "INR",
       status: "active",
     });
 
-    await WalletTransactionModel.create({
-      user: userId,
-      wallet: wallet._id,
-      type: "credit",
-      amount: 500,
-      balance_after: 500,
-      category: "signup_bonus",
-      description: "Welcome bonus: 500 initial credits credited upon joining RealBell Foundation",
-      reference_id: `WELCOME_${userId.toString().slice(-6)}`,
-      status: "success",
-    });
+    if (initialCredits > 0) {
+      await WalletTransactionModel.create({
+        user: userId,
+        wallet: wallet._id,
+        type: "credit",
+        amount: initialCredits,
+        balance_after: initialCredits,
+        category: "signup_bonus",
+        description: `Welcome bonus: ${initialCredits} initial credits credited upon joining RealBell Foundation`,
+        reference_id: `WELCOME_${userId.toString().slice(-6)}`,
+        status: "success",
+      });
+    }
   }
 
   return wallet;
@@ -295,7 +322,11 @@ export async function getAdminWallets(req, res) {
 
     // Fetch wallets for these users
     const userIds = users.map((u) => u._id);
-    const wallets = await WalletModel.find({ user: { $in: userIds } });
+    const [wallets, walletConfig] = await Promise.all([
+      WalletModel.find({ user: { $in: userIds } }),
+      getWalletConfig(),
+    ]);
+    const defaultWelcome = walletConfig?.welcomeCredits ?? 500;
     const walletMap = {};
     wallets.forEach((w) => {
       walletMap[w.user.toString()] = w;
@@ -303,8 +334,8 @@ export async function getAdminWallets(req, res) {
 
     const enrichedUsers = users.map((u) => {
       const w = walletMap[u._id.toString()] || {
-        balance: 500,
-        total_credited: 500,
+        balance: defaultWelcome,
+        total_credited: defaultWelcome,
         total_debited: 0,
         status: "active",
       };
@@ -410,6 +441,23 @@ export async function adminAdjustCredits(req, res) {
       reference_id: `ADM_${req.user._id.toString().slice(-6)}_${Date.now().toString().slice(-4)}`,
       performed_by: req.user._id,
       status: "success",
+    });
+
+    await logAudit({
+      action: type === "credit" ? "WALLET_CREDITS_ASSIGNED" : "WALLET_CREDITS_DEDUCTED",
+      performedBy: req.user,
+      targetType: "UserWallet",
+      targetId: user._id,
+      details: {
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        type,
+        amount: parsedAmount,
+        balance_after: newBalance,
+        reason: formattedReason,
+      },
+      ipAddress: req.ip || req.headers["x-forwarded-for"],
     });
 
     return res.json({
@@ -541,3 +589,88 @@ export async function getAdminWalletStats(req, res) {
     return res.status(500).json({ status: 0, msg: "Internal server error" });
   }
 }
+
+/**
+ * Admin: Get current ecosystem credit configuration rules (Welcome & Referral credits)
+ */
+export async function getAdminWalletSettings(req, res) {
+  try {
+    const setting = await getWalletConfig();
+    const populated = await WalletSettingModel.findById(setting._id).populate("updatedBy", "name email");
+    return res.json({
+      status: 1,
+      settings: populated || setting,
+    });
+  } catch (err) {
+    console.error("getAdminWalletSettings error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+/**
+ * Admin: Update ecosystem credit rules (Welcome bonus credits & Referral reward credits)
+ */
+export async function updateAdminWalletSettings(req, res) {
+  try {
+    const { welcomeCredits, referralCredits } = req.body;
+
+    const parsedWelcome = Number(welcomeCredits);
+    const parsedReferral = Number(referralCredits);
+
+    if (isNaN(parsedWelcome) || parsedWelcome < 0) {
+      return res.status(400).json({ status: 0, msg: "Welcome credits must be a valid non-negative number" });
+    }
+    if (isNaN(parsedReferral) || parsedReferral < 0) {
+      return res.status(400).json({ status: 0, msg: "Referral credits must be a valid non-negative number" });
+    }
+
+    const updated = await WalletSettingModel.findOneAndUpdate(
+      { key: "wallet_config" },
+      {
+        welcomeCredits: parsedWelcome,
+        referralCredits: parsedReferral,
+        updatedBy: req.user._id,
+      },
+      { new: true, upsert: true }
+    ).populate("updatedBy", "name email");
+
+    await logAudit({
+      action: "WALLET_RULES_UPDATED",
+      performedBy: req.user,
+      targetType: "WalletSetting",
+      targetId: updated._id,
+      details: {
+        welcomeCredits: parsedWelcome,
+        referralCredits: parsedReferral,
+      },
+      ipAddress: req.ip || req.headers["x-forwarded-for"],
+    });
+
+    return res.json({
+      status: 1,
+      msg: "Wallet & Referral credit rules updated successfully!",
+      settings: updated,
+    });
+  } catch (err) {
+    console.error("updateAdminWalletSettings error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+
+/**
+ * Public/User: Get active ecosystem credit rules
+ */
+export async function getPublicWalletSettings(req, res) {
+  try {
+    const setting = await getWalletConfig();
+    return res.json({
+      status: 1,
+      welcomeCredits: setting.welcomeCredits ?? 500,
+      referralCredits: setting.referralCredits ?? 250,
+    });
+  } catch (err) {
+    console.error("getPublicWalletSettings error:", err);
+    return res.status(500).json({ status: 0, msg: "Internal server error" });
+  }
+}
+

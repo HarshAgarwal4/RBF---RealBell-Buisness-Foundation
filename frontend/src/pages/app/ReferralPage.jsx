@@ -128,7 +128,7 @@ export default function ReferralPage() {
                 Refer & Earn Credits
               </h1>
               <p className="text-xs sm:text-sm mt-1" style={{ color: COLORS.muted }}>
-                Invite founders, mentors, and investors to RealBell Foundation and earn <strong>250 credits</strong> for each verified signup.
+                Invite founders, mentors, and investors to RealBell Foundation and earn <strong>{referralData.stats.rewardPerReferral || 250} credits</strong> for each verified signup.
               </p>
             </div>
 
@@ -189,7 +189,7 @@ export default function ReferralPage() {
                     Share Your Link With Your Network
                   </h2>
                   <p className="text-xs sm:text-sm mt-1 leading-relaxed" style={{ color: COLORS.muted }}>
-                    When a friend joins using your referral link or code, they receive <strong>250 bonus credits</strong> and you receive <strong>250 credits</strong> directly in your wallet.
+                    When a friend joins using your referral link or code, they receive <strong>{referralData.stats.rewardPerReferral || 250} bonus credits</strong> and you receive <strong>{referralData.stats.rewardPerReferral || 250} credits</strong> directly in your wallet.
                   </p>
                 </div>
                 <div
@@ -323,7 +323,7 @@ export default function ReferralPage() {
                 </div>
                 <div className="mt-4">
                   <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
-                    +250 <span className="text-sm font-bold" style={{ color: COLORS.muted }}>Credits</span>
+                    +{referralData.stats.rewardPerReferral || 250} <span className="text-sm font-bold" style={{ color: COLORS.muted }}>Credits</span>
                   </div>
                   <p className="text-xs mt-1" style={{ color: COLORS.muted }}>
                     100% usable on Legal Compliance services
@@ -415,10 +415,10 @@ export default function ReferralPage() {
                   <Coins size={16} style={{ color: COLORS.muted }} />
                 </div>
                 <h4 className="text-sm font-bold mb-1" style={{ color: COLORS.ink }}>
-                  Both Receive 250 Credits
+                  Both Receive {referralData.stats.rewardPerReferral || 250} Credits
                 </h4>
                 <p className="text-xs leading-relaxed" style={{ color: COLORS.muted }}>
-                  You get 250 credits, and your friend gets 250 bonus credits instantly added to their Credit Wallet.
+                  You get {referralData.stats.rewardPerReferral || 250} credits, and your friend gets {referralData.stats.rewardPerReferral || 250} bonus credits instantly added to their Credit Wallet.
                 </p>
               </div>
             </div>
@@ -478,7 +478,7 @@ export default function ReferralPage() {
                   No Referrals Yet
                 </h4>
                 <p className="text-xs mt-1 max-w-sm mx-auto" style={{ color: COLORS.muted }}>
-                  Share your referral link with startup founders and backers to start earning 250 credits per signup!
+                  Share your referral link with startup founders and backers to start earning {referralData.stats.rewardPerReferral || 250} credits per signup!
                 </p>
                 <button
                   onClick={handleCopyLink}
@@ -539,7 +539,7 @@ export default function ReferralPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            +{item.rewardAmount || 250} Credits
+                            +{item.rewardAmount || referralData.stats.rewardPerReferral || 250} Credits
                           </span>
                         </td>
                         <td className="px-6 py-4">

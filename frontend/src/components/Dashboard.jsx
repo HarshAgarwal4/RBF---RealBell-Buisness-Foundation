@@ -161,6 +161,7 @@ export default function Dashboard() {
     referralLink: "",
     successfulReferrals: 0,
     totalCreditsEarned: 0,
+    rewardPerReferral: 250,
   });
   const [copiedRef, setCopiedRef] = useState(false);
 
@@ -278,6 +279,7 @@ export default function Dashboard() {
             referralLink: refRes.data.referralLink || "",
             successfulReferrals: refRes.data.stats?.successfulReferrals || 0,
             totalCreditsEarned: refRes.data.stats?.totalCreditsEarned || 0,
+            rewardPerReferral: refRes.data.stats?.rewardPerReferral || 250,
           });
         }
       } catch (e) {
@@ -983,13 +985,13 @@ export default function Dashboard() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 6, marginBottom: 12 }}>
               <div style={{ fontWeight: 800, color: COLORS.primary, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
-                <Gift size={16} /> Refer & Earn +250 Credits
+                <Gift size={16} /> Refer & Earn +{referralStats.rewardPerReferral || 250} Credits
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.muted }}>250 / Signup</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.muted }}>{referralStats.rewardPerReferral || 250} / Signup</span>
             </div>
 
             <p style={{ fontSize: 12, color: COLORS.muted, marginBottom: 12, lineHeight: 1.4 }}>
-              Share your link or code with friends. Both of you receive <strong>250 credits</strong> on registration!
+              Share your link or code with friends. Both of you receive <strong>{referralStats.rewardPerReferral || 250} credits</strong> on registration!
             </p>
 
             <div

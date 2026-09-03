@@ -9,7 +9,7 @@ import ApprovalSubmissionModel from "../models/approvalSubmission.js";
 import PlanModel from "../models/plan.js";
 import { sendMail } from "../../services/mail.js";
 import { getEffectiveLoginMethod } from "./authSettingController.js";
-import { getOrCreateUserWallet } from "./walletController.js";
+import { getOrCreateUserWallet, getWalletConfig } from "./walletController.js";
 import ReferralModel from "../models/referral.js";
 import WalletModel from "../models/wallet.js";
 import WalletTransactionModel from "../models/walletTransaction.js";
@@ -189,16 +189,20 @@ async function signUp(req, res) {
         organization.approvalSubmission = initialSubmission._id;
         await organization.save();
 
-        // 1. Automatically provision new user wallet with 500 Welcome Credits
+        // 1. Automatically provision new user wallet with Welcome Credits
         try {
             await getOrCreateUserWallet(organization._id);
         } catch (walletErr) {
             console.error("Auto wallet provisioning on signup error:", walletErr);
         }
 
-        // 2. If referred by another user, award bilateral 250-credit rewards atomically
+        // 2. If referred by another user, award bilateral dynamic referral credits atomically
         if (referrer) {
             try {
+                // Fetch dynamic referral credits from settings
+                const walletConfig = await getWalletConfig();
+                const refCredits = typeof walletConfig.referralCredits === "number" ? walletConfig.referralCredits : 250;
+
                 // Check if referral was already processed (Idempotency)
                 const existingRef = await ReferralModel.findOne({ referredUser: organization._id });
                 if (!existingRef) {
@@ -206,53 +210,55 @@ async function signUp(req, res) {
                         referrer: referrer._id,
                         referredUser: organization._id,
                         referralCode: referrer.referralCode,
-                        referrerReward: 250,
-                        referredReward: 250,
+                        referrerReward: refCredits,
+                        referredReward: refCredits,
                         status: "completed",
                         rewardedAt: new Date(),
                     });
 
-                    // Award +250 credits to Referrer's Wallet atomically
-                    const updatedRefWallet = await WalletModel.findOneAndUpdate(
-                        { user: referrer._id },
-                        { $inc: { balance: 250, total_credited: 250 } },
-                        { new: true, upsert: true }
-                    );
+                    if (refCredits > 0) {
+                        // Award dynamic credits to Referrer's Wallet atomically
+                        const updatedRefWallet = await WalletModel.findOneAndUpdate(
+                            { user: referrer._id },
+                            { $inc: { balance: refCredits, total_credited: refCredits } },
+                            { new: true, upsert: true }
+                        );
 
-                    await WalletTransactionModel.create({
-                        user: referrer._id,
-                        wallet: updatedRefWallet._id,
-                        type: "credit",
-                        amount: 250,
-                        balance_after: updatedRefWallet.balance,
-                        category: "referral_reward",
-                        description: `Referral reward: 250 credits earned for inviting ${organization.name} (${organization.company_name})`,
-                        reference_id: `REF_REWARD_${organization._id.toString().slice(-6)}`,
-                        status: "success",
-                    });
+                        await WalletTransactionModel.create({
+                            user: referrer._id,
+                            wallet: updatedRefWallet._id,
+                            type: "credit",
+                            amount: refCredits,
+                            balance_after: updatedRefWallet.balance,
+                            category: "referral_reward",
+                            description: `Referral reward: ${refCredits} credits earned for inviting ${organization.name} (${organization.company_name})`,
+                            reference_id: `REF_REWARD_${organization._id.toString().slice(-6)}`,
+                            status: "success",
+                        });
 
-                    await OrganizationModel.findByIdAndUpdate(referrer._id, {
-                        $inc: { referralCount: 1, referralCreditsEarned: 250 },
-                    });
+                        await OrganizationModel.findByIdAndUpdate(referrer._id, {
+                            $inc: { referralCount: 1, referralCreditsEarned: refCredits },
+                        });
 
-                    // Award +250 bonus credits to New User's Wallet atomically (500 Base + 250 Referral = 750)
-                    const updatedUserWallet = await WalletModel.findOneAndUpdate(
-                        { user: organization._id },
-                        { $inc: { balance: 250, total_credited: 250 } },
-                        { new: true, upsert: true }
-                    );
+                        // Award dynamic bonus credits to New User's Wallet atomically
+                        const updatedUserWallet = await WalletModel.findOneAndUpdate(
+                            { user: organization._id },
+                            { $inc: { balance: refCredits, total_credited: refCredits } },
+                            { new: true, upsert: true }
+                        );
 
-                    await WalletTransactionModel.create({
-                        user: organization._id,
-                        wallet: updatedUserWallet._id,
-                        type: "credit",
-                        amount: 250,
-                        balance_after: updatedUserWallet.balance,
-                        category: "referral_reward",
-                        description: `Referral bonus: 250 credits earned for registering with code ${referrer.referralCode}`,
-                        reference_id: `REF_BONUS_${referrer._id.toString().slice(-6)}`,
-                        status: "success",
-                    });
+                        await WalletTransactionModel.create({
+                            user: organization._id,
+                            wallet: updatedUserWallet._id,
+                            type: "credit",
+                            amount: refCredits,
+                            balance_after: updatedUserWallet.balance,
+                            category: "referral_reward",
+                            description: `Referral bonus: ${refCredits} credits earned for registering with code ${referrer.referralCode}`,
+                            reference_id: `REF_BONUS_${referrer._id.toString().slice(-6)}`,
+                            status: "success",
+                        });
+                    }
                 }
             } catch (refErr) {
                 console.error("Referral rewards processing error:", refErr);

@@ -10,21 +10,28 @@ import {
   adminAdjustCredits,
   getAdminWalletTransactions,
   getAdminWalletStats,
+  getAdminWalletSettings,
+  updateAdminWalletSettings,
+  getPublicWalletSettings,
 } from "../controllers/walletController.js";
 
 const walletRouter = express.Router();
 
-// User Wallet Endpoints (Protected by global isLoggedIn)
+// Public / User Wallet Endpoints (Protected by global isLoggedIn or public)
+walletRouter.get("/settings", getPublicWalletSettings);
 walletRouter.get("/my-wallet", getMyWallet);
 walletRouter.post("/topup/create-order", createWalletTopupOrder);
 walletRouter.post("/topup/verify", verifyWalletTopupPayment);
 walletRouter.get("/transactions", getWalletTransactions);
 
-// Admin & Super Admin Management Endpoints
-walletRouter.get("/admin/stats", isAdmin, authorize("users.view"), getAdminWalletStats);
-walletRouter.get("/admin/wallets", isAdmin, authorize("users.view"), getAdminWallets);
-walletRouter.get("/admin/user/:userId", isAdmin, authorize("users.view"), getAdminWalletUserDetail);
-walletRouter.post("/admin/adjust", isAdmin, authorize("users.update"), adminAdjustCredits);
-walletRouter.get("/admin/transactions", isAdmin, authorize("users.view"), getAdminWalletTransactions);
+// Admin & Super Admin Management Endpoints (Strictly Protected by Team RBAC)
+walletRouter.get("/admin/stats", isAdmin, authorize("wallets.view"), getAdminWalletStats);
+walletRouter.get("/admin/settings", isAdmin, authorize(["wallets.view", "wallets.settings"]), getAdminWalletSettings);
+walletRouter.put("/admin/settings", isAdmin, authorize(["wallets.settings", "wallets.manage"]), updateAdminWalletSettings);
+walletRouter.get("/admin/wallets", isAdmin, authorize("wallets.view"), getAdminWallets);
+walletRouter.get("/admin/user/:userId", isAdmin, authorize("wallets.view"), getAdminWalletUserDetail);
+walletRouter.post("/admin/adjust", isAdmin, authorize(["wallets.adjust", "wallets.manage"]), adminAdjustCredits);
+walletRouter.get("/admin/transactions", isAdmin, authorize("wallets.view"), getAdminWalletTransactions);
 
 export default walletRouter;
+

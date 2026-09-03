@@ -37,6 +37,7 @@ import boosterRouter from './App/routes/booster.js';
 import aiRouter from './App/routes/ai.js';
 import walletRouter from './App/routes/wallet.js';
 import referralRouter from './App/routes/referral.js';
+import incubationRouter from './App/routes/incubation.js';
 import { seedDefaultRoles } from './App/controllers/roleController.js';
 import { seedDefaultPlans } from './App/controllers/planController.js';
 import { seedDefaultTeams } from './App/controllers/teamController.js';
@@ -91,6 +92,7 @@ app.use('/booster', boosterRouter)
 app.use('/ai', aiRouter)
 app.use('/wallet', walletRouter)
 app.use('/referrals', referralRouter)
+app.use('/incubation', incubationRouter)
 
 app.use((err, req, res, next) => {
     if (!err) {

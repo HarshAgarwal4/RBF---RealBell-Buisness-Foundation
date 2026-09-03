@@ -56,10 +56,21 @@ export const PERMISSION_MODULES = [
   {
     module: "payments",
     name: "Payments & Transactions",
-    icon: "💰",
+    icon: "💳",
     description: "View revenue, transaction history, and payment gateway logs",
     permissions: [
       { key: "payments.view", label: "View Transactions", description: "View customer payment records and revenue reports" },
+    ],
+  },
+  {
+    module: "wallets",
+    name: "Wallet Management",
+    icon: "💰",
+    description: "Manage ecosystem user credit wallets, assign bonuses, and configure credit rules",
+    permissions: [
+      { key: "wallets.view", label: "View Wallets & Ledger", description: "View user credit balances, statistics, transaction ledger, and credit rules" },
+      { key: "wallets.adjust", label: "Assign & Adjust Credits", description: "Credit or deduct credits for user wallets with audit reason" },
+      { key: "wallets.settings", label: "Configure Credit Rules", description: "Modify dynamic welcome bonus and referral invite credit configuration" },
     ],
   },
   {

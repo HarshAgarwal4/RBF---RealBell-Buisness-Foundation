@@ -41,6 +41,7 @@ import ProgramDetail from '../pages/app/ProgramDetail.jsx';
 import ProgramApply from '../pages/app/ProgramApply.jsx';
 import AdminPrograms from '../pages/admin/AdminPrograms.jsx';
 import AdminProgramApplications from '../pages/admin/AdminProgramApplications.jsx';
+import AdminIncubation from '../pages/admin/AdminIncubation.jsx';
 import Events from '../pages/app/Events.jsx';
 import EventDetail from '../pages/app/EventDetail.jsx';
 import EventApply from '../pages/app/EventApply.jsx';
@@ -90,6 +91,7 @@ import TestTaking from '../pages/app/TestTaking.jsx';
 import TestResult from '../pages/app/TestResult.jsx';
 import MyCertificates from '../pages/app/MyCertificates.jsx';
 import CertificateVerification from '../pages/CertificateVerification.jsx';
+import IncubationPage from '../pages/app/IncubationPage.jsx';
 
 const Routes = createBrowserRouter([
     {
@@ -135,6 +137,14 @@ const Routes = createBrowserRouter([
     {
         path: '/dashboard',
         element: <ProtectedRoute><Main /></ProtectedRoute>
+    },
+    {
+        path: '/incubation',
+        element: <ProtectedRoute><IncubationPage /></ProtectedRoute>
+    },
+    {
+        path: '/incubaton',
+        element: <ProtectedRoute><IncubationPage /></ProtectedRoute>
     },
     {
         path: '/subscription',
@@ -338,7 +348,7 @@ const Routes = createBrowserRouter([
         path: '/admin/wallets',
         element: (
             <ProtectedRoute>
-                <PermissionRoute permission="users.view" moduleName="Wallet Management">
+                <PermissionRoute permission="wallets.view" moduleName="Wallet Management">
                     <AdminWalletManagement />
                 </PermissionRoute>
             </ProtectedRoute>
@@ -496,6 +506,16 @@ const Routes = createBrowserRouter([
             <ProtectedRoute>
                 <PermissionRoute permission="programs.view" moduleName="Incubation Programs">
                     <AdminPrograms />
+                </PermissionRoute>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/admin/incubation',
+        element: (
+            <ProtectedRoute>
+                <PermissionRoute permission="programs.view" moduleName="Incubation Programs">
+                    <AdminIncubation />
                 </PermissionRoute>
             </ProtectedRoute>
         )

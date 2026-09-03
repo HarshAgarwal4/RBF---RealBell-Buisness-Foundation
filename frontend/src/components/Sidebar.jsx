@@ -50,6 +50,9 @@ import {
   Bot,
   Coins,
   Gift,
+  QrCode,
+  CheckCircle2,
+  Compass,
 } from "lucide-react";
 import { useWebNotifications } from "../hooks/useWebNotifications";
 import { isModuleLocked } from "../config/subscriptionModules.js";
@@ -101,8 +104,17 @@ const pillBtnStyle = {
   transition: "all 0.15s ease",
 };
 
-function isChildActive(item, pathname) {
-  return !!item.children?.some((c) => pathname === c.path || pathname.startsWith(c.path + "/"));
+function isChildActive(item, pathname, search = "") {
+  if (item.path && (pathname === item.path || pathname.startsWith(item.path + "/") || (item.path === "/incubation" && pathname === "/incubaton"))) {
+    return true;
+  }
+  const full = pathname + search;
+  return !!item.children?.some((c) => {
+    if (c.path.includes("?")) {
+      return full === c.path;
+    }
+    return pathname === c.path || pathname.startsWith(c.path + "/");
+  });
 }
 
 export default function Sidebar() {
@@ -141,6 +153,19 @@ export default function Sidebar() {
   const navItems = useMemo(() => {
     return [
       { path: "/dashboard", label: "Dashboard", icon: Building2 },
+      {
+        path: "/incubation",
+        key: "incubation",
+        label: "Incubation Support",
+        icon: Compass,
+        children: [
+          { path: "/incubation?tab=view-application", label: "View Application", icon: FileText },
+          { path: "/incubation?tab=mentor-support", label: "Mentor Support", icon: Users },
+          { path: "/incubation?tab=infrastructure-booking", label: "Infrastructure Booking", icon: Building2 },
+          { path: "/incubation?tab=attendance", label: "QR Incubatee Attendance", icon: QrCode },
+          { path: "/incubation?tab=payment", label: "Incubation Payment", icon: CreditCard },
+        ],
+      },
       { path: "/ai", label: "RBF-AI (Mr. Doom)", icon: Bot, moduleKey: "rbf_ai" },
       { path: "/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
       {
@@ -251,12 +276,12 @@ export default function Sidebar() {
   const routeOpenKeys = useMemo(() => {
     const keys = {};
     navItems.forEach((item) => {
-      if (item.children && isChildActive(item, location.pathname)) {
+      if (item.children && isChildActive(item, location.pathname, location.search)) {
         keys[item.key] = true;
       }
     });
     return keys;
-  }, [navItems, location.pathname]);
+  }, [navItems, location.pathname, location.search]);
 
   const isItemOpen = (key) => {
     if (openKeys[key] !== undefined) {
@@ -297,13 +322,18 @@ export default function Sidebar() {
     // Expandable parent item
     if (item.children) {
       const open = isItemOpen(item.key);
-      const parentActive = isChildActive(item, location.pathname);
+      const parentActive = isChildActive(item, location.pathname, location.search);
 
       return (
         <div key={item.key} style={{ marginBottom: 2 }}>
           <button
             type="button"
-            onClick={(e) => toggleKey(item.key, e)}
+            onClick={(e) => {
+              toggleKey(item.key, e);
+              if (item.path) {
+                handleNavigate(item.path);
+              }
+            }}
             aria-expanded={open}
             style={{
               width: "100%",
@@ -346,8 +376,10 @@ export default function Sidebar() {
             <div style={{ paddingLeft: 16, marginTop: 2, display: "flex", flexDirection: "column", gap: 2 }}>
               {item.children.map((child) => {
                 const ChildIcon = child.icon;
+                const fullCurrent = location.pathname + location.search;
                 const childActive =
-                  location.pathname === child.path ||
+                  (child.path.includes("?") && fullCurrent === child.path) ||
+                  (!child.path.includes("?") && location.pathname === child.path) ||
                   (child.path === "/live_sessions" && location.pathname === "/live-sessions");
                 return (
                   <button
