@@ -68,6 +68,8 @@ app.use(cors({
     credentials: true,
     exposedHeaders: ['X-CSRF-Token'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'X-Razorpay-Signature']
+}));
+
 // 4. Global baseline rate limiter across all endpoints (300 req / 15 mins)
 app.use(globalLimiter);
 
