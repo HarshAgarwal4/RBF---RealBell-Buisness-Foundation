@@ -163,6 +163,12 @@ const IncubationApplicationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    assignedMentors: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Organization",
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -33,6 +33,8 @@ const IncubationFormFieldSchema = new mongoose.Schema(
         "file",
         "image",
         "url",
+        "address",
+        "terms",
       ],
       default: "text",
     },

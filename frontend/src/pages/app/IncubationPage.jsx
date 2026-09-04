@@ -44,6 +44,11 @@ import {
   CheckCircle,
   XCircle,
   ChevronLeft,
+  UploadCloud,
+  Link2,
+  Globe,
+  Mail,
+  Phone,
 } from "lucide-react";
 
 export default function IncubationPage() {
@@ -113,6 +118,93 @@ export default function IncubationPage() {
   const [bookingPurpose, setBookingPurpose] = useState("");
   const [attendeesCount, setAttendeesCount] = useState(2);
   const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [slotBookingMode, setSlotBookingMode] = useState("preset"); // 'preset' | 'custom'
+  const [customStartTime, setCustomStartTime] = useState("09:00");
+  const [customEndTime, setCustomEndTime] = useState("11:00");
+  const [selectedDayFilter, setSelectedDayFilter] = useState("");
+  const [slotAvailabilityMeta, setSlotAvailabilityMeta] = useState({
+    dayName: "",
+    isDayOpen: true,
+    availableDays: [],
+    availabilityType: "specific_days",
+  });
+
+  const formatTime24To12 = (time24) => {
+    if (!time24) return "";
+    const [h, m] = time24.split(":");
+    let hours = parseInt(h, 10);
+    const minutes = m || "00";
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+  };
+
+  const calculateHoursBetween = (start24, end24) => {
+    if (!start24 || !end24) return 2;
+    const [sh, sm] = start24.split(":").map(Number);
+    const [eh, em] = end24.split(":").map(Number);
+    const diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff <= 0) return 2;
+    return Math.round((diff / 60) * 10) / 10;
+  };
+
+  const handleSelectDayOfWeek = (targetDayName) => {
+    setSelectedDayFilter(targetDayName);
+    if (!targetDayName) return;
+    const curr = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(curr.getTime() + i * 24 * 60 * 60 * 1000);
+      const dName = d.toLocaleDateString("en-US", { weekday: "long" });
+      if (dName.toLowerCase() === targetDayName.toLowerCase()) {
+        setCalendarDate(d.toISOString().split("T")[0]);
+        break;
+      }
+    }
+  };
+
+  const jumpToNextAvailableDay = () => {
+    if (!slotAvailabilityMeta.availableDays || slotAvailabilityMeta.availableDays.length === 0) return;
+    const curr = new Date(calendarDate + "T00:00:00");
+    for (let i = 1; i <= 7; i++) {
+      const nextDate = new Date(curr.getTime() + i * 24 * 60 * 60 * 1000);
+      const day = nextDate.toLocaleDateString("en-US", { weekday: "long" });
+      if (slotAvailabilityMeta.availableDays.includes(day)) {
+        setCalendarDate(nextDate.toISOString().split("T")[0]);
+        break;
+      }
+    }
+  };
+
+  const handleApplyCustomTime = () => {
+    if (!customStartTime || !customEndTime) {
+      toast.warning("Please enter start time and end time");
+      return;
+    }
+    if (customStartTime >= customEndTime) {
+      toast.warning("Start time must be before end time");
+      return;
+    }
+    const formattedStart = formatTime24To12(customStartTime);
+    const formattedEnd = formatTime24To12(customEndTime);
+    const duration = calculateHoursBetween(customStartTime, customEndTime);
+
+    const hasCollision = availableSlots.some(
+      (s) => s.isBooked && (s.startTime === formattedStart || s.endTime === formattedEnd)
+    );
+    if (hasCollision) {
+      toast.error("The selected custom time overlaps with an existing reserved slot on this date.");
+      return;
+    }
+
+    setSelectedSlot({
+      slot: `${formattedStart} - ${formattedEnd}`,
+      startTime: formattedStart,
+      endTime: formattedEnd,
+      durationHours: duration,
+      isAvailable: slotAvailabilityMeta.isDayOpen,
+    });
+    toast.success(`Selected time: ${formattedStart} - ${formattedEnd} (${duration} hrs)`);
+  };
 
   // 4. Attendance State
   const [attendanceData, setAttendanceData] = useState({
@@ -253,6 +345,12 @@ export default function IncubationPage() {
       });
       if (res.data?.status === 1) {
         setAvailableSlots(res.data.slots || []);
+        setSlotAvailabilityMeta({
+          dayName: res.data.dayName || "",
+          isDayOpen: res.data.isDayOpen !== false,
+          availableDays: res.data.availableDays || [],
+          availabilityType: res.data.availabilityType || "specific_days",
+        });
         setSelectedSlot(null);
       }
     } catch (err) {
@@ -805,6 +903,7 @@ export default function IncubationPage() {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {/* Business & Incubation Details */}
                   <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5">
                     <h4 className="font-bold uppercase text-slate-400 text-[10.5px]">Business &amp; Incubation Details</h4>
                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
@@ -816,15 +915,45 @@ export default function IncubationPage() {
                       <strong className="text-slate-900 dark:text-white">{myApp.businessDetails?.companyName}</strong>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-500">DPIIT Number:</span>
-                      <strong className="font-mono text-emerald-600">{myApp.businessDetails?.dippNumber || "DIPP172504"}</strong>
+                      <span className="text-slate-500">DPIIT Recognition:</span>
+                      <strong className="font-mono text-emerald-600">{myApp.businessDetails?.dippNumber || "Not Registered"}</strong>
                     </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-slate-500">Sector:</span>
-                      <strong>{myApp.businessDetails?.sector}</strong>
+                    {myApp.businessDetails?.cinNumber && (
+                      <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-500">CIN Number:</span>
+                        <strong className="font-mono">{myApp.businessDetails.cinNumber}</strong>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500">Sector &amp; Stage:</span>
+                      <strong>{myApp.businessDetails?.sector || "Tech"} · {myApp.businessDetails?.stage || "Early Stage"}</strong>
                     </div>
+                    {(myApp.businessDetails?.city || myApp.businessDetails?.state) && (
+                      <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-500">Location:</span>
+                        <strong>{[myApp.businessDetails?.city, myApp.businessDetails?.state].filter(Boolean).join(", ")}</strong>
+                      </div>
+                    )}
+                    {myApp.businessDetails?.website && (
+                      <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-500">Website:</span>
+                        <a href={myApp.businessDetails.website} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline flex items-center gap-1 font-semibold truncate max-w-[200px]">
+                          <span>{myApp.businessDetails.website}</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      </div>
+                    )}
+                    {myApp.businessDetails?.pitchSummary && (
+                      <div className="pt-1">
+                        <span className="block text-slate-500 text-[10.5px] mb-0.5">Pitch Summary:</span>
+                        <p className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                          {myApp.businessDetails.pitchSummary}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
+                  {/* Team Members */}
                   <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5">
                     <h4 className="font-bold uppercase text-slate-400 text-[10.5px]">Team Members ({myApp.teamMembers?.length || 1})</h4>
                     <div className="space-y-1.5">
@@ -833,11 +962,97 @@ export default function IncubationPage() {
                           <div>
                             <strong>{t.name}</strong> <span className="text-slate-400">({t.role})</span>
                           </div>
-                          <div className="text-slate-500">{t.email}</div>
+                          <div className="text-slate-500">{t.email || t.phone}</div>
                         </div>
                       ))}
                     </div>
                   </div>
+
+                  {/* Custom Questionnaire Responses (Full View) */}
+                  {myApp.customResponses && Object.keys(myApp.customResponses).length > 0 && (
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5 md:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold uppercase text-slate-400 text-[10.5px] flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-teal-600" />
+                          <span>Custom Questionnaire Answers</span>
+                        </h4>
+                        <span className="text-[10.5px] text-teal-600 font-mono font-bold">
+                          {Object.keys(myApp.customResponses).length} Responses
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                        {Object.entries(myApp.customResponses).map(([key, val]) => {
+                          const matchedField = formSchema?.fields?.find((f) => f.key === key);
+                          const label = matchedField?.label || key.replace(/_/g, " ");
+                          const isFile = typeof val === "string" && (val.startsWith("http://") || val.startsWith("https://"));
+
+                          return (
+                            <div key={key} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 space-y-1">
+                              <span className="block text-[10.5px] font-bold text-slate-400 capitalize truncate" title={label}>
+                                {label}
+                              </span>
+                              {isFile ? (
+                                <a
+                                  href={val}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-teal-600 hover:underline font-semibold text-xs"
+                                >
+                                  <ExternalLink size={12} />
+                                  <span>View Uploaded Document</span>
+                                </a>
+                              ) : Array.isArray(val) ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {val.map((item, vIdx) => (
+                                    <span key={vIdx} className="px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-200 text-[10.5px] font-medium">
+                                      {item}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : typeof val === "boolean" ? (
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10.5px] font-bold ${val ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-200 text-slate-500"}`}>
+                                  {val ? "Yes / Agreed" : "No"}
+                                </span>
+                              ) : (
+                                <span className="text-slate-800 dark:text-slate-200 font-semibold block break-words">
+                                  {String(val || "N/A")}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Uploaded Documents Vault */}
+                  {myApp.documents && myApp.documents.length > 0 && (
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5 md:col-span-2">
+                      <h4 className="font-bold uppercase text-slate-400 text-[10.5px] flex items-center gap-1.5">
+                        <UploadCloud size={14} className="text-teal-600" />
+                        <span>Uploaded Documents &amp; Pitch Decks ({myApp.documents.length})</span>
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {myApp.documents.map((doc, dIdx) => (
+                          <div key={dIdx} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                            <div className="flex items-center gap-2 truncate pr-2">
+                              <FileText size={15} className="text-teal-600 shrink-0" />
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{doc.fileName}</span>
+                            </div>
+                            <a
+                              href={doc.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-md bg-teal-600 text-white font-bold text-[11px] shrink-0 hover:bg-teal-700"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Feedback Thread */}
@@ -1109,43 +1324,194 @@ export default function IncubationPage() {
 
                 {/* SECTION 3: DYNAMIC FORM FIELDS */}
                 {formSchema?.fields?.length > 0 && (
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3.5">
-                    <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                      <Sparkles size={16} className="text-teal-600" />
-                      <span>Section 3: Incubation Questionnaire &amp; Attachments</span>
+                  <div className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                      <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <Sparkles size={16} className="text-teal-600" />
+                        <span>Section 3: Incubation Questionnaire &amp; Attachments</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        {formSchema.fields.length} Custom Fields
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {formSchema.fields.map((f) => (
-                        <div key={f.id} className="space-y-1">
-                          <label className="block font-bold">
-                            {f.label} {f.required && <span className="text-rose-500">*</span>}
-                          </label>
+                        <div
+                          key={f.id}
+                          className={`space-y-1.5 ${f.gridCols === 2 ? "sm:col-span-2" : "sm:col-span-1"}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="block font-bold text-xs text-slate-800 dark:text-slate-200">
+                              {f.label} {f.required && <span className="text-rose-500">*</span>}
+                            </label>
+                            <span className="text-[10px] font-mono text-slate-400 uppercase">
+                              {f.type}
+                            </span>
+                          </div>
+                          {f.description && (
+                            <p className="text-[11px] text-slate-400">{f.description}</p>
+                          )}
 
+                          {/* Multi-Line Textarea */}
                           {f.type === "textarea" ? (
                             <textarea
-                              rows={2}
+                              rows={3}
+                              placeholder={f.placeholder || "Enter details..."}
                               value={customResponses[f.key] || ""}
                               onChange={(e) => setCustomResponses({ ...customResponses, [f.key]: e.target.value })}
-                              className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                             />
-                          ) : f.type === "file" || f.type === "image" ? (
-                            <input
-                              type="file"
-                              onChange={(e) => {
-                                if (e.target.files[0]) {
-                                  setUploadedFiles({ ...uploadedFiles, [f.key]: e.target.files[0] });
+                          ) : f.type === "select" ? (
+                            /* Dropdown Select */
+                            <select
+                              value={customResponses[f.key] || ""}
+                              onChange={(e) => setCustomResponses({ ...customResponses, [f.key]: e.target.value })}
+                              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                            >
+                              <option value="">-- Select {f.label} --</option>
+                              {f.options?.map((opt, oIdx) => (
+                                <option key={oIdx} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          ) : f.type === "multiselect" ? (
+                            /* Multi-Select Tag Pills */
+                            (() => {
+                              const rawVal = customResponses[f.key];
+                              const selectedList = Array.isArray(rawVal)
+                                ? rawVal
+                                : typeof rawVal === "string" && rawVal
+                                ? rawVal.split(",").map((s) => s.trim()).filter(Boolean)
+                                : [];
+
+                              const handleToggle = (opt) => {
+                                let updated;
+                                if (selectedList.includes(opt)) {
+                                  updated = selectedList.filter((item) => item !== opt);
+                                } else {
+                                  updated = [...selectedList, opt];
                                 }
-                              }}
-                              className="w-full p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px]"
+                                setCustomResponses({ ...customResponses, [f.key]: updated });
+                              };
+
+                              return (
+                                <div className="space-y-1.5 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                                  <div className="text-[10.5px] text-slate-400">
+                                    Click tags to select multiple options ({selectedList.length} selected):
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {f.options?.map((opt, oIdx) => {
+                                      const isSelected = selectedList.includes(opt);
+                                      return (
+                                        <button
+                                          key={oIdx}
+                                          type="button"
+                                          onClick={() => handleToggle(opt)}
+                                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
+                                            isSelected
+                                              ? "bg-teal-600 text-white border-teal-600 shadow-2xs"
+                                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-teal-500"
+                                          }`}
+                                        >
+                                          {isSelected && <Check size={12} />}
+                                          <span>{opt}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          ) : f.type === "radio" ? (
+                            /* Radio Options */
+                            <div className="flex flex-wrap gap-3 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                              {f.options?.map((opt, oIdx) => (
+                                <label key={oIdx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name={`user_radio_${f.key}`}
+                                    checked={customResponses[f.key] === opt}
+                                    onChange={() => setCustomResponses({ ...customResponses, [f.key]: opt })}
+                                    className="text-teal-600"
+                                  />
+                                  <span>{opt}</span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : f.type === "checkbox" || f.type === "terms" ? (
+                            /* Checkbox / Terms Agreement */
+                            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer text-xs">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(customResponses[f.key])}
+                                onChange={(e) => setCustomResponses({ ...customResponses, [f.key]: e.target.checked })}
+                                className="mt-0.5 rounded text-teal-600"
+                              />
+                              <div>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                  {f.placeholder || f.label}
+                                </span>
+                              </div>
+                            </label>
+                          ) : f.type === "file" || f.type === "image" ? (
+                            /* File / Image Upload */
+                            <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                              <input
+                                type="file"
+                                accept={f.type === "image" ? "image/*" : undefined}
+                                onChange={(e) => {
+                                  if (e.target.files[0]) {
+                                    setUploadedFiles({ ...uploadedFiles, [f.key]: e.target.files[0] });
+                                  }
+                                }}
+                                className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 dark:file:bg-teal-950 dark:file:text-teal-300 cursor-pointer"
+                              />
+                              {uploadedFiles[f.key] && (
+                                <p className="text-[11px] text-teal-600 font-semibold flex items-center gap-1">
+                                  <Check size={12} /> Selected for upload: {uploadedFiles[f.key].name}
+                                </p>
+                              )}
+                              {!uploadedFiles[f.key] && customResponses[f.key] && typeof customResponses[f.key] === "string" && customResponses[f.key].startsWith("http") && (
+                                <a
+                                  href={customResponses[f.key]}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-teal-600 hover:underline flex items-center gap-1 font-medium"
+                                >
+                                  <ExternalLink size={11} />
+                                  <span>View currently uploaded file</span>
+                                </a>
+                              )}
+                            </div>
+                          ) : f.type === "address" ? (
+                            /* Address Multi-line */
+                            <textarea
+                              rows={2}
+                              placeholder={f.placeholder || "Enter physical address..."}
+                              value={customResponses[f.key] || ""}
+                              onChange={(e) => setCustomResponses({ ...customResponses, [f.key]: e.target.value })}
+                              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                             />
                           ) : (
+                            /* Standard Inputs: text, number, email, phone, date, url */
                             <input
-                              type={f.type === "number" ? "number" : "text"}
+                              type={
+                                f.type === "number"
+                                  ? "number"
+                                  : f.type === "email"
+                                  ? "email"
+                                  : f.type === "phone"
+                                  ? "tel"
+                                  : f.type === "date"
+                                  ? "date"
+                                  : f.type === "url"
+                                  ? "url"
+                                  : "text"
+                              }
                               placeholder={f.placeholder}
                               value={customResponses[f.key] || ""}
                               onChange={(e) => setCustomResponses({ ...customResponses, [f.key]: e.target.value })}
-                              className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                             />
                           )}
                         </div>
@@ -1245,58 +1611,126 @@ export default function IncubationPage() {
               </div>
 
               {/* Mentors Catalog */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {mentors.map((mentor) => (
-                  <div
-                    key={mentor._id}
-                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-xs flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex items-center gap-3 mb-2.5">
-                        <div className="w-10 h-10 rounded-full bg-teal-600 text-white font-black flex items-center justify-center text-sm shadow-xs">
-                          {mentor.name?.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 dark:text-white text-sm">{mentor.name}</div>
-                          <div className="text-[11px] text-teal-600 font-semibold">{mentor.role}</div>
-                        </div>
-                      </div>
-                      <p className="text-slate-500 text-[11px] line-clamp-2 leading-relaxed">{mentor.bio}</p>
-
-                      <div className="flex flex-wrap gap-1 mt-2.5">
-                        {mentor.expertiseAreas?.map((area, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300">
-                            {area}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-amber-500 font-bold text-[11px]">
-                        <Star size={12} className="fill-amber-500" />
-                        <span>{mentor.rating || 4.9}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isOverdue) {
-                            toast.error("Action Suspended: Payment is overdue. Settle monthly dues in Payment to book new calls.");
-                            return;
-                          }
-                          setSelectedMentor(mentor);
-                          setShowMentorModal(true);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer ${
-                          isOverdue ? "bg-slate-300 dark:bg-slate-700 text-slate-500" : "bg-teal-600 hover:bg-teal-700 text-white"
-                        }`}
-                      >
-                        Book 1-on-1 Call
-                      </button>
-                    </div>
+              {mentors.length === 0 ? (
+                <div className="py-12 px-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center max-w-lg mx-auto space-y-3.5 bg-slate-50/50 dark:bg-slate-800/30">
+                  <div className="w-14 h-14 rounded-2xl bg-teal-500/10 text-teal-600 flex items-center justify-center mx-auto">
+                    <Users size={28} />
                   </div>
-                ))}
-              </div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">Mentor Assignment in Progress</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Your incubation application is officially approved! The incubation committee has not yet assigned a dedicated mentor to your startup.
+                    As soon as your mentor is assigned by the admin, their profile, booking calendar, and direct contact options will appear right here.
+                  </p>
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 text-[11px] font-bold">
+                      <Sparkles size={13} />
+                      <span>Status: Awaiting Mentor Assignment by Admin</span>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mentors.map((mentor) => (
+                    <div
+                      key={mentor._id}
+                      className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-xs flex flex-col justify-between space-y-4 hover:border-teal-500/40 transition shadow-xs"
+                    >
+                      <div className="space-y-3">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-12 h-12 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0 overflow-hidden">
+                              {mentor.avatarUrl && mentor.avatarUrl !== "/default_user.png" ? (
+                                <img src={mentor.avatarUrl} alt={mentor.name} className="w-full h-full object-cover" />
+                              ) : (
+                                mentor.name?.charAt(0)
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-slate-900 dark:text-white text-sm truncate">{mentor.name}</div>
+                              <div className="text-[11.5px] text-teal-600 font-semibold truncate">{mentor.role || mentor.designation}</div>
+                              <div className="text-[10.5px] text-slate-400 truncate">{mentor.company}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 text-amber-500 font-bold text-xs shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                            <Star size={12} className="fill-amber-500" />
+                            <span>{mentor.rating || 4.9}</span>
+                          </div>
+                        </div>
+
+                        {/* Bio */}
+                        <p className="text-slate-600 dark:text-slate-400 text-[11.5px] line-clamp-3 leading-relaxed">{mentor.bio}</p>
+
+                        {/* Mentorship Domains */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {(mentor.expertiseAreas || mentor.mentorshipDomains)?.slice(0, 4).map((area, i) => (
+                            <span key={i} className="px-2.5 py-0.5 rounded-lg text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300">
+                              {area}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Direct Contact Links */}
+                        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex flex-wrap gap-2 text-[11px]">
+                          {mentor.email && (
+                            <a
+                              href={`mailto:${mentor.email}`}
+                              title="Send Direct Email"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition"
+                            >
+                              <Mail size={12} className="text-teal-600" />
+                              <span>Email</span>
+                            </a>
+                          )}
+                          {mentor.phone && (
+                            <a
+                              href={`tel:${mentor.phone}`}
+                              title="Call or WhatsApp"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition"
+                            >
+                              <Phone size={12} className="text-teal-600" />
+                              <span>Call</span>
+                            </a>
+                          )}
+                          <a
+                            href={`/connect/mentor/${mentor._id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Open Platform Profile & Chat"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition ml-auto"
+                          >
+                            <ExternalLink size={12} className="text-teal-600" />
+                            <span>Connect / Profile</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Primary Action Button */}
+                      <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isOverdue) {
+                              toast.error("Action Suspended: Payment is overdue. Settle monthly dues in Payment to book new calls.");
+                              return;
+                            }
+                            setSelectedMentor(mentor);
+                            setShowMentorModal(true);
+                          }}
+                          className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-xs ${
+                            isOverdue
+                              ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                              : "bg-teal-600 hover:bg-teal-700 text-white"
+                          }`}
+                        >
+                          <Calendar size={14} />
+                          <span>Book 1-on-1 Call</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Complete Scheduled & Past Calls History */}
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -1502,17 +1936,94 @@ export default function IncubationPage() {
                         <span>2. Availability Calendar &amp; Slot Reservation</span>
                       </h4>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Select a date to view available time slots for {selectedFacility.title}.
+                        Operational:{" "}
+                        <strong className="text-teal-600">
+                          {selectedFacility.availabilityType === "24_7"
+                            ? "24/7 Access (All Days & Hours)"
+                            : (selectedFacility.availableDays || []).join(", ") || "Weekdays"}
+                        </strong>
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3 text-[11px]">
                       <span className="flex items-center gap-1 font-semibold text-emerald-600">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Available Slot
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Available
                       </span>
                       <span className="flex items-center gap-1 font-semibold text-slate-400">
                         <span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Booked / Closed
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Calendar Date Picker & Day Select Box Controls */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+                      {/* Day Select Box */}
+                      <div className="flex-1 min-w-[170px]">
+                        <label className="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                          Day Select Box:
+                        </label>
+                        <select
+                          value={selectedDayFilter}
+                          onChange={(e) => handleSelectDayOfWeek(e.target.value)}
+                          className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold cursor-pointer"
+                        >
+                          <option value="">Jump to Day of Week...</option>
+                          <option value="Monday">Monday</option>
+                          <option value="Tuesday">Tuesday</option>
+                          <option value="Wednesday">Wednesday</option>
+                          <option value="Thursday">Thursday</option>
+                          <option value="Friday">Friday</option>
+                          <option value="Saturday">Saturday</option>
+                          <option value="Sunday">Sunday</option>
+                        </select>
+                      </div>
+
+                      {/* Calendar Date Input */}
+                      <div className="flex-1 min-w-[170px]">
+                        <label className="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                          Calendar Date Input:
+                        </label>
+                        <input
+                          type="date"
+                          min={todayStr}
+                          value={calendarDate}
+                          onChange={(e) => {
+                            setCalendarDate(e.target.value);
+                            setSelectedDayFilter("");
+                          }}
+                          className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick Today / Tomorrow Buttons */}
+                    <div className="flex items-center gap-1.5 self-end sm:self-center sm:pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCalendarDate(todayStr);
+                          setSelectedDayFilter("");
+                        }}
+                        className={`px-3 py-1.5 rounded-lg font-bold text-xs border cursor-pointer ${
+                          calendarDate === todayStr
+                            ? "bg-teal-600 text-white border-teal-600 shadow-xs"
+                            : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tmr = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                          setCalendarDate(tmr);
+                          setSelectedDayFilter("");
+                        }}
+                        className="px-3 py-1.5 rounded-lg font-bold text-xs border bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
+                        Tomorrow
+                      </button>
                     </div>
                   </div>
 
@@ -1524,7 +2035,10 @@ export default function IncubationPage() {
                         <button
                           key={d.dateStr}
                           type="button"
-                          onClick={() => setCalendarDate(d.dateStr)}
+                          onClick={() => {
+                            setCalendarDate(d.dateStr);
+                            setSelectedDayFilter("");
+                          }}
                           className={`flex flex-col items-center justify-center p-2.5 rounded-xl border min-w-[65px] transition cursor-pointer ${
                             isSelected
                               ? "bg-teal-600 text-white border-teal-600 shadow-sm font-bold"
@@ -1539,48 +2053,167 @@ export default function IncubationPage() {
                     })}
                   </div>
 
-                  {/* Available Time Slots Grid */}
+                  {/* Closed Day Alert Banner */}
+                  {!slotAvailabilityMeta.isDayOpen && (
+                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-amber-600 shrink-0" />
+                        <div>
+                          <strong>{selectedFacility.title} is closed on {slotAvailabilityMeta.dayName}s.</strong>
+                          <span className="block text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                            Standard operating days: {(slotAvailabilityMeta.availableDays || []).join(", ") || "Weekdays"}.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={jumpToNextAvailableDay}
+                        className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer shadow-xs"
+                      >
+                        Jump to Next Open Day
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Mode Tabs: Pre-set Time Slots vs Custom Time Input */}
                   <div className="pt-2">
-                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">
-                      Time Slots for {calendarDate}:
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <span>Time Slots for {calendarDate} ({slotAvailabilityMeta.dayName}):</span>
+                      </div>
+
+                      <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl text-xs font-bold">
+                        <button
+                          type="button"
+                          onClick={() => setSlotBookingMode("preset")}
+                          className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                            slotBookingMode === "preset"
+                              ? "bg-white dark:bg-slate-900 text-teal-600 shadow-xs"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Configured Slots ({availableSlots.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSlotBookingMode("custom")}
+                          className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                            slotBookingMode === "custom"
+                              ? "bg-white dark:bg-slate-900 text-teal-600 shadow-xs"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Custom Time Input
+                        </button>
+                      </div>
                     </div>
 
-                    {loadingSlots ? (
-                      <div className="py-8 text-center text-xs text-slate-400">Loading slot availability...</div>
-                    ) : availableSlots.length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400">No slots configured for this facility.</div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        {availableSlots.map((slotObj, idx) => {
-                          const isSelected = selectedSlot?.startTime === slotObj.startTime;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              disabled={!slotObj.isAvailable}
-                              onClick={() => setSelectedSlot(slotObj)}
-                              className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col justify-between ${
-                                isSelected
-                                  ? "bg-teal-600 text-white border-teal-600 shadow-md ring-2 ring-teal-500/30"
-                                  : slotObj.isAvailable
-                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 cursor-pointer"
-                                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-60"
-                              }`}
-                            >
-                              <div className="flex justify-between items-center w-full">
-                                <span>{slotObj.slot}</span>
-                                {slotObj.isAvailable ? (
-                                  <CheckCircle size={14} className={isSelected ? "text-white" : "text-emerald-600"} />
-                                ) : (
-                                  <XCircle size={14} className="text-slate-400" />
-                                )}
-                              </div>
-                              <span className="text-[10px] mt-1 opacity-80 font-normal">
-                                {slotObj.isBooked ? "Reserved by Incubatee" : slotObj.isAvailable ? "Available (2 Hours)" : "Center Closed"}
-                              </span>
-                            </button>
-                          );
-                        })}
+                    {/* Pre-set Slots Grid */}
+                    {slotBookingMode === "preset" && (
+                      <div>
+                        {loadingSlots ? (
+                          <div className="py-8 text-center text-xs text-slate-400">Loading slot availability...</div>
+                        ) : availableSlots.length === 0 ? (
+                          <div className="py-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                            No pre-configured slots found for this facility. You can use the "Custom Time Input" tab above.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            {availableSlots.map((slotObj, idx) => {
+                              const isSelected = selectedSlot?.startTime === slotObj.startTime && selectedSlot?.endTime === slotObj.endTime;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  disabled={!slotObj.isAvailable}
+                                  onClick={() => setSelectedSlot(slotObj)}
+                                  className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col justify-between ${
+                                    isSelected
+                                      ? "bg-teal-600 text-white border-teal-600 shadow-md ring-2 ring-teal-500/30"
+                                      : slotObj.isAvailable
+                                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 cursor-pointer"
+                                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-60"
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-center w-full">
+                                    <span>{slotObj.slot}</span>
+                                    {slotObj.isAvailable ? (
+                                      <CheckCircle size={14} className={isSelected ? "text-white" : "text-emerald-600"} />
+                                    ) : (
+                                      <XCircle size={14} className="text-slate-400" />
+                                    )}
+                                  </div>
+                                  <div className="flex justify-between items-center mt-1 text-[10px] opacity-85 font-normal">
+                                    <span>
+                                      {slotObj.isBooked
+                                        ? "Reserved by Incubatee"
+                                        : slotObj.isAvailable
+                                        ? `Available (${slotObj.durationHours || 2}h)`
+                                        : "Center Closed"}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Custom Time Input Section */}
+                    {slotBookingMode === "custom" && (
+                      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 space-y-3">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                              <Clock size={14} className="text-teal-600" />
+                              <span>Select Custom Hours for {calendarDate}:</span>
+                            </div>
+                            <span className="text-[11px] text-slate-400">
+                              Input your preferred start and end times to reserve the facility.
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <span className="block text-[10px] text-slate-400 mb-0.5">Start Time:</span>
+                              <input
+                                type="time"
+                                value={customStartTime}
+                                onChange={(e) => setCustomStartTime(e.target.value)}
+                                className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-xs"
+                              />
+                            </div>
+                            <span className="text-slate-400 pt-3">to</span>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 mb-0.5">End Time:</span>
+                              <input
+                                type="time"
+                                value={customEndTime}
+                                onChange={(e) => setCustomEndTime(e.target.value)}
+                                className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-xs"
+                              />
+                            </div>
+                            <div className="pt-3">
+                              <button
+                                type="button"
+                                onClick={handleApplyCustomTime}
+                                className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer shadow-xs"
+                              >
+                                Select This Time
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {selectedSlot && (
+                          <div className="p-2 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-500/30 flex items-center justify-between text-xs">
+                            <span className="font-semibold text-teal-800 dark:text-teal-200">
+                              Active selection: {selectedSlot.slot} ({selectedSlot.durationHours || 2} hours)
+                            </span>
+                            <span className="text-emerald-600 font-bold">Ready to confirm below</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1591,12 +2224,14 @@ export default function IncubationPage() {
                       onSubmit={handleBookSlotFromCalendar}
                       className="p-4 rounded-xl border border-teal-500/30 bg-teal-500/5 space-y-3 text-xs"
                     >
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <span className="font-bold text-slate-900 dark:text-white">
                           Reserve {selectedFacility.title} on {calendarDate} ({selectedSlot.slot})
                         </span>
                         <span className="font-bold text-emerald-600">
-                          {selectedFacility.remainingFreeQuota > 0 ? "Free Trial Quota Slot" : `₹${selectedFacility.pricePerHour * 2} for 2 hrs`}
+                          {selectedFacility.remainingFreeQuota > 0
+                            ? "Free Trial Quota Slot (1 quota credit)"
+                            : `₹${Math.round((selectedFacility.pricePerHour || 0) * (selectedSlot.durationHours || 2))} for ${selectedSlot.durationHours || 2} hrs`}
                         </span>
                       </div>
 

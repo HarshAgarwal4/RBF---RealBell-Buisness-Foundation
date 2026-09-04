@@ -14,6 +14,7 @@ import ReferralModel from "../models/referral.js";
 import WalletModel from "../models/wallet.js";
 import WalletTransactionModel from "../models/walletTransaction.js";
 import { generateUniqueReferralCode } from "./referralController.js";
+import { generateCsrfToken, setCsrfCookies } from "../../middlewares/csrf.js";
 
 function normalizeCompanyType(type = "") {
     const value = String(type).toLowerCase().trim();
@@ -150,15 +151,16 @@ async function signUp(req, res) {
             token
         });
 
+        const isProd = process.env.PRODUCTION === "true" || process.env.NODE_ENV === "production";
         res.cookie("UID", token, {
-            httpOnly: process.env.PRODUCTION === "true",
-            secure: process.env.PRODUCTION === "true",
-            sameSite:
-                process.env.PRODUCTION === "true"
-                    ? "none"
-                    : "lax",
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: "/",
         });
+
+        const csrfToken = generateCsrfToken(req, res, { overwrite: true });
 
         await organization.save();
 
@@ -304,6 +306,7 @@ async function signUp(req, res) {
             msg: "Organization registered successfully. Please complete your verification form for dashboard access.",
             approvalStatus: "Pending Form",
             applicationId: appId,
+            csrfToken,
         });
 
     } catch (err) {
@@ -373,15 +376,16 @@ async function login(req, res) {
         if (!token) return res.send({ status: 11, msg: "Error generating session token" });
 
         findUser.sessions = [{ token }];
+        const isProd = process.env.PRODUCTION === "true" || process.env.NODE_ENV === "production";
         res.cookie("UID", token, {
-            httpOnly: process.env.PRODUCTION === "true" || process.env.production === "true",
-            secure: process.env.PRODUCTION === "true" || process.env.production === "true",
-            sameSite:
-                process.env.PRODUCTION === "true" || process.env.production === "true"
-                    ? "none"
-                    : "lax",
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: "/",
         });
+
+        const csrfToken = generateCsrfToken(req, res, { overwrite: true });
 
         if ((findUser.role === "super_admin" || findUser.role === "admin") && findUser.approvalStatus !== "Approved") {
             findUser.approvalStatus = "Approved";
@@ -411,6 +415,7 @@ async function login(req, res) {
                 mustChangePassword: findUser.mustChangePassword,
                 permissions,
             },
+            csrfToken,
         });
     } catch (err) {
         console.error("Login controller error:", err);
@@ -559,7 +564,15 @@ async function fetchUser(req, res) {
         }
 
         if (req.user.accountStatus === "disabled") {
-            res.clearCookie("UID");
+            const isProd = process.env.PRODUCTION === "true" || process.env.NODE_ENV === "production";
+            const clearOpts = {
+                secure: isProd,
+                sameSite: isProd ? "none" : "lax",
+                path: "/",
+            };
+            res.clearCookie("UID", { ...clearOpts, httpOnly: true });
+            res.clearCookie("_csrf", { ...clearOpts, httpOnly: true });
+            res.clearCookie("XSRF-TOKEN", { ...clearOpts, httpOnly: false });
             return res.status(403).send({ status: 0, msg: "Account has been deactivated" });
         }
 
@@ -742,13 +755,17 @@ async function updateProfile(req, res) {
 async function logout(req, res) {
     try {
         let token = req.cookies?.UID;
+        const isProd = process.env.PRODUCTION === "true" || process.env.NODE_ENV === "production";
+        const clearOpts = {
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
+            path: "/",
+        };
+        res.clearCookie('UID', { ...clearOpts, httpOnly: true });
+        res.clearCookie('_csrf', { ...clearOpts, httpOnly: true });
+        res.clearCookie('XSRF-TOKEN', { ...clearOpts, httpOnly: false });
+
         if (!token) return res.send({ status: 1, msg: "Logged out successfully" });
-        res.clearCookie('UID', {
-            httpOnly: process.env.PRODUCTION === "true",
-            secure: process.env.PRODUCTION === "true",
-            sameSite: process.env.PRODUCTION === "true" ? "none" : "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
         req.user.sessions = req.user.sessions.filter((session) => session.token !== token);
         await req.user.save();
         req.user = null

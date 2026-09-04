@@ -1,6 +1,7 @@
 import express from "express";
 import { authorize } from "../../middlewares/rbac.js";
 import { uploadFile } from "../../services/upload.js";
+import { uploadLimiter } from "../../middlewares/rateLimiter.js";
 import {
   getMyApprovalStatus,
   saveDraftSubmission,
@@ -24,6 +25,7 @@ approvalRouter.post("/my-submission/draft", saveDraftSubmission);
 approvalRouter.post("/my-submission/submit", submitApprovalForm);
 approvalRouter.post(
   "/upload-document",
+  uploadLimiter,
   uploadFile.single("file"),
   uploadApprovalDocument
 );

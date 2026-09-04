@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios from '../services/axios';
+import axios, { getCsrfToken } from '../services/axios';
 import { toast } from 'react-toastify';
 import { DEFAULT_PAGE_FALLBACKS } from '../config/pageFallbacks';
 
@@ -34,6 +34,9 @@ export const useStore = create((set, get) => ({
     // Fetches session, public page contents, roles, and auth settings in parallel
     initializeApp: async () => {
         try {
+            // Proactively initialize anti-CSRF token handshake
+            await getCsrfToken().catch(() => {});
+
             // 1. Check user session and parallel public assets
             let user = null;
             try {

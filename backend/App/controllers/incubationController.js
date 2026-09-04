@@ -29,52 +29,131 @@ async function getOrCreateSettings() {
   return settings;
 }
 
-// Helper: Seed default mentors if none exist
-async function seedDefaultMentors() {
-  const count = await IncubationMentorModel.countDocuments();
-  if (count === 0) {
-    await IncubationMentorModel.insertMany([
-      {
-        name: "Dr. V. K. Mathur",
-        role: "Chief Ecosystem Mentor & AI Advisor",
-        company: "Vedic Council & ex-IIT Faculty",
-        bio: "Senior advisor in Artificial Intelligence, DeepTech patenting, and national grant schemes with 20+ years of mentoring experience.",
-        expertiseAreas: ["AI & DeepTech", "Patent Filing", "DPIIT Seed Fund", "R&D Architecture"],
-        email: "vk.mathur@realbell.org",
-        rating: 4.95,
-        sessionsCount: 38,
-      },
-      {
-        name: "CA Ananya Sharma",
-        role: "Startup CFO & Corporate Law Partner",
-        company: "Sharma & Associates Legal-Tax",
-        bio: "Specialist in startup equity capitalization, ESOP structuring, 42A compliance, and venture debt financing.",
-        expertiseAreas: ["Company Valuation", "ESOP Structuring", "Tax & GST", "Due Diligence"],
-        email: "ananya.sharma@realbell.org",
-        rating: 4.9,
-        sessionsCount: 42,
-      },
-      {
-        name: "Rajiv Mehra",
-        role: "Managing Partner & Angel Syndicate Lead",
-        company: "Rajasthan Angel Network (RAN)",
-        bio: "Angel investor with portfolio of 18+ startups. Focuses on product-market fit, unit economics, and Seed-to-Series A fundraising.",
-        expertiseAreas: ["Fundraising Pitch", "Investor Relations", "GTM Strategy", "Unit Economics"],
-        email: "rajiv.mehra@realbell.org",
-        rating: 4.88,
-        sessionsCount: 56,
-      },
-      {
-        name: "Priya Deshmukh",
-        role: "Head of Product & Growth Architect",
-        company: "SaaS ScaleLab",
-        bio: "Helps early-stage B2B SaaS startups scale from 0 to ₹1 Cr ARR with product analytics, inbound funnels, and enterprise sales.",
-        expertiseAreas: ["B2B SaaS Growth", "Pricing Optimization", "Customer Retention", "Enterprise Sales"],
-        email: "priya.deshmukh@realbell.org",
-        rating: 4.92,
-        sessionsCount: 29,
-      },
-    ]);
+// Helper: Parse and normalize mentor details from Organization model
+export function parseMentorDetails(org) {
+  if (!org) return null;
+  const orgObj = typeof org.toObject === "function" ? org.toObject() : org;
+
+  let prof = orgObj.profile || {};
+  if (typeof prof === "string") {
+    try {
+      prof = JSON.parse(prof);
+    } catch (e) {
+      prof = {};
+    }
+  }
+  if (prof && typeof prof.profile === "string") {
+    try {
+      prof = { ...prof, ...JSON.parse(prof.profile) };
+    } catch (e) {}
+  } else if (prof && typeof prof.profile === "object" && prof.profile !== null) {
+    prof = { ...prof, ...prof.profile };
+  }
+
+  const account = orgObj.account || {};
+  const designation = prof.designation || account.designation || "Ecosystem Mentor";
+  const company = prof.currentOrganization || orgObj.company_name || "RealBell Ecosystem";
+  const headline = prof.headline || `${designation} at ${company}`;
+  const bio = prof.about || prof.bio || headline || "Experienced ecosystem mentor and strategic advisor.";
+  const avatar = prof.photo || prof.logo || account.image || "/default_user.png";
+  const domains = Array.isArray(prof.mentorshipDomains) && prof.mentorshipDomains.length > 0
+    ? prof.mentorshipDomains
+    : Array.isArray(prof.industries) && prof.industries.length > 0
+    ? prof.industries
+    : ["Startup Strategy", "AI & DeepTech", "Fundraising", "Scale-Up"];
+
+  return {
+    _id: orgObj._id,
+    name: orgObj.name || "Mentor",
+    email: orgObj.email || "",
+    phone: orgObj.phone || "",
+    company_name: orgObj.company_name || "",
+    company_type: orgObj.company_type || "mentor",
+    role: designation,
+    designation,
+    company,
+    headline,
+    bio,
+    avatarUrl: avatar,
+    avatar,
+    expertiseAreas: domains,
+    mentorshipDomains: domains,
+    city: prof.city || "",
+    state: prof.state || "",
+    country: prof.country || "",
+    socialLinks: prof.socialLinks || {},
+    rating: 4.9,
+    sessionsCount: prof.sessionsCount || 12,
+  };
+}
+
+// Helper: Seed default registered mentors in Organization if none exist
+export async function seedDefaultRegisteredMentors() {
+  try {
+    const mentorCount = await OrganizationModel.countDocuments({
+      company_type: { $regex: /^mentor$/i },
+    });
+    if (mentorCount === 0) {
+      const defaultMentors = [
+        {
+          company_type: "mentor",
+          company_name: "Vedic Council & IIT Mentorship Cell",
+          name: "Dr. V. K. Mathur",
+          email: "vk.mathur.mentor@realbell.org",
+          phone: "+919876543210",
+          password: null,
+          role: "normal",
+          account: {
+            designation: "Chief Ecosystem Mentor & AI Advisor",
+            image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          },
+          profile: {
+            designation: "Chief Ecosystem Mentor & AI Advisor",
+            currentOrganization: "Vedic Council & IIT Mentorship Cell",
+            headline: "Senior Advisor in AI, DeepTech Patenting & National Grant Schemes",
+            about: "Senior advisor in Artificial Intelligence, DeepTech patenting, and national grant schemes with 20+ years of mentoring experience across global incubators.",
+            mentorshipDomains: ["AI & DeepTech", "Patent Filing", "DPIIT Seed Fund", "R&D Architecture"],
+            city: "Jaipur",
+            state: "Rajasthan",
+            country: "India",
+            socialLinks: { linkedin: "https://linkedin.com" },
+          },
+        },
+        {
+          company_type: "mentor",
+          company_name: "Sharma & Associates Legal-Tax",
+          name: "CA Ananya Sharma",
+          email: "ananya.sharma.mentor@realbell.org",
+          phone: "+919876543211",
+          password: null,
+          role: "normal",
+          account: {
+            designation: "Startup CFO & Corporate Law Partner",
+            image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+          },
+          profile: {
+            designation: "Startup CFO & Corporate Law Partner",
+            currentOrganization: "Sharma & Associates Legal-Tax",
+            headline: "Specialist in Startup Equity, ESOP Structuring & Venture Debt Financing",
+            about: "Specialist in startup equity capitalization, ESOP structuring, Section 42A compliance, valuation reports, and venture debt financing.",
+            mentorshipDomains: ["Company Valuation", "ESOP Structuring", "Tax & GST", "Due Diligence"],
+            city: "Bengaluru",
+            state: "Karnataka",
+            country: "India",
+            socialLinks: { linkedin: "https://linkedin.com" },
+          },
+        },
+      ];
+
+      for (const m of defaultMentors) {
+        const exists = await OrganizationModel.findOne({ email: m.email });
+        if (!exists) {
+          await OrganizationModel.create(m);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("seedDefaultRegisteredMentors error:", err);
   }
 }
 
@@ -234,7 +313,8 @@ export const getMyIncubationApplication = async (req, res) => {
 
     let application = await IncubationApplicationModel.findOne({ user: userId })
       .populate("form")
-      .populate("user", "name email phone company_name company_type role account profile");
+      .populate("user", "name email phone company_name company_type role account profile")
+      .populate("assignedMentors", "name email phone company_name company_type role account profile");
 
     const settings = await getOrCreateSettings();
 
@@ -350,16 +430,23 @@ export const submitIncubationApplication = async (req, res) => {
       });
     } else {
       application.incubationType = incubationType;
+      application.form = form._id;
       application.businessDetails = { ...application.businessDetails, ...parsedBiz };
       application.teamMembers = parsedTeam && parsedTeam.length > 0 ? parsedTeam : application.teamMembers;
       application.customResponses = { ...application.customResponses, ...parsedResponses };
       application.monthlyFee = fee;
       if (uploadedDocs.length > 0) {
-        application.documents = [...application.documents, ...uploadedDocs];
+        const existingDocs = application.documents || [];
+        const newFieldKeys = new Set(uploadedDocs.map((d) => d.fieldKey));
+        const retainedDocs = existingDocs.filter((d) => !newFieldKeys.has(d.fieldKey));
+        application.documents = [...retainedDocs, ...uploadedDocs];
       }
       if (!isDraft || application.status === "Draft") {
         application.status = newStatus;
       }
+      application.markModified("customResponses");
+      application.markModified("businessDetails");
+      application.markModified("teamMembers");
       await application.save();
     }
 
@@ -404,12 +491,46 @@ export const userReplyFeedback = async (req, res) => {
   }
 };
 
-// 5. MENTOR SUPPORT: Get active mentors
+// 5. MENTOR SUPPORT: Get assigned mentors for current user's incubation profile
 export const getMentorsList = async (req, res) => {
   try {
-    await seedDefaultMentors();
-    const mentors = await IncubationMentorModel.find({ isActive: true }).sort({ rating: -1 });
-    return res.json({ status: 1, mentors });
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ status: 0, msg: "Unauthorized" });
+
+    await seedDefaultRegisteredMentors();
+
+    // Check user's incubation application
+    const application = await IncubationApplicationModel.findOne({ user: userId })
+      .populate("assignedMentors", "name email phone company_name company_type role account profile");
+
+    if (!application) {
+      return res.json({
+        status: 1,
+        mentors: [],
+        applicationStatus: "none",
+        msg: "No incubation application found.",
+      });
+    }
+
+    if (application.status !== "Accepted" && application.status !== "Approved") {
+      return res.json({
+        status: 1,
+        mentors: [],
+        applicationStatus: application.status,
+        msg: "Mentorship is available once your incubation application is approved.",
+      });
+    }
+
+    // Return the assigned mentors
+    const assigned = (application.assignedMentors || []).map((m) => parseMentorDetails(m)).filter(Boolean);
+
+    return res.json({
+      status: 1,
+      mentors: assigned,
+      applicationId: application.applicationId,
+      startupName: application.businessDetails?.companyName,
+      hasAssignedMentors: assigned.length > 0,
+    });
   } catch (err) {
     console.error("getMentorsList error:", err);
     return res.status(500).json({ status: 0, msg: "Failed to load mentors" });
@@ -437,15 +558,23 @@ export const bookMentorSession = async (req, res) => {
       });
     }
 
-    const mentor = await IncubationMentorModel.findById(mentorId);
-    if (!mentor) return res.status(404).json({ status: 0, msg: "Mentor not found" });
+    // Find mentor in Organization
+    let mentor = await OrganizationModel.findById(mentorId);
+    let mentorName = mentor?.name;
+
+    if (!mentor) {
+      // Fallback for any legacy mentor ID
+      const legacyMentor = await IncubationMentorModel.findById(mentorId);
+      if (!legacyMentor) return res.status(404).json({ status: 0, msg: "Mentor not found" });
+      mentorName = legacyMentor.name;
+    }
 
     const bookingId = `MB-${Math.floor(100 + Math.random() * 900)}`;
     const session = await IncubationMentorBookingModel.create({
       bookingId,
       user: userId,
-      mentor: mentor._id,
-      mentorName: mentor.name,
+      mentor: mentor ? mentor._id : mentorId,
+      mentorName: mentorName || "Assigned Mentor",
       date,
       timeSlot,
       topic: topic.trim(),
@@ -454,12 +583,23 @@ export const bookMentorSession = async (req, res) => {
       status: "Confirmed",
     });
 
-    mentor.sessionsCount = (mentor.sessionsCount || 0) + 1;
-    await mentor.save().catch(() => {});
+    // Notify the mentor if registered user
+    if (mentor) {
+      await NotificationModel.create({
+        title: "1-on-1 Incubation Call Booked!",
+        message: `${req.user?.name || "Startup Founder"} booked a 1-on-1 mentorship session with you for ${date} at ${timeSlot}. Topic: "${topic.trim()}"`,
+        type: "info",
+        priority: "high",
+        action_url: "/incubation",
+        target_type: "specific_users",
+        recipients: [mentor._id],
+        sent_by: userId,
+      }).catch((e) => console.error("Notification warning:", e));
+    }
 
     return res.json({
       status: 1,
-      msg: `Mentorship session booked with ${mentor.name} on ${date} at ${timeSlot}!`,
+      msg: `Mentorship session booked with ${mentorName} on ${date} at ${timeSlot}!`,
       session,
     });
   } catch (err) {
@@ -473,7 +613,7 @@ export const getMyMentorSessions = async (req, res) => {
   try {
     const userId = req.user?._id;
     const sessions = await IncubationMentorBookingModel.find({ user: userId })
-      .populate("mentor")
+      .populate("mentor", "name email phone company_name company_type role account profile")
       .sort({ createdAt: -1 });
 
     return res.json({ status: 1, sessions });
@@ -487,68 +627,6 @@ export const getMyMentorSessions = async (req, res) => {
 export const getInfrastructureList = async (req, res) => {
   try {
     const userId = req.user?._id;
-
-    // Seed default facilities if none exist
-    let count = await IncubationInfrastructureModel.countDocuments();
-    if (count === 0) {
-      await IncubationInfrastructureModel.insertMany([
-        {
-          title: "Chanakya Boardroom (12 Seater)",
-          type: "boardroom",
-          capacity: 12,
-          location: "Floor 1 - Chandlai Center, Jaipur",
-          description: "Executive boardroom with 4K display, video conference bar, and motorized whiteboard.",
-          amenities: ["Wi-Fi 6", "4K Display", "Video Conferencing", "Whiteboard", "Coffee Bar"],
-          isFreeForNewProfiles: true,
-          freeQuotaPerUser: 3,
-          pricePerHour: 500,
-        },
-        {
-          title: "Meeting Pod A (4 Seater)",
-          type: "meeting_room",
-          capacity: 4,
-          location: "Floor 1 - Chandlai Center, Jaipur",
-          description: "Soundproof acoustic meeting pod for investor calls and sprint syncs.",
-          amenities: ["Wi-Fi 6", "Acoustic Insulation", "Smart TV Screen", "Power Hub"],
-          isFreeForNewProfiles: true,
-          freeQuotaPerUser: 5,
-          pricePerHour: 200,
-        },
-        {
-          title: "AI & DeepTech High-Compute Lab",
-          type: "lab",
-          capacity: 6,
-          location: "Lab Wing B - Chandlai Center, Jaipur",
-          description: "Dedicated workstation stations with NVIDIA RTX GPUs for AI model training and prototyping.",
-          amenities: ["NVIDIA RTX Server", "Gigabit LAN", "UPS Backup", "Development Toolchains"],
-          isFreeForNewProfiles: true,
-          freeQuotaPerUser: 2,
-          pricePerHour: 750,
-        },
-        {
-          title: "Podcast & Founder Media Studio",
-          type: "studio",
-          capacity: 4,
-          location: "Media Pod - Chandlai Center, Jaipur",
-          description: "Broadcast-grade podcast recording studio with Shure mics and multi-cam setup.",
-          amenities: ["Shure SM7B Mics", "Rodecaster Pro", "Studio Lighting", "Soundproofing"],
-          isFreeForNewProfiles: true,
-          freeQuotaPerUser: 2,
-          pricePerHour: 600,
-        },
-        {
-          title: "Dedicated Incubatee Desk #C-12",
-          type: "desk",
-          capacity: 1,
-          location: "Co-Working Floor 1 - Chandlai Center, Jaipur",
-          description: "Reserved desk with ergonomic chair, lockable pedestal, and high-speed fiber.",
-          amenities: ["Ergonomic Chair", "Locker", "Power Strip", "24/7 Access"],
-          isFreeForNewProfiles: true,
-          freeQuotaPerUser: 30,
-          pricePerMonth: 5000,
-        },
-      ]);
-    }
 
     const items = await IncubationInfrastructureModel.find({ isActive: true }).sort({ type: 1 });
 
@@ -619,6 +697,33 @@ export const getInfrastructureList = async (req, res) => {
   }
 };
 
+// Helpers for Infrastructure Availability & Time Slots
+const sanitizeArray = (val) => {
+  if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+  if (typeof val === "string") return val.split(",").map((s) => s.trim()).filter(Boolean);
+  return [];
+};
+
+const parseTimeStringToMinutes = (timeStr) => {
+  if (!timeStr) return 0;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem === "PM" && hours < 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+};
+
+const calculateDurationHours = (startStr, endStr) => {
+  const startMins = parseTimeStringToMinutes(startStr);
+  const endMins = parseTimeStringToMinutes(endStr);
+  let diff = endMins - startMins;
+  if (diff <= 0) diff = 120; // fallback standard 2-hour block
+  return Math.round((diff / 60) * 10) / 10;
+};
+
 // 9. INFRASTRUCTURE: Book infrastructure slot
 export const bookInfrastructure = async (req, res) => {
   try {
@@ -643,7 +748,19 @@ export const bookInfrastructure = async (req, res) => {
     const infra = await IncubationInfrastructureModel.findById(infrastructureId);
     if (!infra) return res.status(404).json({ status: 0, msg: "Facility not found" });
 
+    // Validate Day of Week against facility availability
+    const d = new Date(date + "T00:00:00");
+    const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+    const isDayOpen = infra.availabilityType === "24_7" || (infra.availableDays || []).includes(dayName);
+    if (!isDayOpen) {
+      return res.status(400).json({
+        status: 0,
+        msg: `${infra.title} is closed on ${dayName}s. Operational days: ${(infra.availableDays || []).join(", ") || "None specified"}.`,
+      });
+    }
+
     const monthYear = date.substring(0, 7); // e.g. "2026-09"
+    const durationHours = calculateDurationHours(startTime, endTime);
 
     // 1. Enforce Monthly Booking Limits for Startup (max times per month)
     const existingMonthly = await IncubationBookingModel.find({
@@ -662,13 +779,12 @@ export const bookInfrastructure = async (req, res) => {
     }
 
     // 2. Enforce Monthly Hours Limit for Startup (max hours per month)
-    const durationHours = 2; // Standard 2 hour block
     const hoursUsed = existingMonthly.reduce((acc, b) => acc + (b.durationHours || 2), 0);
     const maxHours = infra.monthlyHoursLimit || 20;
     if (hoursUsed + durationHours > maxHours) {
       return res.status(400).json({
         status: 0,
-        msg: `Monthly limit reached: A startup can reserve ${infra.title} a maximum of ${maxHours} hours per month. (Already used: ${hoursUsed} hrs).`,
+        msg: `Monthly limit reached: A startup can reserve ${infra.title} a maximum of ${maxHours} hours per month. (Already used: ${hoursUsed} hrs, requested: ${durationHours} hrs).`,
       });
     }
 
@@ -695,7 +811,7 @@ export const bookInfrastructure = async (req, res) => {
     });
 
     const isFree = infra.isFreeForNewProfiles && usedQuota < infra.freeQuotaPerUser;
-    const amount = isFree ? 0 : infra.pricePerHour || 0;
+    const amount = isFree ? 0 : Math.round((infra.pricePerHour || 0) * durationHours);
 
     const bookingId = `BK-${Math.floor(100 + Math.random() * 900)}`;
 
@@ -995,6 +1111,8 @@ export const getAdminApplications = async (req, res) => {
 
     const applications = await IncubationApplicationModel.find(query)
       .populate("user", "name email phone company_name company_type role account profile")
+      .populate("assignedMentors", "name email phone company_name company_type role account profile")
+      .populate("form")
       .sort({ updatedAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
@@ -1022,7 +1140,7 @@ export const getAdminApplications = async (req, res) => {
 export const updateAdminApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, reviewNotes, cohortName, centerAllocated, deskAllocated } = req.body;
+    const { status, reviewNotes, cohortName, centerAllocated, deskAllocated, assignedMentors } = req.body;
 
     const application = await IncubationApplicationModel.findById(id);
     if (!application) return res.status(404).json({ status: 0, msg: "Application not found" });
@@ -1030,6 +1148,9 @@ export const updateAdminApplicationStatus = async (req, res) => {
     const previousStatus = application.status;
     if (status) application.status = status;
     if (reviewNotes !== undefined) application.reviewNotes = reviewNotes;
+    if (assignedMentors !== undefined) {
+      application.assignedMentors = Array.isArray(assignedMentors) ? assignedMentors : [assignedMentors];
+    }
 
     const settings = await getOrCreateSettings();
 
@@ -1079,6 +1200,7 @@ export const updateAdminApplicationStatus = async (req, res) => {
     application.reviewedAt = new Date();
 
     await application.save();
+    await application.populate("assignedMentors", "name email phone company_name company_type role account profile");
 
     return res.json({ status: 1, msg: `Application status updated to "${status}"`, application });
   } catch (err) {
@@ -1162,24 +1284,161 @@ export const saveAdminIncubationSettings = async (req, res) => {
   }
 };
 
-// 21. Admin: Manage Mentors (Create / Update / Delete)
+// 21. Admin: Manage Registered Mentors & Assignments
+export const getAdminRegisteredMentors = async (req, res) => {
+  try {
+    await seedDefaultRegisteredMentors();
+
+    const mentors = await OrganizationModel.find({
+      $or: [
+        { company_type: { $regex: /^mentor$/i } },
+        { role: "mentor" },
+      ],
+    }).select("name email phone company_name company_type role account profile createdAt");
+
+    // For each mentor, find how many approved incubation applications they are assigned to
+    const applications = await IncubationApplicationModel.find({
+      assignedMentors: { $in: mentors.map((m) => m._id) },
+    }).select("applicationId businessDetails.companyName user assignedMentors status");
+
+    const mentorListWithCounts = mentors.map((m) => {
+      const parsed = parseMentorDetails(m);
+      const assignedApps = applications.filter((app) =>
+        app.assignedMentors?.some((mid) => mid.toString() === m._id.toString())
+      );
+
+      return {
+        ...parsed,
+        assignedStartupsCount: assignedApps.length,
+        assignedStartups: assignedApps.map((a) => ({
+          applicationId: a.applicationId,
+          companyName: a.businessDetails?.companyName || "Incubation Startup",
+          status: a.status,
+          _id: a._id,
+        })),
+      };
+    });
+
+    return res.json({ status: 1, mentors: mentorListWithCounts });
+  } catch (err) {
+    console.error("getAdminRegisteredMentors error:", err);
+    return res.status(500).json({ status: 0, msg: "Failed to load registered mentors" });
+  }
+};
+
+export const assignMentorsToApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { mentorIds } = req.body;
+
+    if (!mentorIds) mentorIds = [];
+    if (!Array.isArray(mentorIds)) mentorIds = [mentorIds];
+
+    const application = await IncubationApplicationModel.findById(id);
+    if (!application) {
+      return res.status(404).json({ status: 0, msg: "Incubation application not found" });
+    }
+
+    // Verify all mentorIds exist in Organization
+    const validMentors = await OrganizationModel.find({
+      _id: { $in: mentorIds },
+    });
+
+    const validMentorIds = validMentors.map((m) => m._id);
+    application.assignedMentors = validMentorIds;
+    await application.save();
+
+    await application.populate("assignedMentors", "name email phone company_name company_type role account profile");
+
+    const mentorNames = validMentors.map((m) => m.name).join(", ") || "None";
+
+    // 1. Notify Startup Founder
+    await NotificationModel.create({
+      title: "Mentor Assigned to Your Startup!",
+      message: validMentors.length > 0
+        ? `Dedicated mentor(s) [${mentorNames}] have been assigned to your incubation startup. Check Incubation > Mentor Support to schedule 1-on-1 sessions or connect directly.`
+        : "Your assigned mentors have been updated by the incubation committee.",
+      type: "success",
+      priority: "high",
+      action_url: "/incubation",
+      target_type: "specific_users",
+      recipients: [application.user],
+      sent_by: req.user?._id || application.user,
+    }).catch((e) => console.error("Notification warning:", e));
+
+    // 2. Notify Mentors
+    for (const mentor of validMentors) {
+      await NotificationModel.create({
+        title: "New Incubation Mentee Assigned!",
+        message: `You have been assigned as mentor to incubation startup: ${application.businessDetails?.companyName || "Startup"} (${application.applicationId}).`,
+        type: "info",
+        priority: "normal",
+        action_url: `/connect/startups/${application.user}`,
+        target_type: "specific_users",
+        recipients: [mentor._id],
+        sent_by: req.user?._id || application.user,
+      }).catch((e) => console.error("Mentor notification warning:", e));
+    }
+
+    return res.json({
+      status: 1,
+      msg: `Successfully assigned ${validMentors.length} mentor(s) to application ${application.applicationId}!`,
+      assignedMentors: application.assignedMentors,
+      application,
+    });
+  } catch (err) {
+    console.error("assignMentorsToApplication error:", err);
+    return res.status(500).json({ status: 0, msg: "Failed to assign mentors" });
+  }
+};
+
 export const createAdminMentor = async (req, res) => {
   try {
-    const { name, role, company, bio, expertiseAreas, email } = req.body;
+    const { name, role, company, bio, expertiseAreas, email, phone } = req.body;
     if (!name?.trim() || !role?.trim()) {
       return res.status(400).json({ status: 0, msg: "Mentor name and role are required." });
     }
 
-    const mentor = await IncubationMentorModel.create({
+    const areas = Array.isArray(expertiseAreas)
+      ? expertiseAreas
+      : (expertiseAreas || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+    const mentorEmail = email?.trim() || `mentor.${Date.now()}@realbell.org`;
+
+    // Check if user already exists in Organization
+    let orgMentor = await OrganizationModel.findOne({ email: mentorEmail });
+    if (!orgMentor) {
+      orgMentor = await OrganizationModel.create({
+        name: name.trim(),
+        email: mentorEmail,
+        phone: phone?.trim() || "+919800000000",
+        company_name: company?.trim() || "Ecosystem Mentor",
+        company_type: "mentor",
+        role: "normal",
+        account: {
+          designation: role.trim(),
+        },
+        profile: {
+          designation: role.trim(),
+          currentOrganization: company?.trim() || "Ecosystem Mentor",
+          headline: `${role.trim()} at ${company?.trim() || "RealBell Ecosystem"}`,
+          about: bio?.trim() || "",
+          mentorshipDomains: areas,
+        },
+      });
+    }
+
+    // Also sync with IncubationMentorModel for legacy compatibility
+    await IncubationMentorModel.create({
       name: name.trim(),
       role: role.trim(),
       company: company || "Ecosystem Mentor",
       bio: bio || "",
-      expertiseAreas: Array.isArray(expertiseAreas) ? expertiseAreas : (expertiseAreas || "").split(",").map((s) => s.trim()).filter(Boolean),
-      email: email || "",
-    });
+      expertiseAreas: areas,
+      email: mentorEmail,
+    }).catch(() => {});
 
-    return res.json({ status: 1, msg: "Mentor added to incubation roster", mentor });
+    return res.json({ status: 1, msg: "Mentor added to registered mentors roster", mentor: orgMentor });
   } catch (err) {
     console.error("createAdminMentor error:", err);
     return res.status(500).json({ status: 0, msg: "Failed to add mentor" });
@@ -1189,7 +1448,8 @@ export const createAdminMentor = async (req, res) => {
 export const deleteAdminMentor = async (req, res) => {
   try {
     const { id } = req.params;
-    await IncubationMentorModel.findByIdAndDelete(id);
+    await OrganizationModel.findByIdAndUpdate(id, { company_type: "user" }).catch(() => {});
+    await IncubationMentorModel.findByIdAndDelete(id).catch(() => {});
     return res.json({ status: 1, msg: "Mentor removed from roster" });
   } catch (err) {
     console.error("deleteAdminMentor error:", err);
@@ -1202,14 +1462,14 @@ export const saveAdminIncubationForm = async (req, res) => {
   try {
     const { title, description, centerName, cohortName, fields, status } = req.body;
 
-    let form = await IncubationFormModel.findOne();
+    let form = await IncubationFormModel.findOne({ status: "published" }) || await IncubationFormModel.findOne();
     if (!form) form = new IncubationFormModel();
 
     if (title) form.title = title;
     if (description !== undefined) form.description = description;
     if (centerName) form.centerName = centerName;
     if (cohortName) form.cohortName = cohortName;
-    if (status) form.status = status;
+    form.status = status || form.status || "published";
     if (Array.isArray(fields)) form.fields = fields;
 
     form.updatedBy = req.user?._id;
@@ -1232,6 +1492,11 @@ export const createAdminInfrastructure = async (req, res) => {
       location,
       description,
       amenities,
+      availabilityType = "specific_days",
+      availableDays,
+      availableTimeSlots,
+      monthlyBookingLimit = 20,
+      monthlyHoursLimit = 20,
       isFreeForNewProfiles,
       freeQuotaPerUser,
       pricePerHour,
@@ -1243,13 +1508,29 @@ export const createAdminInfrastructure = async (req, res) => {
       return res.status(400).json({ status: 0, msg: "Infrastructure title is required" });
     }
 
+    const defaultDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const defaultSlots = [
+      "09:00 AM - 11:00 AM",
+      "11:30 AM - 01:30 PM",
+      "02:30 PM - 04:30 PM",
+      "05:00 PM - 07:00 PM",
+    ];
+
+    const parsedDays = availableDays !== undefined ? sanitizeArray(availableDays) : defaultDays;
+    const parsedSlots = availableTimeSlots !== undefined ? sanitizeArray(availableTimeSlots) : defaultSlots;
+
     const item = await IncubationInfrastructureModel.create({
       title: title.trim(),
       type: type || "meeting_room",
-      capacity: capacity || 4,
+      capacity: Number(capacity) || 4,
       location: location || "Floor 1, Chandlai Innovation Center, Jaipur",
       description: description || "",
-      amenities: Array.isArray(amenities) ? amenities : (amenities || "").split(",").map((s) => s.trim()).filter(Boolean),
+      amenities: sanitizeArray(amenities),
+      availabilityType: availabilityType || "specific_days",
+      availableDays: parsedDays.length > 0 ? parsedDays : defaultDays,
+      availableTimeSlots: parsedSlots.length > 0 ? parsedSlots : defaultSlots,
+      monthlyBookingLimit: Number(monthlyBookingLimit) || 20,
+      monthlyHoursLimit: Number(monthlyHoursLimit) || 20,
       isFreeForNewProfiles: isFreeForNewProfiles !== false,
       freeQuotaPerUser: Number(freeQuotaPerUser) || 3,
       pricePerHour: Number(pricePerHour) || 0,
@@ -1267,7 +1548,31 @@ export const createAdminInfrastructure = async (req, res) => {
 export const updateAdminInfrastructure = async (req, res) => {
   try {
     const { id } = req.params;
-    const item = await IncubationInfrastructureModel.findByIdAndUpdate(id, req.body, { new: true });
+    const updateData = { ...req.body };
+
+    if (updateData.amenities !== undefined) {
+      updateData.amenities = sanitizeArray(updateData.amenities);
+    }
+    if (updateData.availableDays !== undefined) {
+      updateData.availableDays = sanitizeArray(updateData.availableDays);
+    }
+    if (updateData.availableTimeSlots !== undefined) {
+      updateData.availableTimeSlots = sanitizeArray(updateData.availableTimeSlots);
+    }
+    if (updateData.monthlyBookingLimit !== undefined) {
+      updateData.monthlyBookingLimit = Number(updateData.monthlyBookingLimit) || 20;
+    }
+    if (updateData.monthlyHoursLimit !== undefined) {
+      updateData.monthlyHoursLimit = Number(updateData.monthlyHoursLimit) || 20;
+    }
+    if (updateData.capacity !== undefined) {
+      updateData.capacity = Number(updateData.capacity) || 4;
+    }
+    if (updateData.pricePerHour !== undefined) {
+      updateData.pricePerHour = Number(updateData.pricePerHour) || 0;
+    }
+
+    const item = await IncubationInfrastructureModel.findByIdAndUpdate(id, updateData, { new: true });
     if (!item) return res.status(404).json({ status: 0, msg: "Facility not found" });
 
     return res.json({ status: 1, msg: "Facility updated successfully", item });
@@ -1369,12 +1674,16 @@ export const getFacilitySlotAvailability = async (req, res) => {
         ];
 
     const slotsWithStatus = timeSlots.map((slot) => {
-      const start = slot.split(" - ")[0];
+      const parts = slot.split(" - ");
+      const start = parts[0]?.trim() || "";
+      const end = parts[1]?.trim() || "";
       const isBooked = bookedStarts.includes(start);
+      const durationHours = calculateDurationHours(start, end);
       return {
         slot,
         startTime: start,
-        endTime: slot.split(" - ")[1] || "",
+        endTime: end,
+        durationHours,
         isAvailable: isDayOpen && !isBooked,
         isBooked,
       };
@@ -1384,10 +1693,16 @@ export const getFacilitySlotAvailability = async (req, res) => {
       status: 1,
       facilityName: infra.title,
       facilityType: infra.type,
+      capacity: infra.capacity,
+      pricePerHour: infra.pricePerHour || 0,
+      monthlyBookingLimit: infra.monthlyBookingLimit || 20,
+      monthlyHoursLimit: infra.monthlyHoursLimit || 20,
       date,
       dayName,
       isDayOpen,
       availabilityType: infra.availabilityType,
+      availableDays: infra.availableDays || [],
+      availableTimeSlots: infra.availableTimeSlots || [],
       slots: slotsWithStatus,
     });
   } catch (err) {

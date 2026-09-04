@@ -16,7 +16,7 @@ const IncubationMentorBookingSchema = new mongoose.Schema(
     },
     mentor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "IncubationMentor",
+      ref: "Organization",
       required: true,
     },
     mentorName: {

@@ -1,6 +1,7 @@
 import express from "express";
 import { isAdmin, authorize } from "../../middlewares/admin.js";
 import { requireSubscription } from "../../middlewares/subscriptionGuard.js";
+import { aiLimiter } from "../../middlewares/rateLimiter.js";
 import {
   getPublicAiInfo,
   getAdminAiConfig,
@@ -14,6 +15,9 @@ import {
 } from "../controllers/aiController.js";
 
 const aiRouter = express.Router();
+
+// Apply AI rate limiter (30 req / 1 min)
+aiRouter.use(aiLimiter);
 
 /* Public Bot Info */
 aiRouter.get("/info", getPublicAiInfo);

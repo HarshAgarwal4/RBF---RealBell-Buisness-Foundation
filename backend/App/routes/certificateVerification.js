@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { authorize } from '../../middlewares/rbac.js';
+import { uploadLimiter } from '../../middlewares/rateLimiter.js';
 import * as ctrl from '../controllers/certificateController.js';
 
 const router = Router();
 
 // PUBLIC - Certificate verification & Image proxy (no auth needed)
 router.get('/verify/:certificateId', ctrl.verifyCertificate);
-router.post('/proxy-image', ctrl.proxyImage);
+router.post('/proxy-image', uploadLimiter, ctrl.proxyImage);
 
 // Admin - Certificate management
 router.get('/admin/all', authorize('certificates.view'), ctrl.getAllCertificates);

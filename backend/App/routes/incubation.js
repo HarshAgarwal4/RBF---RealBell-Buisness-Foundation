@@ -27,6 +27,8 @@ import {
   saveAdminIncubationSettings,
   createAdminMentor,
   deleteAdminMentor,
+  getAdminRegisteredMentors,
+  assignMentorsToApplication,
   saveAdminIncubationForm,
   createAdminInfrastructure,
   updateAdminInfrastructure,
@@ -74,8 +76,10 @@ incubationRouter.put("/admin/settings", isAdmin, authorize(["programs.update", "
 
 incubationRouter.get("/admin/applications", isAdmin, authorize(["programs.applications_view", "programs.view"]), getAdminApplications);
 incubationRouter.put("/admin/applications/:id/status", isAdmin, authorize(["programs.applications_view", "programs.update"]), updateAdminApplicationStatus);
+incubationRouter.put("/admin/applications/:id/assign-mentors", isAdmin, authorize(["programs.applications_view", "programs.update"]), assignMentorsToApplication);
 incubationRouter.post("/admin/applications/:id/feedback", isAdmin, authorize(["programs.applications_view", "programs.update"]), sendAdminFeedbackMessage);
 
+incubationRouter.get("/admin/registered-mentors", isAdmin, authorize(["programs.view", "programs.applications_view"]), getAdminRegisteredMentors);
 incubationRouter.post("/admin/mentors", isAdmin, authorize(["programs.create", "programs.update"]), createAdminMentor);
 incubationRouter.delete("/admin/mentors/:id", isAdmin, authorize(["programs.delete"]), deleteAdminMentor);
 

@@ -9,6 +9,9 @@ import cookieParser from 'cookie-parser'
 import bodyParser from 'body-parser'
 import mongoose from 'mongoose';
 import { createServer } from "http";
+import { securityHeaders } from './middlewares/securityHeaders.js';
+import { globalLimiter } from './middlewares/rateLimiter.js';
+import { getCsrfTokenHandler, verifyCsrfToken } from './middlewares/csrf.js';
 import { isLoggedIn } from './middlewares/Auth.js';
 import { organizationRoutes } from './App/routes/organization.js';
 import { connectRoutes } from './App/routes/connect.js';
@@ -50,15 +53,35 @@ import { clearRedis } from './services/Redis.js';
 import LiveSessionModel from './App/models/liveSession.js';
 
 const app = express();
+app.set('trust proxy', 1);
 const server = createServer(app);
 
-app.use(cookieParser())
+// 1. Defensive HTTP security headers
+app.use(securityHeaders);
+
+// 2. Cookie parser for session and CSRF cookies
+app.use(cookieParser());
+
+// 3. Strict CORS configuration
 app.use(cors({
     origin: process.env.FRONTEND_URL,
-    credentials: true
-}))
+    credentials: true,
+    exposedHeaders: ['X-CSRF-Token'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'X-Razorpay-Signature']
+// 4. Global baseline rate limiter across all endpoints (300 req / 15 mins)
+app.use(globalLimiter);
+
+// 5. JSON body parser
 app.use(express.json());
-app.use(isLoggedIn)
+
+// 5. CSRF Handshake endpoint (GET /csrf-token)
+app.get('/csrf-token', getCsrfTokenHandler);
+
+// 6. Anti-CSRF verification for all state-mutating requests (POST, PUT, DELETE, PATCH)
+app.use(verifyCsrfToken);
+
+// 7. Session authentication & authorization middleware
+app.use(isLoggedIn);
 
 app.get('/', (req, res) => {
     res.send("Hello World");
@@ -97,6 +120,14 @@ app.use('/incubation', incubationRouter)
 app.use((err, req, res, next) => {
     if (!err) {
         return next();
+    }
+
+    if (err.code === 'EBADCSRFTOKEN') {
+        return res.status(403).json({
+            status: 403,
+            code: 'EBADCSRFTOKEN',
+            message: 'Invalid or missing CSRF token',
+        });
     }
 
     if (err.code === 'LIMIT_FILE_SIZE') {

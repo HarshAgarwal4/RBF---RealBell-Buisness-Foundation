@@ -16,8 +16,11 @@ function isPublicRoute(req) {
   const path = getRoutePath(req);
   const method = req.method;
 
-  // Root endpoint
-  if (path === "/" && method === "GET") return true;
+  // Root and Security / CSRF Handshake
+  if (method === "GET" && (path === "/" || path === "/csrf-token")) return true;
+
+  // Server-to-server webhooks (Razorpay HMAC signature verification)
+  if (method === "POST" && path === "/payment/webhook") return true;
 
   // Unauthenticated authentication endpoints & public helpers
   if (
@@ -33,7 +36,7 @@ function isPublicRoute(req) {
     return true;
   }
 
-  // Public GET endpoints (for signup dropdowns, landing pages, etc.)
+  // Public GET endpoints (for signup dropdowns, landing pages, discovery, etc.)
   if (
     method === "GET" &&
     (path === "/roles" ||
@@ -50,7 +53,9 @@ function isPublicRoute(req) {
       path.startsWith("/tests/public") ||
       path.startsWith("/referrals/validate") ||
       path.startsWith("/booster/public") ||
-      path.startsWith("/booster/items"))
+      path.startsWith("/booster/items") ||
+      path.startsWith("/ai/info") ||
+      path.startsWith("/wallet/settings"))
   ) {
     return true;
   }
@@ -96,7 +101,15 @@ async function isLoggedIn(req, res, next) {
           .populate("approvalSubmission");
         if (findUser) {
           if (findUser.accountStatus === "disabled") {
-            res.clearCookie("UID");
+            const isProd = process.env.PRODUCTION === "true" || process.env.NODE_ENV === "production";
+            const clearOpts = {
+              secure: isProd,
+              sameSite: isProd ? "none" : "lax",
+              path: "/",
+            };
+            res.clearCookie("UID", { ...clearOpts, httpOnly: true });
+            res.clearCookie("_csrf", { ...clearOpts, httpOnly: true });
+            res.clearCookie("XSRF-TOKEN", { ...clearOpts, httpOnly: false });
             return res.status(403).json({ status: 54, msg: "Access Forbidden: Account is disabled" });
           }
           const hasSession =
@@ -149,4 +162,4 @@ async function isLoggedIn(req, res, next) {
   return res.status(401).json({ status: 53, msg: "Unauthorized: Invalid credentials or session expired" });
 }
 
-export { isLoggedIn };
+export { isLoggedIn, isPublicRoute, isAllowedDuringApproval };

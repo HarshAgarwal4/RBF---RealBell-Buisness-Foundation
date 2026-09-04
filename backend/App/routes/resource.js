@@ -1,6 +1,7 @@
 import express from "express";
 import { isAdmin, authorize } from "../../middlewares/admin.js";
 import { createUploadMiddleware } from "../../services/upload.js";
+import { uploadLimiter } from "../../middlewares/rateLimiter.js";
 import {
   getResources,
   createResource,
@@ -54,6 +55,7 @@ resourceRouter.patch("/:id/download", incrementDownload);
 resourceRouter.post(
   "/",
   isStrictAdminOrSuperAdmin,
+  uploadLimiter,
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -64,6 +66,7 @@ resourceRouter.post(
 resourceRouter.put(
   "/:id",
   isStrictAdminOrSuperAdmin,
+  uploadLimiter,
   resourceUpload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
